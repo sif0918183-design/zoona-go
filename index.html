@@ -79,11 +79,46 @@
             if(id === 'cust-form') initMap();
         }
 
-        // ميزة سرية للموظفين: 5 ضغطات على الهيدر تفتح التسجيل
-        function checkStaffAccess() {
-            clickCount++;
-            if (clickCount === 5) { showSection('staff-section'); clickCount = 0; }
+        // ميزة سرية للموظفين: 5 ضغطات على الهيدر let clickCount = 0;
+
+// 1. حيلة الـ 5 ضغطات تفتح نافذة الرمز فقط
+function checkStaffAccess() {
+    clickCount++;
+    if (clickCount === 5) {
+        document.getElementById('passcode-modal').classList.remove('hidden');
+        clickCount = 0;
+    }
+}
+
+function closePasscodeModal() {
+    document.getElementById('passcode-modal').classList.add('hidden');
+    document.getElementById('staff-input-pass').value = '';
+}
+
+// 2. التحقق من الكلمة بمقارنتها مع المخزن في Supabase
+async function verifyStaffPasscode() {
+    const enteredPass = document.getElementById('staff-input-pass').value;
+
+    try {
+        // جلب الكلمة الصحيحة من الجدول الذي أنشأناه
+        const { data, error } = await supabaseClient
+            .from('system_settings')
+            .select('value')
+            .eq('key', 'staff_passcode')
+            .single();
+
+        if (data && data.value === enteredPass) {
+            alert("تم التحقق بنجاح!");
+            closePasscodeModal();
+            showSection('staff-section'); // فتح قسم الموظفين الآن
+        } else {
+            alert("رمز الدخول غير صحيح!");
         }
+    } catch (err) {
+        console.error("خطأ في الاتصال:", err);
+        alert("حدث خطأ أثناء التحقق، حاول مرة أخرى.");
+    }
+}
 
         // --- منطق الموظف ---
         async function registerDriverByStaff() {
