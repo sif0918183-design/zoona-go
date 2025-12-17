@@ -69,5 +69,36 @@
             }
         }
     </script>
+<div id="active-trip-overlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+    <h2 style="color: #4f46e5;">الرحلة سارية الآن... 🚗</h2>
+    <div id="trip-map-mini" style="width: 100%; height: 300px; border-radius: 15px; margin: 20px 0;"></div>
+    <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; width: 100%; text-align: center; margin-bottom: 20px;">
+        <p><strong>حالة الرصيد:</strong> سيتم خصم 3,000 SDG عند الانتهاء</p>
+    </div>
+    <button onclick="confirmEndTrip()" style="background: #ef4444; color: white; padding: 15px 40px; border-radius: 10px; font-weight: bold; width: 100%;">إنهاء الرحلة</button>
+</div>
+
+<script>
+    // دالة لتفعيل قفل الشاشة عند بدء الرحلة
+    function startActiveTripUI() {
+        document.getElementById('active-trip-overlay').classList.remove('hidden');
+        // منع المستخدم من التراجع (Back Button) في المتصفح
+        window.history.pushState(null, null, window.location.href);
+        window.onpopstate = function() {
+            window.history.go(1);
+        };
+    }
+
+    async function confirmEndTrip() {
+        if (confirm("هل وصلت إلى الوجهة؟ سيتم إنهاء الرحلة وخصم الرسوم.")) {
+            // تنفيذ كود الخصم في Supabase الذي كتبناه سابقاً
+            await completeTrip(currentTripId, currentDriverId);
+            
+            // إخفاء القفل وإعادة السماح بالتنقل
+            document.getElementById('active-trip-overlay').classList.add('hidden');
+            window.onpopstate = null; 
+        }
+    }
+</script>
 </body>
 </html>
