@@ -18,12 +18,14 @@
         .header { background: var(--primary); color: white; padding: 20px; text-align: center; font-size: 22px; cursor: pointer; }
         .container { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
         .hidden { display: none !important; }
-        button { padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; }
+        button { padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; }
+        button:active { transform: scale(0.95); }
         input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }
         
         .btn-cust { background: #2563eb; }
         .btn-drive { background: var(--driver-bg); }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
+        .card { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); border: 1px solid #eee; }
     </style>
 </head>
 <body>
@@ -32,7 +34,7 @@
 
     <div id="home-screen" class="container">
         <button class="btn-cust" onclick="showSection('cust-form')">طلب رحلة (زبون)</button>
-        <button class="btn-drive" onclick="showSection('driver-login')">دخول السائقين</button>
+        <button class="btn-drive" onclick="showSection('driver-dashboard')">دخول السائقين</button>
     </div>
 
     <div id="staff-section" class="container hidden">
@@ -44,6 +46,21 @@
         <button onclick="showSection('home-screen')" style="color: #666; background: none;">إلغاء</button>
     </div>
 
+    <div id="driver-dashboard" class="container hidden">
+        <div class="card">
+            <h3>مرحباً أيها السائق</h3>
+            <p id="driver-status-text">حالتك الآن: <span style="color:red">خارج التغطية</span></p>
+            <button id="toggle-online-btn" class="btn-drive" onclick="toggleDriverOnline()">تفعيل وضع العمل (Online)</button>
+        </div>
+        
+        <div id="incoming-ride" class="card hidden" style="border: 2px solid gold; margin-top: 20px;">
+            <h4>🔔 طلب رحلة جديد!</h4>
+            <p>المسافة: قريبة جداً</p>
+            <button class="btn-drive" style="width: 100%;" onclick="acceptRide()">قبول الرحلة</button>
+        </div>
+        <button onclick="showSection('home-screen')" style="color: #666; background: none; margin-top: 20px;">خروج</button>
+    </div>
+
     <div id="cust-form" class="container hidden">
         <h3>تحديد موقع الرحلة</h3>
         <div id="map" style="width:100%; height:300px; border-radius:15px; background:#eee;"></div>
@@ -53,22 +70,34 @@
 
     <div id="active-trip-overlay" class="overlay hidden">
         <h2 style="color: var(--primary)">الرحلة سارية الآن... 🚗</h2>
-        <div style="background: #fef2f2; padding: 15px; border-radius: 10px; margin: 20px 0;">
+        <div style="background: #fef2f2; padding: 15px; border-radius: 10px; margin: 20px 0; text-align: center;">
             <p>سيتم خصم <b>3,000 SDG</b> عند الوصول</p>
+            <small>الرجاء عدم إغلاق التطبيق</small>
         </div>
         <button onclick="handleEndTrip()" style="background: #ef4444; width: 100%;">إنهاء الرحلة وخصم الرسوم</button>
     </div>
 
+    <div id="passcode-modal" class="overlay hidden">
+        <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 80%;">
+            <h3>تحقق من الهوية</h3>
+            <input type="password" id="staff-input-pass" placeholder="****" style="text-align: center; font-size: 24px;">
+            <button onclick="verifyStaffPasscode()" style="background: var(--staff-bg); width: 100%; margin-top: 15px;">دخول</button>
+            <button onclick="closePasscodeModal()" style="background: none; color: #666; width: 100%; margin-top: 10px;">إلغاء</button>
+        </div>
+    </div>
+
     <script>
-        // إعدادات Supabase
+        // --- الإعدادات الأساسية ---
         const SB_URL = 'YOUR_SUPABASE_URL';
         const SB_KEY = 'YOUR_SUPABASE_ANON_KEY';
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
         let clickCount = 0;
-        let userLocation = { lat: 15.5007, lng: 32.5599 };
+        let isOnline = false;
+        let watchId = null;
+        let currentDriverId = null; // سيتم تعيينه عند دخول السائق
 
-        // تسجيل الـ Service Worker
+        // تسجيل Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js');
         }
@@ -79,102 +108,125 @@
             if(id === 'cust-form') initMap();
         }
 
-        // ميزة سرية للموظفين: 5 ضغطات على الهيدر let clickCount = 0;
-
-// 1. حيلة الـ 5 ضغطات تفتح نافذة الرمز فقط
-function checkStaffAccess() {
-    clickCount++;
-    if (clickCount === 5) {
-        document.getElementById('passcode-modal').classList.remove('hidden');
-        clickCount = 0;
-    }
-}
-
-function closePasscodeModal() {
-    document.getElementById('passcode-modal').classList.add('hidden');
-    document.getElementById('staff-input-pass').value = '';
-}
-
-// 2. التحقق من الكلمة بمقارنتها مع المخزن في Supabase
-async function verifyStaffPasscode() {
-    const enteredPass = document.getElementById('staff-input-pass').value;
-
-    try {
-        // جلب الكلمة الصحيحة من الجدول الذي أنشأناه
-        const { data, error } = await supabaseClient
-            .from('system_settings')
-            .select('value')
-            .eq('key', 'staff_passcode')
-            .single();
-
-        if (data && data.value === enteredPass) {
-            alert("تم التحقق بنجاح!");
-            closePasscodeModal();
-            showSection('staff-section'); // فتح قسم الموظفين الآن
-        } else {
-            alert("رمز الدخول غير صحيح!");
+        // --- نظام الموظفين والحماية ---
+        function checkStaffAccess() {
+            clickCount++;
+            if (clickCount === 5) {
+                document.getElementById('passcode-modal').classList.remove('hidden');
+                clickCount = 0;
+            }
         }
-    } catch (err) {
-        console.error("خطأ في الاتصال:", err);
-        alert("حدث خطأ أثناء التحقق، حاول مرة أخرى.");
-    }
-}
 
-        // --- منطق الموظف ---
+        function closePasscodeModal() {
+            document.getElementById('passcode-modal').classList.add('hidden');
+            document.getElementById('staff-input-pass').value = '';
+        }
+
+        async function verifyStaffPasscode() {
+            const enteredPass = document.getElementById('staff-input-pass').value;
+            const { data, error } = await supabaseClient.from('system_settings').select('value').eq('key', 'staff_passcode').single();
+
+            if (data && data.value === enteredPass) {
+                closePasscodeModal();
+                showSection('staff-section');
+            } else {
+                alert("الرمز غير صحيح");
+            }
+        }
+
         async function registerDriverByStaff() {
-            const name = document.getElementById('st-name').value;
-            const phone = document.getElementById('st-phone').value;
             const { error } = await supabaseClient.from('drivers').insert([{
-                full_name: name, whatsapp_number: phone, balance: 15000, status: 'ONLINE'
+                full_name: document.getElementById('st-name').value,
+                whatsapp_number: document.getElementById('st-phone').value,
+                balance: 15000,
+                status: 'OFFLINE'
             }]);
-            if (!error) alert("تم منح السائق رصيد 15,000 بنجاح!");
+            if (!error) alert("تم تسجيل السائق بنجاح!");
         }
 
-        // --- منطق الزبون والـ 20 كم ---
+        // --- منطق السائق (الموقع والبث) ---
+        function toggleDriverOnline() {
+            isOnline = !isOnline;
+            const btn = document.getElementById('toggle-online-btn');
+            const statusText = document.getElementById('driver-status-text');
+
+            if (isOnline) {
+                btn.innerText = "إيقاف وضع العمل (Offline)";
+                btn.style.background = "#ef4444";
+                statusText.innerHTML = 'حالتك الآن: <span style="color:green">متصل وجاهز</span>';
+                startTracking();
+                subscribeToRequests();
+            } else {
+                btn.innerText = "تفعيل وضع العمل (Online)";
+                btn.style.background = "var(--driver-bg)";
+                statusText.innerHTML = 'حالتك الآن: <span style="color:red">خارج التغطية</span>';
+                stopTracking();
+            }
+        }
+
+        function startTracking() {
+            watchId = navigator.geolocation.watchPosition(async (pos) => {
+                await supabaseClient.from('driver_locations').upsert({
+                    driver_id: currentDriverId,
+                    lat: pos.coords.latitude,
+                    lng: pos.coords.longitude,
+                    last_seen: new Date()
+                });
+            }, null, { enableHighAccuracy: true });
+        }
+
+        function stopTracking() {
+            if(watchId) navigator.geolocation.clearWatch(watchId);
+        }
+
+        function subscribeToRequests() {
+            const channel = supabaseClient.channel('ride-requests')
+            .on('broadcast', { event: 'new-ride' }, (payload) => {
+                document.getElementById('incoming-ride').classList.remove('hidden');
+                // تشغيل صوت تنبيه هنا إذا أردت
+            }).subscribe();
+        }
+
+        function acceptRide() {
+            document.getElementById('incoming-ride').classList.add('hidden');
+            document.getElementById('active-trip-overlay').classList.remove('hidden');
+        }
+
+        // --- منطق الزبون ---
         async function requestRide() {
             navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { latitude, longitude } = pos.coords;
-                // استدعاء دالة البحث الجغرافي (RPC) في Supabase
                 const { data: drivers } = await supabaseClient.rpc('search_nearby_drivers', {
-                    user_lat: latitude, user_lng: longitude, radius_meters: 20000
+                    user_lat: pos.coords.latitude, user_lng: pos.coords.longitude, radius_meters: 20000
                 });
 
                 if (drivers && drivers.length > 0) {
-                    alert(`تم العثور على ${drivers.length} سائق. جاري البث...`);
-                    document.getElementById('active-trip-overlay').classList.remove('hidden');
+                    // بث الطلب للسائقين
+                    supabaseClient.channel('ride-requests').send({
+                        type: 'broadcast', event: 'new-ride', payload: { lat: pos.coords.latitude, lng: pos.coords.longitude }
+                    });
+                    alert("جاري البحث عن أقرب سائق...");
                 } else {
-                    alert("لا يوجد سائق متاح حالياً في نطاق 20 كم.");
+                    alert("لا يوجد سائق متاح حالياً");
                 }
             });
         }
 
-        // --- منطق إنهاء الرحلة والخصم ---
         async function handleEndTrip() {
-            if(confirm("هل وصلت؟ سيتم خصم 3000 من رصيد السائق.")) {
-                // الكود البرمجي لخصم الرصيد وتحديث الحالة
+            if(confirm("تأكيد الوصول وخصم 3000؟")) {
+                // الكود هنا يحدث رصيد السائق في Supabase
                 document.getElementById('active-trip-overlay').classList.add('hidden');
-                alert("تم إنهاء الرحلة بنجاح.");
                 location.reload();
             }
         }
 
         function initMap() {
-            const map = new maplibregl.Map({
+            new maplibregl.Map({
                 container: 'map',
                 style: 'https://demotiles.maplibre.org/style.json',
-                center: [userLocation.lng, userLocation.lat],
+                center: [32.5599, 15.5007],
                 zoom: 12
             });
         }
     </script>
-<div id="passcode-modal" class="overlay hidden">
-    <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 80%;">
-        <h3>تحقق من الهوية</h3>
-        <p>الرجاء إدخال رمز الوصول للموظفين:</p>
-        <input type="password" id="staff-input-pass" placeholder="****" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
-        <button onclick="verifyStaffPasscode()" style="background: var(--staff-bg); width: 100%; margin-top: 15px;">دخول</button>
-        <button onclick="closePasscodeModal()" style="background: none; color: #666; width: 100%; margin-top: 10px;">إلغاء</button>
-    </div>
-</div>
 </body>
 </html>
