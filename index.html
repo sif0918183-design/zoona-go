@@ -7,24 +7,25 @@
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <link rel="icon" href="data:,"> <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link rel="icon" href="data:,">
+
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
         :root { --primary: #4f46e5; --driver-bg: #16a34a; --staff-bg: #7c3aed; }
         body { font-family: sans-serif; margin: 0; background: #f9fafb; transition: 0.3s; overflow-x: hidden; }
-        .header { background: var(--primary); color: white; padding: 20px; text-align: center; font-size: 22px; cursor: pointer; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; font-size: 22px; cursor: pointer; font-weight: bold; }
         .container { padding: 20px; display: flex; flex-direction: column; gap: 15px; max-width: 500px; margin: auto; }
         .hidden { display: none !important; }
         button { padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s; font-size: 16px; }
         button:active { transform: scale(0.95); }
         input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; font-size: 16px; }
-        
         .btn-cust { background: #2563eb; }
         .btn-drive { background: var(--driver-bg); }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; text-align: center; }
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); border: 1px solid #eee; text-align: center; width: 100%; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -38,64 +39,55 @@
 
     <div id="staff-section" class="container hidden">
         <div class="card">
-            <h3 style="color: var(--staff-bg)">تسجيل سائق جديد</h3>
-            <div style="display:flex; flex-direction:column; gap:10px;">
-                <input type="text" id="st-name" placeholder="الاسم رباعي">
-                <input type="tel" id="st-phone" placeholder="رقم واتساب السائق">
-                <input type="text" id="st-car" placeholder="موديل السيارة">
-                <button onclick="registerDriverByStaff()" style="background: var(--staff-bg)">حفظ ومنح رصيد 15,000</button>
-                <button onclick="showSection('home-screen')" style="color: #666; background: none;">إلغاء</button>
-            </div>
+            <h3 style="color: var(--staff-bg)">لوحة الموظف: تسجيل سائق</h3>
+            <input type="text" id="st-name" placeholder="الاسم رباعي">
+            <input type="tel" id="st-phone" placeholder="رقم واتساب السائق">
+            <input type="text" id="st-car" placeholder="موديل السيارة">
+            <button onclick="registerDriverByStaff()" style="background: var(--staff-bg); width: 100%; margin-top: 10px;">تسجيل ومنح رصيد 15,000</button>
+            <button onclick="showSection('home-screen')" style="color: #666; background: none; margin-top: 10px;">إلغاء</button>
         </div>
     </div>
 
     <div id="driver-dashboard" class="container hidden">
         <div class="card">
-            <h3>مرحباً أيها السائق</h3>
-            <p id="driver-status-text">حالتك الآن: <span style="color:red">خارج التغطية</span></p>
+            <h3>لوحة السائق</h3>
+            <p id="driver-status-text">الحالة: <span style="color:red">أوفلاين</span></p>
             <button id="toggle-online-btn" class="btn-drive" style="width:100%" onclick="toggleDriverOnline()">تفعيل وضع العمل (Online)</button>
         </div>
-        
         <div id="incoming-ride" class="card hidden" style="border: 3px solid #fbbf24; margin-top: 20px; background: #fffbeb;">
-            <h4>🔔 طلب رحلة جديد قريب منك!</h4>
-            <p>المسافة ضمن نطاق 20 كم</p>
-            <button class="btn-drive" style="width: 100%;" onclick="acceptRide()">قبول الرحلة فوراً</button>
+            <h4>🔔 طلب رحلة جديد!</h4>
+            <button class="btn-drive" style="width: 100%;" onclick="acceptRide()">قبول الآن</button>
         </div>
-        <button onclick="showSection('home-screen')" style="color: #666; background: none; margin-top: 20px;">العودة للرئيسية</button>
+        <button onclick="showSection('home-screen')" style="color: #666; background: none; margin-top: 20px;">خروج</button>
     </div>
 
     <div id="cust-form" class="container hidden">
         <div class="card">
-            <h3>موقعك الحالي</h3>
+            <h3>تحديد الموقع</h3>
             <div id="map" style="width:100%; height:300px; border-radius:15px; background:#eee; margin-bottom: 15px;"></div>
-            <button class="btn-cust" style="width:100%" onclick="requestRide()">بحث عن سائق (20 كم)</button>
+            <button class="btn-cust" style="width:100%" onclick="requestRide()">ابحث عن سائق (20 كم)</button>
             <button onclick="showSection('home-screen')" style="color: #666; background: none; margin-top: 10px;">رجوع</button>
         </div>
     </div>
 
     <div id="active-trip-overlay" class="overlay hidden">
-        <div class="card" style="width: 100%;">
-            <h2 style="color: var(--primary)">الرحلة سارية الآن... 🚗</h2>
-            <div style="background: #fef2f2; padding: 20px; border-radius: 15px; margin: 20px 0;">
-                <p style="font-size: 18px;">سيتم خصم <b>3,000 SDG</b> رسوم خدمة</p>
-                <p><small>الرجاء البقاء في هذه الشاشة حتى الوصول</small></p>
-            </div>
-            <button onclick="handleEndTrip()" style="background: #ef4444; width: 100%; padding: 20px; font-size: 18px;">إنهاء الرحلة وتحصيل الرسوم</button>
+        <div class="card">
+            <h2 style="color: var(--primary)">الرحلة سارية... 🚗</h2>
+            <p>سيتم خصم <b>3,000 SDG</b> عند الوصول</p>
+            <button onclick="handleEndTrip()" style="background: #ef4444; width: 100%; padding: 20px;">إنهاء الرحلة</button>
         </div>
     </div>
 
-    <div id="passcode-modal" class="overlay hidden" style="background: rgba(0,0,0,0.7)">
+    <div id="passcode-modal" class="overlay hidden">
         <div class="card" style="width: 85%;">
-            <h3>تحقق من الهوية</h3>
-            <p>أدخل رمز الوصول السري:</p>
-            <input type="password" id="staff-input-pass" placeholder="****" style="text-align: center; font-size: 28px; letter-spacing: 8px;">
-            <button onclick="verifyStaffPasscode()" style="background: var(--staff-bg); width: 100%; margin-top: 15px;">تأكيد الدخول</button>
+            <h3>رمز الموظفين</h3>
+            <input type="password" id="staff-input-pass" placeholder="****" style="text-align: center; font-size: 28px;">
+            <button onclick="verifyStaffPasscode()" style="background: var(--staff-bg); width: 100%; margin-top: 15px;">دخول</button>
             <button onclick="closePasscodeModal()" style="background: none; color: #666; width: 100%; margin-top: 10px;">إلغاء</button>
         </div>
     </div>
 
     <script>
-        // --- الإعدادات والربط ---
         const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
         const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
@@ -103,49 +95,27 @@
         let clickCount = 0;
         let isOnline = false;
         let watchId = null;
-        let currentDriverId = "DRIVER_ID_TEMP"; // في النسخة النهائية يتم جلبه بعد تسجيل الدخول
+        let currentDriverId = null; 
 
-        // تسجيل Service Worker
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('service-worker.js');
-        }
+        if ('serviceWorker' in navigator) { navigator.serviceWorker.register('service-worker.js'); }
 
-        // صوت التنبيه للسائق
         function playNotificationSound() {
-            const audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-            audio.play().catch(e => console.log("الصوت يتطلب تفاعل المستخدم أولاً"));
+            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(() => {});
         }
 
         function showSection(id) {
             document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
             document.getElementById(id).classList.remove('hidden');
-            if(id === 'cust-form') setTimeout(initMap, 100);
+            if(id === 'cust-form') setTimeout(initMap, 200);
         }
 
-        // --- نظام الموظفين ---
-        function checkStaffAccess() {
-            clickCount++;
-            if (clickCount === 5) {
-                document.getElementById('passcode-modal').classList.remove('hidden');
-                clickCount = 0;
-            }
-        }
-
-        function closePasscodeModal() {
-            document.getElementById('passcode-modal').classList.add('hidden');
-            document.getElementById('staff-input-pass').value = '';
-        }
+        function checkStaffAccess() { clickCount++; if (clickCount === 5) { document.getElementById('passcode-modal').classList.remove('hidden'); clickCount = 0; } }
+        function closePasscodeModal() { document.getElementById('passcode-modal').classList.add('hidden'); }
 
         async function verifyStaffPasscode() {
             const enteredPass = document.getElementById('staff-input-pass').value;
-            const { data, error } = await supabaseClient.from('system_settings').select('value').eq('key', 'staff_passcode').single();
-
-            if (data && data.value === enteredPass) {
-                closePasscodeModal();
-                showSection('staff-section');
-            } else {
-                alert("الرمز غير صحيح!");
-            }
+            const { data } = await supabaseClient.from('system_settings').select('value').eq('key', 'staff_passcode').single();
+            if (data && data.value === enteredPass) { closePasscodeModal(); showSection('staff-section'); } else { alert("خطأ!"); }
         }
 
         async function registerDriverByStaff() {
@@ -154,93 +124,64 @@
                 whatsapp_number: document.getElementById('st-phone').value,
                 balance: 15000,
                 status: 'OFFLINE'
-            }]).select();
-            if (!error) {
-                alert("تم تسجيل السائق بنجاح ومنحه رصيد 15,000 ج.س");
+            }]).select(); // ضروري لجلب الـ ID الجديد
+
+            if (!error && data.length > 0) {
+                currentDriverId = data[0].id; // حفظ الـ ID الحقيقي
+                alert("تم التسجيل! معرف السائق: " + currentDriverId);
                 showSection('home-screen');
-            } else {
-                alert("خطأ: " + error.message);
-            }
+            } else { alert("فشل: " + error.message); }
         }
 
-        // --- منطق السائق ---
         function toggleDriverOnline() {
+            if (!currentDriverId) return alert("الرجاء تسجيل السائق أولاً");
             isOnline = !isOnline;
             const btn = document.getElementById('toggle-online-btn');
-            const statusText = document.getElementById('driver-status-text');
-
             if (isOnline) {
-                btn.innerText = "إيقاف وضع العمل (Offline)";
-                btn.style.background = "#ef4444";
-                statusText.innerHTML = 'حالتك الآن: <span style="color:green">متصل وجاهز للاستقبال</span>';
-                startTracking();
-                subscribeToRequests();
+                btn.innerText = "إيقاف (Offline)"; btn.style.background = "#ef4444";
+                document.getElementById('driver-status-text').innerHTML = 'الحالة: <span style="color:green">أونلاين</span>';
+                startTracking(); subscribeToRequests();
             } else {
-                btn.innerText = "تفعيل وضع العمل (Online)";
-                btn.style.background = "var(--driver-bg)";
-                statusText.innerHTML = 'حالتك الآن: <span style="color:red">خارج التغطية</span>';
+                btn.innerText = "تفعيل (Online)"; btn.style.background = "var(--driver-bg)";
+                document.getElementById('driver-status-text').innerHTML = 'الحالة: <span style="color:red">أوفلاين</span>';
                 stopTracking();
             }
         }
 
         function startTracking() {
             watchId = navigator.geolocation.watchPosition(async (pos) => {
-                const { error } = await supabaseClient.from('driver_locations').upsert({
+                await supabaseClient.from('driver_locations').upsert({
                     driver_id: currentDriverId,
                     lat: parseFloat(pos.coords.latitude),
                     lng: parseFloat(pos.coords.longitude),
                     last_seen: new Date()
                 }, { onConflict: 'driver_id' });
-                if(error) console.error("Update Location Error:", error.message);
             }, null, { enableHighAccuracy: true });
         }
 
-        function stopTracking() {
-            if(watchId) navigator.geolocation.clearWatch(watchId);
-        }
+        function stopTracking() { if(watchId) navigator.geolocation.clearWatch(watchId); }
 
         function subscribeToRequests() {
-            const channel = supabaseClient.channel('ride-requests')
-            .on('broadcast', { event: 'new-ride' }, (payload) => {
-                playNotificationSound();
-                document.getElementById('incoming-ride').classList.remove('hidden');
+            supabaseClient.channel('ride-requests').on('broadcast', { event: 'new-ride' }, () => {
+                playNotificationSound(); document.getElementById('incoming-ride').classList.remove('hidden');
             }).subscribe();
         }
 
-        function acceptRide() {
-            document.getElementById('incoming-ride').classList.add('hidden');
-            document.getElementById('active-trip-overlay').classList.remove('hidden');
-        }
+        function acceptRide() { document.getElementById('incoming-ride').classList.add('hidden'); document.getElementById('active-trip-overlay').classList.remove('hidden'); }
 
-        // --- منطق الزبون ---
         async function requestRide() {
             navigator.geolocation.getCurrentPosition(async (pos) => {
-                const { data: drivers, error } = await supabaseClient.rpc('search_nearby_drivers', {
-                    user_lat: pos.coords.latitude, 
-                    user_lng: pos.coords.longitude, 
-                    radius_meters: 20000 
+                const { data: drivers } = await supabaseClient.rpc('search_nearby_drivers', {
+                    user_lat: pos.coords.latitude, user_lng: pos.coords.longitude, radius_meters: 20000
                 });
-
                 if (drivers && drivers.length > 0) {
-                    supabaseClient.channel('ride-requests').send({
-                        type: 'broadcast', 
-                        event: 'new-ride', 
-                        payload: { lat: pos.coords.latitude, lng: pos.coords.longitude }
-                    });
-                    alert("جاري إرسال طلبك لـ " + drivers.length + " سائق متصل...");
-                } else {
-                    alert("عذراً، لا يوجد سائق متاح حالياً في نطاق 20 كم.");
-                }
+                    supabaseClient.channel('ride-requests').send({ type: 'broadcast', event: 'new-ride' });
+                    alert("جاري البحث...");
+                } else { alert("لا يوجد سائق متاح"); }
             });
         }
 
-        async function handleEndTrip() {
-            if(confirm("تأكيد الوصول للوجهة؟ سيتم خصم 3000 ج.س من رصيد السائق.")) {
-                document.getElementById('active-trip-overlay').classList.add('hidden');
-                alert("تم إنهاء الرحلة بنجاح. شكراً لاستخدامكم ترحال السودان.");
-                location.reload();
-            }
-        }
+        function handleEndTrip() { if(confirm("تأكيد؟")) { location.reload(); } }
 
         function initMap() {
             const map = new maplibregl.Map({
@@ -248,13 +189,6 @@
                 style: 'https://demotiles.maplibre.org/style.json',
                 center: [32.5599, 15.5007],
                 zoom: 12
-            });
-            
-            navigator.geolocation.getCurrentPosition(pos => {
-                map.setCenter([pos.coords.longitude, pos.coords.latitude]);
-                new maplibregl.Marker({color: "#2563eb"})
-                    .setLngLat([pos.coords.longitude, pos.coords.latitude])
-                    .addTo(map);
             });
         }
     </script>
