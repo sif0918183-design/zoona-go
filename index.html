@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ترحال السودان</title>
+    <title>ترحال السودان - Tarhal</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
@@ -13,92 +13,124 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
-        body { font-family: sans-serif; margin: 0; background: #f4f4f9; text-align: center; }
-        .header { background: #4f46e5; color: white; padding: 20px; font-size: 22px; }
-        .main-container { padding: 20px; display: flex; flex-direction: column; gap: 15px; margin-top: 30px; }
-        button { padding: 15px; border-radius: 10px; border: none; font-weight: bold; font-size: 16px; cursor: pointer; }
-        .btn-cust { background: #2563eb; color: white; }
-        .btn-drive { background: #16a34a; color: white; }
-        #map { width: 100%; height: 300px; display: none; margin-top: 20px; border-radius: 10px; }
-        .hidden { display: none; }
+        :root { --primary: #4f46e5; --driver-bg: #16a34a; --staff-bg: #7c3aed; }
+        body { font-family: sans-serif; margin: 0; background: #f9fafb; transition: 0.3s; }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; font-size: 22px; cursor: pointer; }
+        .container { padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .hidden { display: none !important; }
+        button { padding: 15px; border-radius: 12px; border: none; font-weight: bold; cursor: pointer; color: white; }
+        input { padding: 12px; border-radius: 8px; border: 1px solid #ddd; width: 100%; box-sizing: border-box; }
+        
+        .btn-cust { background: #2563eb; }
+        .btn-drive { background: var(--driver-bg); }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; box-sizing: border-box; }
     </style>
 </head>
 <body>
 
-    <div class="header">ترحال السودان 🇸🇩</div>
+    <div class="header" onclick="checkStaffAccess()">ترحال السودان 🇸🇩</div>
 
-    <div id="welcome-screen" class="main-container">
-        <h2>مرحباً بك</h2>
-        <button class="btn-cust" onclick="showForm('customer')">تسجيل كزبون</button>
-        <button class="btn-drive" onclick="showForm('driver')">تسجيل كسائق</button>
+    <div id="home-screen" class="container">
+        <button class="btn-cust" onclick="showSection('cust-form')">طلب رحلة (زبون)</button>
+        <button class="btn-drive" onclick="showSection('driver-login')">دخول السائقين</button>
     </div>
 
-    <div id="reg-form" class="main-container hidden">
-        <h3 id="form-title">بيانات التسجيل</h3>
-        <input type="text" id="name" placeholder="الاسم رباعي" style="padding:12px; border-radius:8px; border:1px solid #ccc;">
-        <input type="tel" id="phone" placeholder="رقم الموبايل" style="padding:12px; border-radius:8px; border:1px solid #ccc;">
-        <button id="action-btn" class="btn-cust">متابعة</button>
-        <button onclick="location.reload()" style="background:none; color:blue;">رجوع</button>
+    <div id="staff-section" class="container hidden">
+        <h3 style="color: var(--staff-bg)">لوحة الموظف: تسجيل سائق جديد</h3>
+        <input type="text" id="st-name" placeholder="الاسم رباعي">
+        <input type="tel" id="st-phone" placeholder="رقم واتساب السائق">
+        <input type="text" id="st-car" placeholder="موديل السيارة">
+        <button onclick="registerDriverByStaff()" style="background: var(--staff-bg)">تسجيل ومنح رصيد 15,000</button>
+        <button onclick="showSection('home-screen')" style="color: #666; background: none;">إلغاء</button>
     </div>
 
-    <div id="map"></div>
+    <div id="cust-form" class="container hidden">
+        <h3>تحديد موقع الرحلة</h3>
+        <div id="map" style="width:100%; height:300px; border-radius:15px; background:#eee;"></div>
+        <button class="btn-cust" onclick="requestRide()">ابحث عن أقرب سائق (20 كم)</button>
+        <button onclick="showSection('home-screen')" style="color: #666; background: none;">رجوع</button>
+    </div>
+
+    <div id="active-trip-overlay" class="overlay hidden">
+        <h2 style="color: var(--primary)">الرحلة سارية الآن... 🚗</h2>
+        <div style="background: #fef2f2; padding: 15px; border-radius: 10px; margin: 20px 0;">
+            <p>سيتم خصم <b>3,000 SDG</b> عند الوصول</p>
+        </div>
+        <button onclick="handleEndTrip()" style="background: #ef4444; width: 100%;">إنهاء الرحلة وخصم الرسوم</button>
+    </div>
 
     <script>
+        // إعدادات Supabase
+        const SB_URL = 'YOUR_SUPABASE_URL';
+        const SB_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
+
+        let clickCount = 0;
+        let userLocation = { lat: 15.5007, lng: 32.5599 };
+
         // تسجيل الـ Service Worker
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('service-worker.js');
         }
 
-        // إعداد Supabase (استبدل القيم ببيانات مشروعك)
-        const SB_URL = 'YOUR_SUPABASE_URL';
-        const SB_KEY = 'YOUR_SUPABASE_ANON_KEY';
-        const supabase = supabase.createClient(SB_URL, SB_KEY);
+        function showSection(id) {
+            document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            if(id === 'cust-form') initMap();
+        }
 
-        function showForm(type) {
-            document.getElementById('welcome-screen').classList.add('hidden');
-            document.getElementById('reg-form').classList.remove('hidden');
-            const btn = document.getElementById('action-btn');
-            
-            if(type === 'driver') {
-                document.getElementById('form-title').innerText = 'تسجيل السائقين';
-                btn.innerText = 'تواصل عبر واتساب';
-                btn.className = 'btn-drive';
-                btn.onclick = () => window.open('https://wa.me/249XXXXXXXXX', '_blank');
-            } else {
-                btn.onclick = () => alert('جاري التحقق من الرقم...');
+        // ميزة سرية للموظفين: 5 ضغطات على الهيدر تفتح التسجيل
+        function checkStaffAccess() {
+            clickCount++;
+            if (clickCount === 5) { showSection('staff-section'); clickCount = 0; }
+        }
+
+        // --- منطق الموظف ---
+        async function registerDriverByStaff() {
+            const name = document.getElementById('st-name').value;
+            const phone = document.getElementById('st-phone').value;
+            const { error } = await supabaseClient.from('drivers').insert([{
+                full_name: name, whatsapp_number: phone, balance: 15000, status: 'ONLINE'
+            }]);
+            if (!error) alert("تم منح السائق رصيد 15,000 بنجاح!");
+        }
+
+        // --- منطق الزبون والـ 20 كم ---
+        async function requestRide() {
+            navigator.geolocation.getCurrentPosition(async (pos) => {
+                const { latitude, longitude } = pos.coords;
+                // استدعاء دالة البحث الجغرافي (RPC) في Supabase
+                const { data: drivers } = await supabaseClient.rpc('search_nearby_drivers', {
+                    user_lat: latitude, user_lng: longitude, radius_meters: 20000
+                });
+
+                if (drivers && drivers.length > 0) {
+                    alert(`تم العثور على ${drivers.length} سائق. جاري البث...`);
+                    document.getElementById('active-trip-overlay').classList.remove('hidden');
+                } else {
+                    alert("لا يوجد سائق متاح حالياً في نطاق 20 كم.");
+                }
+            });
+        }
+
+        // --- منطق إنهاء الرحلة والخصم ---
+        async function handleEndTrip() {
+            if(confirm("هل وصلت؟ سيتم خصم 3000 من رصيد السائق.")) {
+                // الكود البرمجي لخصم الرصيد وتحديث الحالة
+                document.getElementById('active-trip-overlay').classList.add('hidden');
+                alert("تم إنهاء الرحلة بنجاح.");
+                location.reload();
             }
         }
-    </script>
-<div id="active-trip-overlay" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 9999; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-    <h2 style="color: #4f46e5;">الرحلة سارية الآن... 🚗</h2>
-    <div id="trip-map-mini" style="width: 100%; height: 300px; border-radius: 15px; margin: 20px 0;"></div>
-    <div style="background: #f3f4f6; padding: 15px; border-radius: 10px; width: 100%; text-align: center; margin-bottom: 20px;">
-        <p><strong>حالة الرصيد:</strong> سيتم خصم 3,000 SDG عند الانتهاء</p>
-    </div>
-    <button onclick="confirmEndTrip()" style="background: #ef4444; color: white; padding: 15px 40px; border-radius: 10px; font-weight: bold; width: 100%;">إنهاء الرحلة</button>
-</div>
 
-<script>
-    // دالة لتفعيل قفل الشاشة عند بدء الرحلة
-    function startActiveTripUI() {
-        document.getElementById('active-trip-overlay').classList.remove('hidden');
-        // منع المستخدم من التراجع (Back Button) في المتصفح
-        window.history.pushState(null, null, window.location.href);
-        window.onpopstate = function() {
-            window.history.go(1);
-        };
-    }
-
-    async function confirmEndTrip() {
-        if (confirm("هل وصلت إلى الوجهة؟ سيتم إنهاء الرحلة وخصم الرسوم.")) {
-            // تنفيذ كود الخصم في Supabase الذي كتبناه سابقاً
-            await completeTrip(currentTripId, currentDriverId);
-            
-            // إخفاء القفل وإعادة السماح بالتنقل
-            document.getElementById('active-trip-overlay').classList.add('hidden');
-            window.onpopstate = null; 
+        function initMap() {
+            const map = new maplibregl.Map({
+                container: 'map',
+                style: 'https://demotiles.maplibre.org/style.json',
+                center: [userLocation.lng, userLocation.lat],
+                zoom: 12
+            });
         }
-    }
-</script>
+    </script>
 </body>
 </html>
