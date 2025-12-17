@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ترحال السودان - Tarhal Sudan</title>
+    
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#4f46e5">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192">
+
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f3f4f6;
+            text-align: center;
+        }
+        header {
+            background-color: #4f46e5;
+            color: white;
+            padding: 20px;
+            font-size: 24px;
+            font-bold: true;
+        }
+        .container {
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            margin-top: 50px;
+        }
+        button {
+            width: 80%;
+            max-width: 300px;
+            padding: 15px;
+            font-size: 18px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+        .btn-customer { background-color: #2563eb; color: white; }
+        .btn-driver { background-color: #16a34a; color: white; }
+        
+        #map {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+            display: none; /* يظهر عند بدء الرحلة */
+            border-radius: 15px;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <header>ترحال السودان 🇸🇩</header>
+
+    <div id="main-menu" class="container">
+        <h2>مرحباً بك في ترحال</h2>
+        <p>اختر نوع الحساب للمتابعة</p>
+        
+        <button class="btn-customer" onclick="showRegistration('customer')">تسجيل كزبون</button>
+        <button class="btn-driver" onclick="showRegistration('driver')">تسجيل كسائق</button>
+    </div>
+
+    <div id="registration-form" class="container hidden">
+        <h3 id="form-title">بيانات التسجيل</h3>
+        <input type="text" id="full-name" placeholder="الاسم رباعي" style="width: 80%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+        <input type="tel" id="phone" placeholder="رقم الموبايل" style="width: 80%; padding: 10px; border-radius: 5px; border: 1px solid #ccc; margin-top: 10px;">
+        <button id="submit-btn" class="btn-customer" style="margin-top: 15px;">إرسال</button>
+        <button onclick="goBack()" style="background: none; color: #666; font-size: 14px;">رجوع</button>
+    </div>
+
+    <div id="map"></div>
+
+    <script>
+        // 1. تسجيل الـ Service Worker ليعمل التطبيق Offline
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('Service Worker تم تسجيله بنجاح'))
+                    .catch(err => console.log('فشل تسجيل Service Worker', err));
+            });
+        }
+
+        // 2. إعدادات Supabase (ضع مفاتيحك هنا)
+        const supabaseUrl = 'YOUR_SUPABASE_URL';
+        const supabaseKey = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // 3. وظائف التنقل البسيطة
+        function showRegistration(type) {
+            document.getElementById('main-menu').classList.add('hidden');
+            document.getElementById('registration-form').classList.remove('hidden');
+            
+            if (type === 'driver') {
+                document.getElementById('form-title').innerText = 'تسجيل سائق';
+                document.getElementById('submit-btn').innerText = 'تواصل عبر واتساب';
+                document.getElementById('submit-btn').onclick = () => {
+                    window.open('https://wa.me/2499XXXXXXXX', '_blank'); // رقم فريق التسجيل
+                };
+            } else {
+                document.getElementById('form-title').innerText = 'تسجيل زبون';
+                document.getElementById('submit-btn').innerText = 'تحقق من الرقم';
+                document.getElementById('submit-btn').onclick = handleCustomerSignup;
+            }
+        }
+
+        function goBack() {
+            document.getElementById('main-menu').classList.remove('hidden');
+            document.getElementById('registration-form').classList.add('hidden');
+        }
+
+        async function handleCustomerSignup() {
+            const name = document.getElementById('full-name').value;
+            const phone = document.getElementById('phone').value;
+            
+            if(!name || !phone) {
+                alert("الرجاء ملء البيانات");
+                return;
+            }
+
+            // هنا تضع منطق Supabase Auth للموبايل
+            alert("تم إرسال رمز التحقق إلى " + phone);
+        }
+
+        // 4. تهيئة الخريطة (MapLibre)
+        function initMap(lat, lng) {
+            document.getElementById('map').style.display = 'block';
+            const map = new maplibregl.Map({
+                container: 'map',
+                style: 'https://demotiles.maplibre.org/style.json', // نمط الخريطة
+                center: [lng, lat],
+                zoom: 14
+            });
+
+            new maplibregl.Marker().setLngLat([lng, lat]).addTo(map);
+        }
+    </script>
+</body>
+</html>
