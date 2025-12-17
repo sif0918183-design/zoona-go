@@ -132,5 +132,14 @@
             });
         }
     </script>
+<div id="passcode-modal" class="overlay hidden">
+    <div style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); width: 80%;">
+        <h3>تحقق من الهوية</h3>
+        <p>الرجاء إدخال رمز الوصول للموظفين:</p>
+        <input type="password" id="staff-input-pass" placeholder="****" style="text-align: center; font-size: 24px; letter-spacing: 5px;">
+        <button onclick="verifyStaffPasscode()" style="background: var(--staff-bg); width: 100%; margin-top: 15px;">دخول</button>
+        <button onclick="closePasscodeModal()" style="background: none; color: #666; width: 100%; margin-top: 10px;">إلغاء</button>
+    </div>
+</div>
 </body>
 </html>
