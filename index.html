@@ -2,26 +2,492 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ترحال السودان - Tarhal</title>
     
     <!-- إعدادات PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <link rel="icon" href="data:,"> 
-
-    <!-- مكتبات خارجية -->
-    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
-    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- خط Tajawal -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <!-- ملفات التطبيق -->
-    <link rel="stylesheet" href="css/main.css">
+    <!-- مكتبات خارجية -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        /* أنماط CSS الأساسية */
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --primary-light: #818cf8;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --driver: #16a34a;
+            --dark: #1f2937;
+            --light: #f9fafb;
+            --gray: #6b7280;
+            --gray-light: #e5e7eb;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            direction: rtl;
+        }
+        
+        /* حاوية عامة */
+        .container {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* بطاقة الترحيب */
+        .welcome-card {
+            background: white;
+            border-radius: 24px;
+            padding: 40px 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            text-align: center;
+            animation: fadeInUp 0.6s ease;
+        }
+        
+        .logo-container {
+            margin-bottom: 40px;
+        }
+        
+        .logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 48px;
+            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
+        }
+        
+        h1 {
+            color: var(--primary);
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 10px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .tagline {
+            color: var(--gray);
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        /* الأزرار */
+        .welcome-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .btn {
+            padding: 16px 24px;
+            border-radius: 12px;
+            border: none;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            color: white;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .btn-large {
+            padding: 18px 28px;
+            font-size: 18px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-driver {
+            background: var(--driver);
+        }
+        
+        .btn-driver:hover {
+            background: #15803d;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+        }
+        
+        .btn-secondary:hover {
+            background: #6d28d9;
+        }
+        
+        .btn-whatsapp {
+            background: #25D366;
+        }
+        
+        .btn-whatsapp:hover {
+            background: #128C7E;
+        }
+        
+        .btn-back {
+            background: var(--gray-light);
+            color: var(--gray);
+        }
+        
+        .btn-back:hover {
+            background: #d1d5db;
+        }
+        
+        /* البطاقات */
+        .card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            animation: slideUp 0.4s ease;
+        }
+        
+        .card-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .card-header h2 {
+            color: var(--primary);
+            font-size: 24px;
+            margin-bottom: 10px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .card-header p {
+            color: var(--gray);
+            font-size: 14px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        /* حقول الإدخال */
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--gray-light);
+            border-radius: 12px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            background: var(--light);
+            transition: all 0.3s;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        /* المحددات */
+        .divider {
+            display: flex;
+            align-items: center;
+            margin: 20px 0;
+            color: var(--gray);
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--gray-light);
+        }
+        
+        .divider span {
+            padding: 0 15px;
+            font-size: 14px;
+        }
+        
+        /* رسائل النجاح */
+        .success-message {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .success-message p {
+            color: var(--success);
+            margin-bottom: 5px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .small {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .note {
+            margin-top: 15px;
+            color: var(--gray);
+            font-size: 12px;
+            text-align: center;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        /* الواجهات العائمة */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9999;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            width: 100%;
+            max-width: 400px;
+            animation: slideUp 0.4s ease;
+        }
+        
+        .modal-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .modal-header h3 {
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .modal-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .staff-access {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-light);
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        .staff-access small {
+            color: var(--gray);
+        }
+        
+        .staff-access a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .staff-access a:hover {
+            text-decoration: underline;
+        }
+        
+        /* الرسوم المتحركة */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        /* إشعارات */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            z-index: 99999;
+            animation: slideInRight 0.5s ease;
+            border-right: 5px solid var(--primary);
+            max-width: 300px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* التجاوبية */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .welcome-card {
+                padding: 30px 20px;
+            }
+            
+            .logo {
+                width: 80px;
+                height: 80px;
+                font-size: 40px;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .btn {
+                padding: 14px 20px;
+                font-size: 15px;
+            }
+            
+            .btn-large {
+                padding: 16px 24px;
+                font-size: 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .card {
+                padding: 20px 15px;
+            }
+            
+            input {
+                padding: 14px 16px;
+                font-size: 15px;
+            }
+            
+            .notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+        }
+        
+        @media (max-width: 320px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .welcome-card {
+                padding: 20px 15px;
+            }
+            
+            .logo {
+                width: 70px;
+                height: 70px;
+                font-size: 35px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+        }
+        
+        /* إصلاح مشكلة اختفاء النصوص */
+        span, button span, .btn span {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Tajawal', sans-serif;
+        }
+        
+        /* تحسين العرض على الهواتف الصغيرة */
+        html, body {
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+        
+        /* تحسين أداء اللمس على الهواتف */
+        button, input, .btn {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+    </style>
 </head>
 <body>
 
@@ -168,14 +634,6 @@
         </div>
     </div>
 
-    <!-- باقي الأقسام كما هي في الكود الأصلي (Home Screen, Ride Request, Driver Dashboard, etc.) -->
-    <!-- سيتم نقلها إلى ملفات منفصلة -->
-    <div id="home-screen" class="container hidden"></div>
-    <div id="ride-request" class="container hidden"></div>
-    <div id="driver-dashboard" class="container hidden"></div>
-    <div id="active-trip-overlay" class="overlay hidden"></div>
-    <div id="incoming-ride-overlay" class="overlay hidden"></div>
-
     <!-- نافذة رمز التحقق للموظفين -->
     <div id="staff-passcode-modal" class="overlay hidden">
         <div class="modal">
@@ -202,55 +660,79 @@
     <!-- منطقة الإشعارات -->
     <div id="notification-area"></div>
 
-    <!-- ملفات JavaScript -->
     <script>
         // إعدادات Supabase
         const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZURI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
         const supabase = supabase.createClient(SB_URL, SB_KEY);
         
         // متغيرات عامة
         let currentUser = null;
         let currentDriver = null;
-    </script>
-    
-    <script src="js/auth.js"></script>
-    <script src="js/map.js"></script>
-    <script src="js/ride.js"></script>
-    <script src="js/driver.js"></script>
-    <script src="js/notifications.js"></script>
-    
-    <script>
+        
         // تهيئة التطبيق
         document.addEventListener('DOMContentLoaded', () => {
+            console.log('تم تحميل التطبيق');
             initApp();
+            registerServiceWorker();
+            
+            // إضافة استماع للأخطاء
+            window.addEventListener('error', function(e) {
+                console.error('حدث خطأ:', e.error);
+                showNotification('حدث خطأ في التطبيق', 'error');
+            });
         });
         
         async function initApp() {
+            console.log('بدء تهيئة التطبيق...');
+            
             // التحقق من وجود مستخدم مسجل
             const savedUser = localStorage.getItem('tarhal_customer');
             const savedDriver = localStorage.getItem('tarhal_driver');
             
             if (savedDriver) {
+                console.log('تم العثور على سائق محفوظ');
                 // تحميل لوحة السائق
                 window.location.href = 'driver-dashboard.html';
             } else if (savedUser) {
+                console.log('تم العثور على زبون محفوظ');
                 // تحميل الصفحة الرئيسية للزبون
                 window.location.href = 'home.html';
             } else {
+                console.log('لا توجد جلسة محفوظة، عرض شاشة الترحيب');
                 // عرض شاشة الترحيب
                 showSection('welcome-screen');
             }
         }
         
-        // دوال التنقل
+        // دوال التنقل - تم تصحيحها
         function showSection(sectionId) {
-            document.querySelectorAll('.container').forEach(c => c.classList.add('hidden'));
-            document.getElementById(sectionId).classList.remove('hidden');
+            console.log('محاولة عرض القسم:', sectionId);
+            
+            // إخفاء جميع الحاويات
+            const containers = document.querySelectorAll('.container');
+            containers.forEach(c => {
+                c.classList.add('hidden');
+                console.log('إخفاء:', c.id);
+            });
+            
+            // إخفاء الـ overlays
+            const overlays = document.querySelectorAll('.overlay');
+            overlays.forEach(o => o.classList.add('hidden'));
+            
+            // إظهار القسم المطلوب
+            const targetSection = document.getElementById(sectionId);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                console.log('تم إظهار:', sectionId);
+            } else {
+                console.error('القسم غير موجود:', sectionId);
+            }
         }
         
         // دخول الموظفين
         function showStaffAccess() {
+            console.log('فتح نافذة دخول الموظفين');
             document.getElementById('staff-passcode-modal').classList.remove('hidden');
         }
         
@@ -261,6 +743,12 @@
         
         async function verifyStaffPasscode() {
             const passcode = document.getElementById('staff-passcode').value;
+            console.log('التحقق من كلمة المرور...');
+            
+            if (!passcode) {
+                showNotification('الرجاء إدخال كلمة المرور', 'error');
+                return;
+            }
             
             try {
                 const { data: settings, error } = await supabase
@@ -269,9 +757,20 @@
                     .eq('key', 'staff_passcode')
                     .single();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('خطأ في جلب كلمة المرور:', error);
+                    // إذا لم تكن كلمة المرور موجودة، استخدم الافتراضي
+                    const defaultPasscode = '123456';
+                    if (passcode === defaultPasscode) {
+                        window.location.href = 'admin-panel.html';
+                    } else {
+                        showNotification('كلمة المرور غير صحيحة', 'error');
+                    }
+                    return;
+                }
                 
                 if (settings && settings.value === passcode) {
+                    console.log('كلمة المرور صحيحة، فتح لوحة التحكم');
                     // فتح لوحة التحكم
                     window.location.href = 'admin-panel.html';
                 } else {
@@ -288,14 +787,393 @@
             const adminNumber = "249XXXXXXXXX"; // ضع رقم واتساب الإدارة هنا
             const message = "مرحباً، أرغب في التسجيل كسائق في تطبيق ترحال";
             const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
+            console.log('فتح رابط واتساب للتسجيل:', whatsappUrl);
             window.open(whatsappUrl, '_blank');
         }
         
-        // وظيفة عرض الإشعارات (سيتم تفصيلها في notifications.js)
-        function showNotification(message, type = 'info') {
-            // سيتم تفصيل هذه الوظيفة في ملف notifications.js
-            console.log(`${type}: ${message}`);
+        // --- دوال تسجيل الدخول والتحقق ---
+        
+        async function loginCustomer() {
+            console.log('بدء تسجيل دخول الزبون...');
+            const phone = document.getElementById('customer-login-phone').value.trim();
+            const password = document.getElementById('customer-login-password').value;
+            
+            console.log('بيانات الإدخال:', { phone: phone.substring(0, 3) + '***', password: password ? '****' : 'فارغ' });
+            
+            if (!phone || !password) {
+                showNotification('الرجاء إدخال رقم الواتساب وكلمة المرور', 'error');
+                return;
+            }
+            
+            try {
+                const { data: customer, error } = await supabase
+                    .from('customers')
+                    .select('*')
+                    .eq('phone', phone)
+                    .single();
+                
+                if (error) {
+                    if (error.code === 'PGRST116') {
+                        showNotification('رقم الواتساب غير مسجل', 'error');
+                    } else {
+                        console.error('خطأ في جلب بيانات الزبون:', error);
+                        throw error;
+                    }
+                    return;
+                }
+                
+                console.log('تم العثور على زبون:', customer.full_name);
+                
+                // التحقق من تفعيل الحساب
+                if (!customer.is_verified) {
+                    showNotification('لم تقم بتأكيد حسابك عبر رسالة واتساب للإدارة', 'error');
+                    return;
+                }
+                
+                // التحقق من كلمة المرور
+                if (customer.password !== password) {
+                    showNotification('كلمة المرور غير صحيحة', 'error');
+                    return;
+                }
+                
+                // حفظ بيانات المستخدم
+                currentUser = customer;
+                localStorage.setItem('tarhal_customer', JSON.stringify(customer));
+                console.log('تم حفظ جلسة الزبون');
+                showNotification('مرحباً مرة أخرى! ' + customer.full_name, 'success');
+                
+                // التوجيه إلى الصفحة الرئيسية
+                setTimeout(() => {
+                    window.location.href = 'home.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Login error:', error);
+                showNotification('حدث خطأ في تسجيل الدخول: ' + error.message, 'error');
+            }
         }
+        
+        async function handleRegister() {
+            console.log('بدء تسجيل زبون جديد...');
+            const fullname = document.getElementById('fullname').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const phone2 = document.getElementById('phone2').value.trim();
+            const password = document.getElementById('password').value;
+            
+            console.log('بيانات التسجيل:', { 
+                fullname: fullname, 
+                phone: phone.substring(0, 3) + '***', 
+                phone2: phone2.substring(0, 3) + '***',
+                password: password ? '****' : 'فارغ' 
+            });
+            
+            if (!fullname || !phone || !password) {
+                showNotification('الرجاء ملء البيانات الأساسية (الاسم، رقم الواتساب، كلمة المرور)', 'error');
+                return;
+            }
+            
+            // التحقق من صحة رقم الواتساب
+            if (phone.length < 10) {
+                showNotification('رقم الواتساب يجب أن يكون صحيحاً', 'error');
+                return;
+            }
+            
+            try {
+                // التحقق من عدم تكرار رقم الواتساب
+                const { data: existingCustomer, error: checkError } = await supabase
+                    .from('customers')
+                    .select('id')
+                    .eq('phone', phone)
+                    .single();
+                
+                if (existingCustomer) {
+                    showNotification('رقم الواتساب مسجل بالفعل!', 'error');
+                    return;
+                }
+                
+                console.log('جاري حفظ بيانات الزبون في قاعدة البيانات...');
+                
+                // حفظ البيانات في قاعدة البيانات
+                const { data, error } = await supabase
+                    .from('customers')
+                    .insert([{
+                        full_name: fullname,
+                        phone: phone,
+                        phone2: phone2 || null,
+                        password: password,
+                        is_verified: false,
+                        created_at: new Date()
+                    }])
+                    .select();
+                
+                if (error) {
+                    console.error('خطأ في حفظ البيانات:', error);
+                    throw error;
+                }
+                
+                console.log('تم حفظ البيانات بنجاح:', data);
+                
+                // إظهار رسالة النجاح
+                document.getElementById('registration-form').style.opacity = "0.5";
+                document.getElementById('btn-register').disabled = true;
+                document.getElementById('verification-section').classList.remove('hidden');
+                
+                // حفظ رقم الهاتف للاستخدام لاحقاً
+                localStorage.setItem('pending_verification_phone', phone);
+                
+                showNotification('تم حفظ بياناتك بنجاح!', 'success');
+                
+            } catch (error) {
+                console.error('Registration error:', error);
+                showNotification('حدث خطأ في التسجيل: ' + (error.message || 'بيانات غير مكتملة'), 'error');
+            }
+        }
+        
+        // إرسال رسالة واتساب للتأكيد
+        function sendWhatsAppMessage() {
+            const phone = document.getElementById('phone').value;
+            const savedPhone = localStorage.getItem('pending_verification_phone');
+            const adminNumber = "249XXXXXXXXX"; // ضع رقم واتساب الإدارة هنا
+            const message = "تفعيل ترحال زونا";
+            
+            // استخدام الرقم المحفوظ إذا كان موجوداً
+            const phoneToUse = savedPhone || phone;
+            
+            if (!phoneToUse) {
+                showNotification('لم يتم العثور على رقم الواتساب', 'error');
+                return;
+            }
+            
+            console.log('إرسال رسالة واتساب للتفعيل:', phoneToUse);
+            
+            // رابط الواتساب لفتح المحادثة وإرسال الرسالة تلقائياً
+            const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
+            
+            window.open(whatsappUrl, '_blank');
+            
+            // إظهار رسالة توضيحية
+            showNotification('برجاء إرسال رسالة التأكيد إلى واتساب الإدارة', 'info');
+            
+            // حذف الرقم المحفوظ
+            localStorage.removeItem('pending_verification_phone');
+        }
+        
+        async function loginDriver() {
+            console.log('بدء تسجيل دخول السائق...');
+            const phone = document.getElementById('driver-login-phone').value.trim();
+            const password = document.getElementById('driver-login-password').value;
+            
+            console.log('بيانات تسجيل دخول السائق:', { 
+                phone: phone.substring(0, 3) + '***', 
+                password: password ? '****' : 'فارغ' 
+            });
+            
+            if (!phone || !password) {
+                showNotification('الرجاء إدخال رقم الواتساب وكلمة المرور', 'error');
+                return;
+            }
+            
+            try {
+                const { data: driver, error } = await supabase
+                    .from('drivers')
+                    .select('*')
+                    .eq('whatsapp_number', phone)
+                    .eq('is_active', true)
+                    .single();
+                
+                if (error || !driver) {
+                    console.error('خطأ في جلب بيانات السائق:', error);
+                    showNotification('رقم الواتساب غير مسجل أو الحساب غير مفعل', 'error');
+                    return;
+                }
+                
+                console.log('تم العثور على سائق:', driver.full_name);
+                
+                if (driver.password !== password) {
+                    showNotification('كلمة المرور غير صحيحة', 'error');
+                    return;
+                }
+                
+                currentDriver = driver;
+                localStorage.setItem('tarhal_driver', JSON.stringify(driver));
+                console.log('تم حفظ جلسة السائق');
+                showNotification('مرحباً مرة أخرى! ' + driver.full_name, 'success');
+                
+                setTimeout(() => {
+                    window.location.href = 'driver-dashboard.html';
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Driver login error:', error);
+                showNotification('حدث خطأ في الدخول', 'error');
+            }
+        }
+        
+        // --- وظائف مساعدة ---
+        
+        function showNotification(message, type = 'info') {
+            console.log('عرض إشعار:', type, message);
+            const notificationArea = document.getElementById('notification-area');
+            
+            const colors = {
+                success: '#10b981',
+                error: '#ef4444',
+                warning: '#f59e0b',
+                info: '#3b82f6'
+            };
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            const titles = {
+                success: 'نجاح',
+                error: 'خطأ',
+                warning: 'تحذير',
+                info: 'معلومة'
+            };
+            
+            // إنشاء عنصر الإشعار
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.borderRightColor = colors[type] || colors.info;
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="font-size: 24px;">
+                        ${icons[type] || icons.info}
+                    </div>
+                    <div style="flex: 1;">
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #1f2937;">
+                            ${titles[type] || titles.info}
+                        </div>
+                        <div style="color: #4b5563; font-size: 14px;">${message}</div>
+                    </div>
+                </div>
+            `;
+            
+            // إضافة الإشعار إلى المنطقة
+            notificationArea.appendChild(notification);
+            
+            // إزالة الإشعار بعد 3 ثواني
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideInRight 0.5s ease reverse';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.parentNode.removeChild(notification);
+                        }
+                    }, 500);
+                }
+            }, 3000);
+        }
+        
+        // تسجيل Service Worker
+        function registerServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('/service-worker.js')
+                        .then(registration => {
+                            console.log('Service Worker registered successfully:', registration.scope);
+                            
+                            // التحقق من التحديثات
+                            registration.addEventListener('updatefound', () => {
+                                const newWorker = registration.installing;
+                                console.log('Service Worker update found:', newWorker.state);
+                                
+                                newWorker.addEventListener('statechange', () => {
+                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                        console.log('New service worker installed, showing update prompt');
+                                        // عرض رسالة للمستخدم حول التحديث المتاح
+                                        if (confirm('تحديث جديد متاح. هل تريد تحديث التطبيق؟')) {
+                                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                            window.location.reload();
+                                        }
+                                    }
+                                });
+                            });
+                        })
+                        .catch(error => {
+                            console.log('Service Worker registration failed:', error);
+                        });
+                });
+            } else {
+                console.log('Service Worker not supported');
+            }
+        }
+        
+        // طلب إذن الإشعارات
+        function requestNotificationPermission() {
+            if ('Notification' in window && Notification.permission === 'default') {
+                Notification.requestPermission().then(permission => {
+                    console.log('Notification permission:', permission);
+                });
+            }
+        }
+        
+        // استدعاء طلب الإذن عند تحميل الصفحة
+        requestNotificationPermission();
+        
+        // تصحيح مشكلة عدم ظهور الأزرار (إضافة تحميل إضافي)
+        window.addEventListener('load', function() {
+            console.log('صفحة محملة بالكامل');
+            
+            // إعادة تعيين display للعناصر المخفية
+            const hiddenElements = document.querySelectorAll('.hidden');
+            hiddenElements.forEach(el => {
+                if (el.style.display !== 'none') {
+                    el.style.display = 'none';
+                }
+            });
+            
+            // إظهار شاشة الترحيب إذا لم يكن هناك قسم ظاهر
+            const visibleSections = Array.from(document.querySelectorAll('.container')).filter(
+                el => !el.classList.contains('hidden')
+            );
+            
+            if (visibleSections.length === 0) {
+                console.log('لا توجد أقسام ظاهرة، عرض شاشة الترحيب');
+                showSection('welcome-screen');
+            }
+        });
+        
+        // إضافة استماع لأخطاء الروابط
+        document.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                if (this.getAttribute('href') === '#') {
+                    e.preventDefault();
+                }
+            });
+        });
+        
+        // إصلاح مشكلة عرض النصوص والأيقونات
+        setTimeout(() => {
+            console.log('فحص عناصر واجهة المستخدم...');
+            
+            // التحقق من ظهور الأزرار
+            const buttons = document.querySelectorAll('button');
+            console.log('عدد الأزرار:', buttons.length);
+            buttons.forEach((btn, index) => {
+                console.log(`زر ${index}:`, {
+                    text: btn.textContent,
+                    display: getComputedStyle(btn).display,
+                    visibility: getComputedStyle(btn).visibility
+                });
+            });
+            
+            // إضافة خط Tajawal للعناصر التي قد تفتقده
+            const textElements = document.querySelectorAll('h1, h2, h3, p, span, button, input, label');
+            textElements.forEach(el => {
+                if (!el.style.fontFamily.includes('Tajawal')) {
+                    el.style.fontFamily = "'Tajawal', sans-serif";
+                }
+            });
+        }, 500);
+        
+        // التهيئة النهائية
+        console.log('التطبيق جاهز للاستخدام');
     </script>
 </body>
 </html>
