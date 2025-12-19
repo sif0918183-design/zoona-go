@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم ترحال - الموظفين</title>
+    
+    <!-- Tajawal Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Ionicons Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --light: #f9fafb;
+            --dark: #111827;
+            --gray: #6b7280;
+            --gray-light: #e5e7eb;
+            
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --radius: 12px;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .admin-container {
+            background: white;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            width: 100%;
+            max-width: 800px;
+            overflow: hidden;
+        }
+        
+        .admin-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 24px;
+            text-align: center;
+        }
+        
+        .admin-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .admin-content {
+            padding: 32px;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+        
+        /* Login Screen */
+        .login-card {
+            max-width: 400px;
+            margin: 0 auto;
+            text-align: center;
+        }
+        
+        .login-icon {
+            font-size: 64px;
+            color: var(--primary);
+            margin-bottom: 24px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+            text-align: right;
+        }
+        
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+        
+        .btn {
+            padding: 16px 24px;
+            border-radius: var(--radius);
+            border: none;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+        
+        /* Dashboard */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--gray-light);
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--gray-light);
+            margin-bottom: 24px;
+        }
+        
+        .tab {
+            padding: 16px 24px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--gray);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .search-box {
+            margin-bottom: 24px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+        }
+        
+        .user-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .user-card {
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-bottom: 12px;
+            border: 1px solid var(--gray-light);
+        }
+        
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        
+        .user-name {
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        .user-phone {
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        .user-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        /* Add Driver Form */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-right: 4px solid var(--primary);
+            animation: slideIn 0.3s ease;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>
+                <ion-icon name="shield-checkmark-outline"></ion-icon>
+                لوحة تحكم ترحال - الموظفين
+            </h1>
+        </div>
+        
+        <div class="admin-content">
+            <!-- Login Screen -->
+            <div id="login-screen" class="login-card">
+                <div class="login-icon">
+                    <ion-icon name="lock-closed-outline"></ion-icon>
+                </div>
+                <h2 style="margin-bottom: 24px; color: var(--dark);">دخول الموظفين</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">كلمة المرور الإدارية</label>
+                    <input type="password" id="admin-password" class="form-input" placeholder="أدخل كلمة المرور">
+                </div>
+                
+                <button class="btn btn-primary" onclick="adminLogin()">
+                    <ion-icon name="log-in-outline"></ion-icon>
+                    دخول
+                </button>
+                
+                <p style="margin-top: 20px; color: var(--gray);">
+                    <a href="index.html" style="color: var(--primary); text-decoration: none;">
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة للتطبيق
+                    </a>
+                </p>
+            </div>
+            
+            <!-- Dashboard -->
+            <div id="dashboard" class="hidden">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-customers">0</div>
+                        <div class="stat-label">إجمالي العملاء</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-drivers">0</div>
+                        <div class="stat-label">إجمالي السائقين</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value" id="active-rides">0</div>
+                        <div class="stat-label">رحلات نشطة</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-earnings">0</div>
+                        <div class="stat-label">إجمالي الإيرادات (SDG)</div>
+                    </div>
+                </div>
+                
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('customers')">العملاء</div>
+                    <div class="tab" onclick="switchTab('drivers')">السائقين</div>
+                    <div class="tab" onclick="switchTab('add-driver')">إضافة سائق</div>
+                </div>
+                
+                <!-- Customers Tab -->
+                <div id="customers-tab" class="tab-content active">
+                    <div class="search-box">
+                        <input type="text" id="search-customer" class="search-input" 
+                               placeholder="ابحث برقم الموبايل أو الاسم" onkeyup="searchCustomers()">
+                    </div>
+                    
+                    <div class="user-list" id="customers-list">
+                        <!-- Customers will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Drivers Tab -->
+                <div id="drivers-tab" class="tab-content">
+                    <div class="search-box">
+                        <input type="text" id="search-driver" class="search-input" 
+                               placeholder="ابحث برقم الواتساب أو الاسم" onkeyup="searchDrivers()">
+                    </div>
+                    
+                    <div class="user-list" id="drivers-list">
+                        <!-- Drivers will be loaded here -->
+                    </div>
+                </div>
+                
+                <!-- Add Driver Tab -->
+                <div id="add-driver-tab" class="tab-content">
+                    <form id="add-driver-form">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">الاسم الرباعي</label>
+                                <input type="text" id="driver-name" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">رقم الواتساب</label>
+                                <input type="tel" id="driver-phone" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">كلمة المرور</label>
+                                <input type="password" id="driver-password" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">موديل السيارة</label>
+                                <input type="text" id="car-model" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">نوع السيارة</label>
+                                <select id="car-type" class="form-input" required>
+                                    <option value="">اختر النوع</option>
+                                    <option value="tuktuk">توك توك</option>
+                                    <option value="economy">اقتصادية</option>
+                                    <option value="comfort">متوسطة</option>
+                                    <option value="vip">VIP</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">رقم اللوحة</label>
+                                <input type="text" id="car-plate" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">لون السيارة</label>
+                                <input type="text" id="car-color" class="form-input" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">رصيد ابتدائي (SDG)</label>
+                                <input type="number" id="initial-balance" class="form-input" value="15000" required>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-primary" onclick="addNewDriver()">
+                            <ion-icon name="save-outline"></ion-icon>
+                            حفظ السائق
+                        </button>
+                    </form>
+                </div>
+                
+                <button class="btn btn-danger" onclick="adminLogout()" style="margin-top: 32px;">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    تسجيل خروج الموظف
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification-area"></div>
+
+    <script>
+        // Supabase Configuration
+        const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
+        const supabase = supabaseClient.createClient(SB_URL, SB_KEY);
+        
+        let adminLoggedIn = false;
+        
+        async function adminLogin() {
+            const password = document.getElementById('admin-password').value;
+            
+            if (!password) {
+                showNotification('الرجاء إدخال كلمة المرور', 'error');
+                return;
+            }
+            
+            try {
+                // Fetch password from system_settings
+                const { data: settings, error } = await supabase
+                    .from('system_settings')
+                    .select('value')
+                    .eq('key', 'staff_passcode')
+                    .single();
+                
+                if (error) {
+                    showNotification('خطأ في التحقق من كلمة المرور', 'error');
+                    return;
+                }
+                
+                if (settings.value === password) {
+                    adminLoggedIn = true;
+                    document.getElementById('login-screen').classList.add('hidden');
+                    document.getElementById('dashboard').classList.remove('hidden');
+                    
+                    loadDashboardStats();
+                    loadCustomers();
+                    loadDrivers();
+                    
+                    showNotification('مرحباً بك في لوحة التحكم', 'success');
+                } else {
+                    showNotification('كلمة المرور غير صحيحة', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Admin login error:', error);
+                showNotification('حدث خطأ أثناء الدخول', 'error');
+            }
+        }
+        
+        async function loadDashboardStats() {
+            try {
+                // Load total customers
+                const { data: customers, error: custError } = await supabase
+                    .from('customers')
+                    .select('id');
+                
+                if (!custError) {
+                    document.getElementById('total-customers').textContent = customers?.length || 0;
+                }
+                
+                // Load total drivers
+                const { data: drivers, error: driverError } = await supabase
+                    .from('drivers')
+                    .select('id');
+                
+                if (!driverError) {
+                    document.getElementById('total-drivers').textContent = drivers?.length || 0;
+                }
+                
+                // Load active rides
+                const { data: activeRides, error: ridesError } = await supabase
+                    .from('rides')
+                    .select('id')
+                    .eq('status', 'driver_accepted');
+                
+                if (!ridesError) {
+                    document.getElementById('active-rides').textContent = activeRides?.length || 0;
+                }
+                
+                // Load total earnings
+                const { data: allRides, error: earningsError } = await supabase
+                    .from('rides')
+                    .select('amount')
+                    .eq('status', 'completed');
+                
+                if (!earningsError && allRides) {
+                    const totalEarnings = allRides.reduce((sum, ride) => sum + (ride.amount || 0), 0);
+                    document.getElementById('total-earnings').textContent = totalEarnings.toLocaleString();
+                }
+                
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        async function loadCustomers() {
+            try {
+                const { data: customers, error } = await supabase
+                    .from('customers')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                const customersList = document.getElementById('customers-list');
+                customersList.innerHTML = '';
+                
+                customers.forEach(customer => {
+                    const customerCard = document.createElement('div');
+                    customerCard.className = 'user-card';
+                    customerCard.innerHTML = `
+                        <div class="user-info">
+                            <div>
+                                <div class="user-name">${customer.full_name}</div>
+                                <div class="user-phone">${customer.phone}</div>
+                                <div style="font-size: 12px; color: ${customer.is_verified ? 'green' : 'red'};">
+                                    ${customer.is_verified ? '✅ حساب موثق' : '❌ غير موثق'}
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; color: var(--gray);">
+                                    ${new Date(customer.created_at).toLocaleDateString('ar-SA')}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="action-btn" style="background: var(--primary); color: white;" 
+                                    onclick="viewCustomerDetails('${customer.phone}')">
+                                تفاصيل
+                            </button>
+                            ${!customer.is_verified ? `
+                            <button class="action-btn" style="background: var(--secondary); color: white;" 
+                                    onclick="verifyCustomer('${customer.id}')">
+                                تفعيل
+                            </button>
+                            ` : ''}
+                        </div>
+                    `;
+                    customersList.appendChild(customerCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading customers:', error);
+                showNotification('خطأ في تحميل بيانات العملاء', 'error');
+            }
+        }
+        
+        async function loadDrivers() {
+            try {
+                const { data: drivers, error } = await supabase
+                    .from('drivers')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                const driversList = document.getElementById('drivers-list');
+                driversList.innerHTML = '';
+                
+                drivers.forEach(driver => {
+                    const driverCard = document.createElement('div');
+                    driverCard.className = 'user-card';
+                    driverCard.innerHTML = `
+                        <div class="user-info">
+                            <div>
+                                <div class="user-name">${driver.full_name}</div>
+                                <div class="user-phone">${driver.whatsapp_number}</div>
+                                <div style="font-size: 12px; color: ${driver.is_active ? 'green' : 'red'};">
+                                    ${driver.is_active ? '✅ نشط' : '❌ غير نشط'}
+                                </div>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; color: var(--gray);">
+                                    ${driver.car_model || 'غير محدد'}
+                                </div>
+                                <div style="font-size: 14px; color: var(--gray);">
+                                    ${driver.balance?.toLocaleString() || 0} SDG
+                                </div>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="action-btn" style="background: var(--primary); color: white;" 
+                                    onclick="viewDriverDetails('${driver.whatsapp_number}')">
+                                تفاصيل
+                            </button>
+                            <button class="action-btn" style="background: ${driver.is_active ? 'var(--danger)' : 'var(--secondary)'}; color: white;" 
+                                    onclick="toggleDriverStatus('${driver.id}', ${driver.is_active})">
+                                ${driver.is_active ? 'تعطيل' : 'تفعيل'}
+                            </button>
+                            <button class="action-btn" style="background: var(--warning); color: white;" 
+                                    onclick="addDriverBalance('${driver.id}')">
+                                إضافة رصيد
+                            </button>
+                        </div>
+                    `;
+                    driversList.appendChild(driverCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading drivers:', error);
+                showNotification('خطأ في تحميل بيانات السائقين', 'error');
+            }
+        }
+        
+        function switchTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Activate selected tab
+            event.currentTarget.classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+        
+        async function addNewDriver() {
+            const driverName = document.getElementById('driver-name').value.trim();
+            const driverPhone = document.getElementById('driver-phone').value.trim();
+            const driverPassword = document.getElementById('driver-password').value;
+            const carModel = document.getElementById('car-model').value.trim();
+            const carType = document.getElementById('car-type').value;
+            const carPlate = document.getElementById('car-plate').value.trim().toUpperCase();
+            const carColor = document.getElementById('car-color').value.trim();
+            const initialBalance = document.getElementById('initial-balance').value;
+            
+            // Validate inputs
+            if (!driverName || !driverPhone || !driverPassword || !carModel || !carType || !carPlate || !carColor) {
+                showNotification('الرجاء ملء جميع الحقول المطلوبة', 'error');
+                return;
+            }
+            
+            // Validate phone number
+            if (!driverPhone.match(/^(?:\+249|0)[0-9]{9}$/)) {
+                showNotification('الرجاء إدخال رقم واتساب سوداني صحيح', 'error');
+                return;
+            }
+            
+            // Check for duplicate plate number
+            try {
+                const { data: existingDriver, error } = await supabase
+                    .from('drivers')
+                    .select('id')
+                    .eq('car_plate', carPlate)
+                    .single();
+                
+                if (existingDriver) {
+                    showNotification('رقم اللوحة مسجل بالفعل لسائق آخر', 'error');
+                    return;
+                }
+            } catch (error) {
+                // No duplicate found, continue
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('drivers')
+                    .insert([{
+                        full_name: driverName,
+                        whatsapp_number: driverPhone,
+                        password: driverPassword,
+                        car_model: carModel,
+                        car_type: carType,
+                        car_plate: carPlate,
+                        car_color: carColor,
+                        balance: parseInt(initialBalance) || 15000,
+                        status: 'OFFLINE',
+                        is_active: true,
+                        created_at: new Date()
+                    }])
+                    .select();
+                
+                if (error) throw error;
+                
+                // Reset form
+                document.getElementById('add-driver-form').reset();
+                
+                // Reload drivers list
+                loadDrivers();
+                loadDashboardStats();
+                
+                showNotification('تم إضافة السائق بنجاح', 'success');
+                switchTab('drivers');
+                
+            } catch (error) {
+                console.error('Error adding driver:', error);
+                showNotification('حدث خطأ أثناء إضافة السائق: ' + error.message, 'error');
+            }
+        }
+        
+        async function verifyCustomer(customerId) {
+            try {
+                const { error } = await supabase
+                    .from('customers')
+                    .update({ is_verified: true })
+                    .eq('id', customerId);
+                
+                if (error) throw error;
+                
+                showNotification('تم تفعيل حساب العميل', 'success');
+                loadCustomers();
+                
+            } catch (error) {
+                console.error('Error verifying customer:', error);
+                showNotification('حدث خطأ أثناء تفعيل الحساب', 'error');
+            }
+        }
+        
+        async function toggleDriverStatus(driverId, currentStatus) {
+            try {
+                const { error } = await supabase
+                    .from('drivers')
+                    .update({ is_active: !currentStatus })
+                    .eq('id', driverId);
+                
+                if (error) throw error;
+                
+                showNotification(`تم ${!currentStatus ? 'تفعيل' : 'تعطيل'} السائق`, 'success');
+                loadDrivers();
+                
+            } catch (error) {
+                console.error('Error toggling driver status:', error);
+                showNotification('حدث خطأ أثناء تغيير حالة السائق', 'error');
+            }
+        }
+        
+        async function addDriverBalance(driverId) {
+            const amount = prompt('أدخل المبلغ المراد إضافته (SDG):');
+            
+            if (!amount || isNaN(amount) || amount <= 0) {
+                showNotification('الرجاء إدخال مبلغ صحيح', 'error');
+                return;
+            }
+            
+            try {
+                // Get current balance
+                const { data: driver, error: fetchError } = await supabase
+                    .from('drivers')
+                    .select('balance')
+                    .eq('id', driverId)
+                    .single();
+                
+                if (fetchError) throw fetchError;
+                
+                // Update balance
+                const { error } = await supabase
+                    .from('drivers')
+                    .update({ balance: (driver.balance || 0) + parseInt(amount) })
+                    .eq('id', driverId);
+                
+                if (error) throw error;
+                
+                showNotification(`تم إضافة ${amount} SDG إلى رصيد السائق`, 'success');
+                loadDrivers();
+                
+            } catch (error) {
+                console.error('Error adding balance:', error);
+                showNotification('حدث خطأ أثناء إضافة الرصيد', 'error');
+            }
+        }
+        
+        async function searchCustomers() {
+            const searchTerm = document.getElementById('search-customer').value.toLowerCase();
+            
+            try {
+                const { data: customers, error } = await supabase
+                    .from('customers')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                const filteredCustomers = customers.filter(customer => 
+                    customer.full_name.toLowerCase().includes(searchTerm) ||
+                    customer.phone.includes(searchTerm) ||
+                    (customer.phone2 && customer.phone2.includes(searchTerm))
+                );
+                
+                const customersList = document.getElementById('customers-list');
+                customersList.innerHTML = '';
+                
+                filteredCustomers.forEach(customer => {
+                    const customerCard = document.createElement('div');
+                    customerCard.className = 'user-card';
+                    customerCard.innerHTML = `
+                        <div class="user-info">
+                            <div>
+                                <div class="user-name">${customer.full_name}</div>
+                                <div class="user-phone">${customer.phone}</div>
+                                <div style="font-size: 12px; color: ${customer.is_verified ? 'green' : 'red'};">
+                                    ${customer.is_verified ? '✅ حساب موثق' : '❌ غير موثق'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="action-btn" style="background: var(--primary); color: white;" 
+                                    onclick="viewCustomerDetails('${customer.phone}')">
+                                تفاصيل
+                            </button>
+                        </div>
+                    `;
+                    customersList.appendChild(customerCard);
+                });
+                
+            } catch (error) {
+                console.error('Error searching customers:', error);
+            }
+        }
+        
+        async function searchDrivers() {
+            const searchTerm = document.getElementById('search-driver').value.toLowerCase();
+            
+            try {
+                const { data: drivers, error } = await supabase
+                    .from('drivers')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                const filteredDrivers = drivers.filter(driver => 
+                    driver.full_name.toLowerCase().includes(searchTerm) ||
+                    driver.whatsapp_number.includes(searchTerm) ||
+                    driver.car_plate.toLowerCase().includes(searchTerm)
+                );
+                
+                const driversList = document.getElementById('drivers-list');
+                driversList.innerHTML = '';
+                
+                filteredDrivers.forEach(driver => {
+                    const driverCard = document.createElement('div');
+                    driverCard.className = 'user-card';
+                    driverCard.innerHTML = `
+                        <div class="user-info">
+                            <div>
+                                <div class="user-name">${driver.full_name}</div>
+                                <div class="user-phone">${driver.whatsapp_number}</div>
+                                <div style="font-size: 12px; color: ${driver.is_active ? 'green' : 'red'};">
+                                    ${driver.is_active ? '✅ نشط' : '❌ غير نشط'}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="user-actions">
+                            <button class="action-btn" style="background: var(--primary); color: white;" 
+                                    onclick="viewDriverDetails('${driver.whatsapp_number}')">
+                                تفاصيل
+                            </button>
+                        </div>
+                    `;
+                    driversList.appendChild(driverCard);
+                });
+                
+            } catch (error) {
+                console.error('Error searching drivers:', error);
+            }
+        }
+        
+        async function viewCustomerDetails(phone) {
+            try {
+                const { data: customer, error } = await supabase
+                    .from('customers')
+                    .select('*')
+                    .eq('phone', phone)
+                    .single();
+                
+                if (error) throw error;
+                
+                const details = `
+                    الاسم: ${customer.full_name}
+                    رقم الواتساب: ${customer.phone}
+                    رقم إضافي: ${customer.phone2 || 'غير محدد'}
+                    الحالة: ${customer.is_verified ? 'موثق' : 'غير موثق'}
+                    تاريخ التسجيل: ${new Date(customer.created_at).toLocaleDateString('ar-SA')}
+                `;
+                
+                alert(details);
+                
+            } catch (error) {
+                console.error('Error viewing customer details:', error);
+                showNotification('حدث خطأ في عرض التفاصيل', 'error');
+            }
+        }
+        
+        async function viewDriverDetails(phone) {
+            try {
+                const { data: driver, error } = await supabase
+                    .from('drivers')
+                    .select('*')
+                    .eq('whatsapp_number', phone)
+                    .single();
+                
+                if (error) throw error;
+                
+                const details = `
+                    الاسم: ${driver.full_name}
+                    رقم الواتساب: ${driver.whatsapp_number}
+                    موديل السيارة: ${driver.car_model}
+                    نوع السيارة: ${driver.car_type}
+                    رقم اللوحة: ${driver.car_plate}
+                    لون السيارة: ${driver.car_color}
+                    الرصيد الحالي: ${driver.balance?.toLocaleString() || 0} SDG
+                    الحالة: ${driver.is_active ? 'نشط' : 'غير نشط'}
+                    تاريخ التسجيل: ${new Date(driver.created_at).toLocaleDateString('ar-SA')}
+                `;
+                
+                alert(details);
+                
+            } catch (error) {
+                console.error('Error viewing driver details:', error);
+                showNotification('حدث خطأ في عرض التفاصيل', 'error');
+            }
+        }
+        
+        function adminLogout() {
+            adminLoggedIn = false;
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('admin-password').value = '';
+        }
+        
+        function showNotification(message, type = 'info') {
+            const notificationArea = document.getElementById('notification-area');
+            
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.borderRightColor = 
+                type === 'success' ? 'green' : 
+                type === 'error' ? 'red' : 
+                type === 'warning' ? 'orange' : 'blue';
+            
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            else if (type === 'error') icon = '❌';
+            else if (type === 'warning') icon = '⚠️';
+            
+            notification.innerHTML = `
+                <div style="font-size: 20px;">${icon}</div>
+                <div>${message}</div>
+            `;
+            
+            notificationArea.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-20px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
