@@ -1,19 +1,17 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ترحال السودان - Tarhal</title>
     
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="icon" href="icons/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    
-    <!-- Favicon -->
-    <link rel="icon" href="favicon.ico">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
     <!-- Tajawal Font -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
@@ -21,8 +19,14 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
+    <!-- Ionicons Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <style>
-        /* إضافة CSS هنا بدلاً من ملف خارجي للتبسيط */
         :root {
             --primary: #4f46e5;
             --primary-dark: #4338ca;
@@ -720,10 +724,29 @@
         .p-1 { padding: 8px; }
         .p-2 { padding: 16px; }
         .p-3 { padding: 24px; }
+        
+        /* PWA Install Prompt */
+        #pwa-install-prompt {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .pwa-mode .app-header {
+            padding-top: env(safe-area-inset-top, 20px);
+        }
     </style>
 </head>
 <body>
-    <div id="root" class="app-container">
+    <div class="app-container">
         <!-- Header -->
         <header class="app-header">
             <h1>
@@ -748,7 +771,7 @@
                             <h3>طالب رحلة</h3>
                             <p>اطلب رحلة بسهولة وأمان من أقرب سائق لك</p>
                         </div>
-                        <span>→</span>
+                        <ion-icon name="chevron-forward-outline"></ion-icon>
                     </div>
                     
                     <div class="role-card" onclick="showDriverLogin()">
@@ -757,12 +780,13 @@
                             <h3>سائق</h3>
                             <p>انضم كسائق وابدأ كسب المال مع ترحال</p>
                         </div>
-                        <span>→</span>
+                        <ion-icon name="chevron-forward-outline"></ion-icon>
                     </div>
                     
                     <div class="form-footer mt-3">
-                        <a href="#" onclick="showAdminLogin()">
-                            🔒 دخول الموظفين
+                        <a href="/admin-login">
+                            <ion-icon name="shield-checkmark-outline"></ion-icon>
+                            دخول الموظفين
                         </a>
                     </div>
                 </div>
@@ -772,7 +796,10 @@
         <!-- Customer Login -->
         <section id="customer-login-screen" class="screen hidden">
             <div class="card">
-                <h2 class="card-title">👤 دخول طالب الرحلة</h2>
+                <h2 class="card-title">
+                    <ion-icon name="person-circle-outline"></ion-icon>
+                    دخول طالب الرحلة
+                </h2>
                 
                 <form class="login-form" id="customerLoginForm">
                     <div class="form-group">
@@ -788,7 +815,8 @@
                     </div>
                     
                     <button type="button" class="btn btn-primary" onclick="loginCustomer()">
-                        🔐 تسجيل الدخول
+                        <ion-icon name="log-in-outline"></ion-icon>
+                        تسجيل الدخول
                     </button>
                 </form>
                 
@@ -797,7 +825,8 @@
                         <a href="#" onclick="showCustomerRegister()">سجل حساب الآن</a>
                     </p>
                     <a href="#" onclick="showWelcomeScreen()">
-                        ← العودة للخيارات
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة للخيارات
                     </a>
                 </div>
             </div>
@@ -806,7 +835,10 @@
         <!-- Customer Registration -->
         <section id="customer-register-screen" class="screen hidden">
             <div class="card">
-                <h2 class="card-title">➕ تسجيل حساب جديد</h2>
+                <h2 class="card-title">
+                    <ion-icon name="person-add-outline"></ion-icon>
+                    تسجيل حساب جديد
+                </h2>
                 
                 <form class="login-form" id="customerRegisterForm">
                     <div class="form-group">
@@ -834,19 +866,22 @@
                     </div>
                     
                     <button type="button" class="btn btn-primary" onclick="registerCustomer()">
-                        📝 تسجيل الحساب
+                        <ion-icon name="create-outline"></ion-icon>
+                        تسجيل الحساب
                     </button>
                 </form>
                 
                 <div id="verification-section" class="hidden mt-3">
                     <div class="card" style="background: #f0f9ff; border: 2px dashed var(--secondary);">
                         <h3 class="mb-2" style="color: var(--secondary);">
-                            ✅ تم التسجيل بنجاح!
+                            <ion-icon name="checkmark-circle-outline"></ion-icon>
+                            تم التسجيل بنجاح!
                         </h3>
                         <p class="mb-2">لتفعيل حسابك، يرجى الضغط على الزر أدناه لإرسال رسالة تأكيد:</p>
                         
                         <button type="button" class="btn btn-secondary" onclick="sendVerificationWhatsApp()">
-                            📱 تأكيد الحساب عبر واتساب
+                            <ion-icon name="logo-whatsapp"></ion-icon>
+                            تأكيد الحساب عبر واتساب
                         </button>
                         
                         <p class="mt-2" style="font-size: 14px; color: var(--gray);">
@@ -857,7 +892,8 @@
                 
                 <div class="form-footer mt-3">
                     <a href="#" onclick="showCustomerLogin()">
-                        ← العودة لتسجيل الدخول
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة لتسجيل الدخول
                     </a>
                 </div>
             </div>
@@ -866,7 +902,10 @@
         <!-- Driver Login -->
         <section id="driver-login-screen" class="screen hidden">
             <div class="card">
-                <h2 class="card-title">🚗 دخول السائقين</h2>
+                <h2 class="card-title">
+                    <ion-icon name="car-sport-outline"></ion-icon>
+                    دخول السائقين
+                </h2>
                 
                 <form class="login-form" id="driverLoginForm">
                     <div class="form-group">
@@ -882,7 +921,8 @@
                     </div>
                     
                     <button type="button" class="btn btn-driver" onclick="loginDriver()">
-                        🔐 دخول السائق
+                        <ion-icon name="log-in-outline"></ion-icon>
+                        دخول السائق
                     </button>
                 </form>
                 
@@ -891,7 +931,8 @@
                         <a href="#" onclick="showDriverRegisterInfo()">سجل كسائق الآن</a>
                     </p>
                     <a href="#" onclick="showWelcomeScreen()">
-                        ← العودة للخيارات
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة للخيارات
                     </a>
                 </div>
             </div>
@@ -900,7 +941,10 @@
         <!-- Driver Registration Info -->
         <section id="driver-register-info-screen" class="screen hidden">
             <div class="card">
-                <h2 class="card-title">ℹ️ التسجيل كسائق</h2>
+                <h2 class="card-title">
+                    <ion-icon name="information-circle-outline"></ion-icon>
+                    التسجيل كسائق
+                </h2>
                 
                 <div class="mb-3">
                     <p>للتسجيل كسائق في تطبيق ترحال، يرجى التواصل مع إدارتنا على واتساب لإكمال عملية التسجيل:</p>
@@ -918,12 +962,14 @@
                 </div>
                 
                 <button type="button" class="btn btn-driver" onclick="contactAdminForDriverRegistration()">
-                    📱 التواصل مع الإدارة على واتساب
+                    <ion-icon name="logo-whatsapp"></ion-icon>
+                    التواصل مع الإدارة على واتساب
                 </button>
                 
                 <div class="form-footer mt-3">
                     <a href="#" onclick="showDriverLogin()">
-                        ← العودة لتسجيل الدخول
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة لتسجيل الدخول
                     </a>
                 </div>
             </div>
@@ -938,7 +984,8 @@
                     <p id="user-phone-display"></p>
                     <div id="verification-status" class="hidden mt-1">
                         <span class="verified-badge">
-                            ✓ حساب موثق
+                            <ion-icon name="checkmark-circle"></ion-icon>
+                            حساب موثق
                         </span>
                     </div>
                 </div>
@@ -967,14 +1014,18 @@
             </div>
             
             <button class="btn btn-outline mt-3" onclick="logout()">
-                🚪 تسجيل الخروج
+                <ion-icon name="log-out-outline"></ion-icon>
+                تسجيل الخروج
             </button>
         </section>
         
         <!-- Ride Request Screen -->
         <section id="ride-request-screen" class="screen hidden">
             <div class="card">
-                <h2 class="card-title">🗺️ طلب رحلة جديدة</h2>
+                <h2 class="card-title">
+                    <ion-icon name="navigate-outline"></ion-icon>
+                    طلب رحلة جديدة
+                </h2>
                 
                 <div class="map-container" id="ride-map">
                     <!-- سيتم تهيئة الخريطة هنا -->
@@ -1029,11 +1080,13 @@
                 </div>
                 
                 <button id="confirm-ride-btn" class="btn btn-primary" onclick="confirmRide()" disabled>
-                    🔍 بحث عن سائق
+                    <ion-icon name="search-outline"></ion-icon>
+                    بحث عن سائق
                 </button>
                 
                 <button class="btn btn-outline mt-2" onclick="goHome()">
-                    ← إلغاء والعودة
+                    <ion-icon name="arrow-back-outline"></ion-icon>
+                    إلغاء والعودة
                 </button>
             </div>
         </section>
@@ -1056,7 +1109,8 @@
                     </div>
                     
                     <button id="toggle-online-btn" class="btn btn-driver" onclick="toggleDriverStatus()">
-                        🔌 تفعيل وضع العمل
+                        <ion-icon name="power-outline"></ion-icon>
+                        تفعيل وضع العمل
                     </button>
                 </div>
                 
@@ -1083,14 +1137,34 @@
                 </div>
                 
                 <button class="btn btn-outline" onclick="showDriverProfile()">
-                    👤 الملف الشخصي
+                    <ion-icon name="person-outline"></ion-icon>
+                    الملف الشخصي
                 </button>
                 
                 <button class="btn btn-outline mt-2" onclick="logoutDriver()">
-                    🚪 تسجيل خروج السائق
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    تسجيل خروج السائق
                 </button>
             </div>
         </section>
+    </div>
+    
+    <!-- PWA Install Prompt -->
+    <div id="pwa-install-prompt" style="display: none; position: fixed; bottom: 20px; left: 20px; right: 20px; background: white; padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 10000;">
+        <div style="text-align: center;">
+            <h4 style="margin-bottom: 8px; color: var(--primary);">تثبيت تطبيق ترحال</h4>
+            <p style="margin-bottom: 16px; color: var(--gray); font-size: 14px;">
+                ثبّت التطبيق لاستخدامه بدون إنترنت وإشعارات فورية
+            </p>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="installPWA()" style="flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; font-family: 'Tajawal'; font-weight: 700;">
+                    تثبيت الآن
+                </button>
+                <button onclick="hideInstallPrompt()" style="flex: 1; padding: 12px; background: transparent; color: var(--gray); border: 1px solid var(--gray-light); border-radius: 8px; font-family: 'Tajawal';">
+                    لاحقاً
+                </button>
+            </div>
+        </div>
     </div>
     
     <!-- Modals -->
@@ -1113,10 +1187,12 @@
             
             <div style="display: flex; gap: 12px; margin-top: 24px;">
                 <button class="btn btn-driver" onclick="acceptRide()" style="flex: 1;">
-                    ✓ قبول الرحلة
+                    <ion-icon name="checkmark-outline"></ion-icon>
+                    قبول الرحلة
                 </button>
                 <button class="btn btn-danger" onclick="declineRide()" style="flex: 1;">
-                    ✗ رفض
+                    <ion-icon name="close-outline"></ion-icon>
+                    رفض
                 </button>
             </div>
             
@@ -1145,7 +1221,7 @@
         const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
         
-        // Initialize Supabase client
+        // التصحيح: استخدام supabase.createClient مباشرة
         const supabase = window.supabase.createClient(SB_URL, SB_KEY);
         
         // --- Application State ---
@@ -1162,6 +1238,7 @@
         let rideCountdownInterval = null;
         let rideTimeout = 40;
         let registeredPhone = null;
+        let deferredPrompt = null; // لتحكم PWA
         
         // Vehicle prices
         const VEHICLE_PRICES = {
@@ -1174,14 +1251,120 @@
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
             checkAuth();
-            
-            // تحميل Leaflet بشكل ديناميكي
-            if (typeof L === 'undefined') {
-                const leafletScript = document.createElement('script');
-                leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                document.head.appendChild(leafletScript);
-            }
+            initServiceWorker();
+            initPWAEvents();
+            testPWACompatibility();
         });
+        
+        // --- PWA Functions ---
+        function initServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('service-worker.js', { 
+                    scope: './' 
+                })
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                    
+                    // تحقق من وجود تحديث
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        console.log('New Service Worker found!');
+                        
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                console.log('New content is available; please refresh.');
+                                showNotification('تحديث جديد متاح. يرجى تحديث الصفحة', 'info');
+                            }
+                        });
+                    });
+                })
+                .catch(error => {
+                    console.log('Service Worker registration failed:', error);
+                });
+            }
+        }
+        
+        function initPWAEvents() {
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                deferredPrompt = e;
+                
+                // عرض زر التثبيت بعد 5 ثواني
+                setTimeout(() => {
+                    if (deferredPrompt) {
+                        showInstallPrompt();
+                    }
+                }, 5000);
+            });
+            
+            window.addEventListener('appinstalled', () => {
+                console.log('PWA was installed');
+                localStorage.setItem('pwa_installed', 'true');
+                showNotification('تم تثبيت التطبيق بنجاح!', 'success');
+            });
+            
+            // Check for updates every hour
+            if ('serviceWorker' in navigator) {
+                setInterval(() => {
+                    navigator.serviceWorker.getRegistration()
+                        .then(registration => {
+                            if (registration) {
+                                registration.update();
+                            }
+                        });
+                }, 60 * 60 * 1000);
+            }
+        }
+        
+        function showInstallPrompt() {
+            const prompt = document.getElementById('pwa-install-prompt');
+            if (prompt) {
+                prompt.style.display = 'block';
+            }
+        }
+        
+        function hideInstallPrompt() {
+            const prompt = document.getElementById('pwa-install-prompt');
+            if (prompt) {
+                prompt.style.display = 'none';
+            }
+        }
+        
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    showNotification('تم تثبيت التطبيق بنجاح!', 'success');
+                }
+                
+                deferredPrompt = null;
+                hideInstallPrompt();
+            }
+        }
+        
+        function testPWACompatibility() {
+            const tests = {
+                'serviceWorker': 'serviceWorker' in navigator,
+                'localStorage': 'localStorage' in window,
+                'geolocation': 'geolocation' in navigator,
+                'notifications': 'Notification' in window,
+                'installPrompt': 'onbeforeinstallprompt' in window,
+                'standalone': window.matchMedia('(display-mode: standalone)').matches
+            };
+            
+            console.log('PWA Compatibility Test:');
+            Object.keys(tests).forEach(test => {
+                console.log(`${test}: ${tests[test] ? '✅' : '❌'}`);
+            });
+            
+            // Check if app is running as PWA
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                console.log('App is running as standalone PWA');
+                document.body.classList.add('pwa-mode');
+            }
+        }
         
         function checkAuth() {
             const savedUser = localStorage.getItem('tarhal_customer');
@@ -1231,6 +1414,7 @@
             showScreen('customer-register-screen');
             document.getElementById('verification-section').classList.add('hidden');
             document.getElementById('register-fullname').focus();
+            // تمكين النموذج
             document.getElementById('customerRegisterForm').style.opacity = '1';
             document.querySelector('#customerRegisterForm button').disabled = false;
         }
@@ -1242,10 +1426,6 @@
         
         function showDriverRegisterInfo() {
             showScreen('driver-register-info-screen');
-        }
-        
-        function showAdminLogin() {
-            showNotification('نظام دخول الموظفين قريباً', 'info');
         }
         
         function goHome() {
@@ -1268,6 +1448,7 @@
                 return;
             }
             
+            // التحقق من صيغة رقم الهاتف السوداني
             if (!isValidSudanesePhone(phone)) {
                 showNotification('الرجاء إدخال رقم واتساب سوداني صحيح', 'error');
                 return;
@@ -1304,6 +1485,7 @@
                     loginBtn.innerHTML = originalText;
                     loginBtn.disabled = false;
                     
+                    // إظهار خيار إعادة الإرسال بعد ثانيتين
                     setTimeout(() => {
                         if (confirm('هل تريد إعادة إرسال رسالة التفعيل إلى واتساب الإدارة؟')) {
                             sendVerificationWhatsApp(customer.phone);
@@ -1339,6 +1521,7 @@
                 return;
             }
             
+            // Validate phone number (Sudanese format)
             if (!isValidSudanesePhone(phone)) {
                 showNotification('الرجاء إدخال رقم واتساب سوداني صحيح', 'error');
                 return;
@@ -1350,6 +1533,7 @@
             registerBtn.disabled = true;
             
             try {
+                // Check if phone already exists
                 const { data: existingCustomer, error: checkError } = await supabase
                     .from('customers')
                     .select('id')
@@ -1363,6 +1547,7 @@
                     return;
                 }
                 
+                // Register new customer
                 const { data: newCustomer, error } = await supabase
                     .from('customers')
                     .insert([{
@@ -1378,7 +1563,10 @@
                 
                 if (error) throw error;
                 
+                // Store phone for verification
                 registeredPhone = phone;
+                
+                // Show verification section
                 document.getElementById('verification-section').classList.remove('hidden');
                 document.getElementById('customerRegisterForm').style.opacity = '0.5';
                 registerBtn.disabled = true;
@@ -1402,6 +1590,7 @@
             const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
             
             window.open(whatsappUrl, '_blank');
+            
             showNotification('تم فتح واتساب. أرسل الرسالة لتأكيد حسابك', 'info');
         }
         
@@ -1412,6 +1601,7 @@
             document.getElementById('user-name').textContent = currentUser.full_name;
             document.getElementById('user-phone-display').textContent = currentUser.phone;
             
+            // Show verification badge if verified
             if (currentUser.is_verified) {
                 document.getElementById('verification-status').classList.remove('hidden');
             }
@@ -1487,9 +1677,11 @@
             document.getElementById('driver-car-info').textContent = 
                 `${currentDriver.car_model || 'سيارة'} - ${getVehicleTypeName(currentDriver.car_type)}`;
             
+            // Update balance
             document.getElementById('driver-balance').textContent = 
                 (currentDriver.balance || 0).toLocaleString();
             
+            // Fetch today's stats
             try {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -1507,6 +1699,7 @@
                     document.getElementById('today-earnings').textContent = todayEarnings.toLocaleString();
                 }
                 
+                // Total trips
                 const { data: totalRides, error: totalError } = await supabase
                     .from('rides')
                     .select('id')
@@ -1531,7 +1724,7 @@
             if (isDriverOnline) {
                 statusIndicator.className = 'status-indicator status-online';
                 statusText.textContent = 'متصل وجاهز';
-                toggleBtn.innerHTML = '🔴 إيقاف وضع العمل';
+                toggleBtn.innerHTML = '<ion-icon name="power-outline"></ion-icon> إيقاف وضع العمل';
                 toggleBtn.classList.add('btn-danger');
                 toggleBtn.classList.remove('btn-driver');
                 
@@ -1540,7 +1733,7 @@
             } else {
                 statusIndicator.className = 'status-indicator status-offline';
                 statusText.textContent = 'غير متصل';
-                toggleBtn.innerHTML = '🔌 تفعيل وضع العمل';
+                toggleBtn.innerHTML = '<ion-icon name="power-outline"></ion-icon> تفعيل وضع العمل';
                 toggleBtn.classList.remove('btn-danger');
                 toggleBtn.classList.add('btn-driver');
                 
@@ -1574,6 +1767,7 @@
         }
         
         function stopDriverTracking() {
+            // في تطبيق حقيقي، هنا نوقف تتبع الموقع
             console.log('Driver tracking stopped');
         }
         
@@ -1594,18 +1788,14 @@
                 rideMap = null;
             }
             
-            if (typeof L === 'undefined') {
-                showNotification('جاري تحميل الخريطة...', 'info');
-                setTimeout(initRideMap, 500);
-                return;
-            }
-            
+            // تهيئة الخريطة باستخدام Leaflet
             rideMap = L.map('ride-map').setView([15.5007, 32.5599], 12);
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '© OpenStreetMap contributors'
             }).addTo(rideMap);
             
+            // الحصول على موقع المستخدم
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition((position) => {
                     userPosition = {
@@ -1615,12 +1805,14 @@
                     
                     rideMap.setView([userPosition.lat, userPosition.lng], 15);
                     
+                    // إضافة علامة للمستخدم
                     userMarker = L.marker([userPosition.lat, userPosition.lng], {
                         icon: L.divIcon({
                             html: '<div style="background: #4f46e5; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>'
                         })
                     }).addTo(rideMap).bindPopup('موقعك الحالي').openPopup();
                     
+                    // إضافة حدث النقر لتحديد الوجهة
                     rideMap.on('click', (e) => {
                         setDestination(e.latlng.lat, e.latlng.lng);
                     });
@@ -1647,6 +1839,7 @@
                     })
                 }).addTo(rideMap).bindPopup('نقطة الوصول').openPopup();
                 
+                // رسم خط بين النقطتين
                 if (userMarker) {
                     L.polyline([
                         [userPosition.lat, userPosition.lng],
@@ -1668,6 +1861,7 @@
         function selectVehicle(type) {
             selectedVehicleType = type;
             
+            // تحديث واجهة المستخدم
             document.querySelectorAll('.vehicle-option').forEach(option => {
                 option.classList.remove('selected');
             });
@@ -1681,6 +1875,7 @@
         function calculateRidePrice() {
             if (!userPosition || !destinationPosition || !selectedVehicleType) return;
             
+            // حساب المسافة (تقريبي)
             const latDiff = destinationPosition.lat - userPosition.lat;
             const lngDiff = destinationPosition.lng - userPosition.lng;
             const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111;
@@ -1691,6 +1886,7 @@
             const extraPrice = additionalKm * vehicle.perKm;
             const totalPrice = basePrice + extraPrice;
             
+            // عرض تفاصيل السعر
             document.getElementById('price-calculation').classList.remove('hidden');
             document.getElementById('distance-display').textContent = `${distance.toFixed(1)} كم`;
             document.getElementById('base-price-display').textContent = `${basePrice.toLocaleString()} SDG`;
@@ -1719,6 +1915,7 @@
             showNotification('جاري البحث عن سائق قريب...', 'info');
             
             try {
+                // حساب السعر النهائي
                 const latDiff = destinationPosition.lat - userPosition.lat;
                 const lngDiff = destinationPosition.lng - userPosition.lng;
                 const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111;
@@ -1726,6 +1923,7 @@
                 const additionalKm = Math.max(0, distance - 1);
                 const totalPrice = vehicle.base + (additionalKm * vehicle.perKm);
                 
+                // إنشاء طلب الرحلة في قاعدة البيانات
                 const { data: ride, error } = await supabase
                     .from('rides')
                     .insert([{
@@ -1750,9 +1948,11 @@
                 
                 currentRideId = ride.id;
                 
+                // محاكاة البحث عن سائق
                 setTimeout(() => {
                     showNotification('تم العثور على سائق! جاري الاتصال...', 'success');
                     
+                    // محاكاة قبول السائق للرحلة
                     setTimeout(() => {
                         showActiveRideModal(ride);
                     }, 2000);
@@ -1768,9 +1968,11 @@
         }
         
         function showActiveRideModal(ride) {
+            // إظهار نافذة تفاصيل الرحلة
             const modal = document.getElementById('active-trip-modal');
             modal.classList.remove('hidden');
             
+            // إضافة تفاصيل الرحلة
             const tripDetails = document.getElementById('trip-details');
             tripDetails.innerHTML = `
                 <div class="card mb-3">
@@ -1806,13 +2008,15 @@
                 
                 <div class="mb-3">
                     <button class="btn btn-secondary" onclick="callDriver()">
-                        📞 الاتصال بالسائق
+                        <ion-icon name="call-outline"></ion-icon>
+                        الاتصال بالسائق
                     </button>
                 </div>
                 
                 <div class="mb-3">
                     <button class="btn btn-danger" onclick="cancelRide()">
-                        ✗ إلغاء الرحلة
+                        <ion-icon name="close-outline"></ion-icon>
+                        إلغاء الرحلة
                     </button>
                 </div>
                 
@@ -1821,7 +2025,7 @@
                 </p>
             `;
             
-            document.getElementById('confirm-ride-btn').innerHTML = '🔍 بحث عن سائق';
+            document.getElementById('confirm-ride-btn').innerHTML = '<ion-icon name="search-outline"></ion-icon> بحث عن سائق';
             document.getElementById('confirm-ride-btn').disabled = false;
         }
         
@@ -1837,10 +2041,12 @@
         }
         
         function getNeighborhoodName(lat, lng) {
+            // دالة مبسطة للحصول على اسم المنطقة (في تطبيق حقيقي، ستستخدم خدمة عكسية للجغرافيا)
             return "الخرطوم";
         }
         
         function isValidSudanesePhone(phone) {
+            // تحقق من صيغة رقم الهاتف السوداني
             const sudanesePhoneRegex = /^(?:\+249|0)?(?:9[0123456789]|1[012])\d{7}$/;
             return sudanesePhoneRegex.test(phone);
         }
@@ -1863,6 +2069,7 @@
             
             notificationArea.appendChild(notification);
             
+            // الإزالة التلقائية بعد 3 ثوان
             setTimeout(() => {
                 notification.style.opacity = '0';
                 notification.style.transform = 'translateY(-20px)';
@@ -1887,7 +2094,7 @@
             showNotification('تم تسجيل خروج السائق', 'success');
         }
         
-        // Placeholder functions
+        // Placeholder functions for other features
         function showMyRides() {
             showNotification('قريباً: عرض الرحلات السابقة', 'info');
         }
@@ -1928,20 +2135,23 @@
             document.getElementById('incoming-ride-modal').classList.add('hidden');
             showNotification('تم رفض الرحلة', 'info');
         }
-    </script>
-    
-    <script>
-        // Register service worker for PWA
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('service-worker.js', { scope: './' })
-                    .then(function(registration) {
-                        console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                    })
-                    .catch(function(err) {
-                        console.log('ServiceWorker registration failed: ', err);
-                    });
-            });
+        
+        // Event listeners للتحقق من Supabase عند التحميل
+        window.addEventListener('load', function() {
+            // تحميل Leaflet JS ديناميكياً إذا لم يكن محملاً
+            if (typeof L === 'undefined') {
+                const leafletScript = document.createElement('script');
+                leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+                leafletScript.onload = function() {
+                    console.log('Leaflet loaded successfully');
+                };
+                document.head.appendChild(leafletScript);
+            }
+        });
+        
+        // إضافة خدمة تنبيهات
+        if ('Notification' in window) {
+            Notification.requestPermission();
         }
     </script>
 </body>
