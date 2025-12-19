@@ -1,16 +1,6 @@
 {
   "cleanUrls": true,
   "trailingSlash": false,
-  "rewrites": [
-    {
-      "source": "/admin-login",
-      "destination": "/admin-login.html"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
-    }
-  ],
   "headers": [
     {
       "source": "/manifest.json",
@@ -25,12 +15,16 @@
         { "key": "Content-Type", "value": "application/javascript" },
         { "key": "Cache-Control", "value": "no-cache" }
       ]
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/admin-login",
+      "destination": "/admin-login.html"
     },
     {
-      "source": "/icons/(.*)",
-      "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=86400" }
-      ]
+      "source": "/((?!icons/|manifest.json|service-worker.js|.*\\.png|.*\\.jpg|.*\\.js|.*\\.css).*)",
+      "destination": "/index.html"
     }
   ]
 }
