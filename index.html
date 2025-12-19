@@ -664,7 +664,7 @@
         // إعدادات Supabase
         const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZURI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
-        const supabase = supabase.createClient(SB_URL, SB_KEY);
+        const sb = window.supabase.createClient(SB_URL, SB_KEY);
         
         // متغيرات عامة
         let currentUser = null;
@@ -751,7 +751,7 @@
             }
             
             try {
-                const { data: settings, error } = await supabase
+                const { data: settings, error } = await sb
                     .from('system_settings')
                     .select('value')
                     .eq('key', 'staff_passcode')
@@ -806,7 +806,7 @@
             }
             
             try {
-                const { data: customer, error } = await supabase
+                const { data: customer, error } = await sb
                     .from('customers')
                     .select('*')
                     .eq('phone', phone)
@@ -880,7 +880,7 @@
             
             try {
                 // التحقق من عدم تكرار رقم الواتساب
-                const { data: existingCustomer, error: checkError } = await supabase
+                const { data: existingCustomer, error: checkError } = await sb
                     .from('customers')
                     .select('id')
                     .eq('phone', phone)
@@ -894,7 +894,7 @@
                 console.log('جاري حفظ بيانات الزبون في قاعدة البيانات...');
                 
                 // حفظ البيانات في قاعدة البيانات
-                const { data, error } = await supabase
+                const { data, error } = await sb
                     .from('customers')
                     .insert([{
                         full_name: fullname,
@@ -974,7 +974,7 @@
             }
             
             try {
-                const { data: driver, error } = await supabase
+                const { data: driver, error } = await sb
                     .from('drivers')
                     .select('*')
                     .eq('whatsapp_number', phone)
