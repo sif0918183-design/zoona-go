@@ -2,373 +2,432 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ترحال السودان - Tarhal</title>
     
-    <!-- إعدادات PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
+    <link rel="icon" href="favicon.ico">
     
-    <!-- خط Tajawal -->
-    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Tajawal Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
     
-    <!-- مكتبات خارجية -->
+    <!-- Leaflet CSS & JS للخرائط -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Ionicons Icons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* أنماط CSS الأساسية */
         :root {
             --primary: #4f46e5;
-            --primary-dark: #3730a3;
-            --primary-light: #818cf8;
-            --secondary: #7c3aed;
-            --success: #10b981;
+            --primary-dark: #4338ca;
+            --primary-light: #e0e7ff;
+            --secondary: #10b981;
+            --secondary-dark: #059669;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --driver: #16a34a;
-            --dark: #1f2937;
+            --danger-dark: #dc2626;
             --light: #f9fafb;
+            --dark: #111827;
             --gray: #6b7280;
             --gray-light: #e5e7eb;
+            
+            --driver: #16a34a;
+            --tuk-tuk: #059669;
+            --economy: #2563eb;
+            --comfort: #7c3aed;
+            --vip: #d97706;
+            --staff: #7c3aed;
+            
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            
+            --radius: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
         }
         
         * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
         }
         
         body {
-            font-family: 'Tajawal', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Tajawal', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
             color: var(--dark);
-            direction: rtl;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         
-        /* حاوية عامة */
-        .container {
-            width: 100%;
+        .app-container {
             max-width: 500px;
             margin: 0 auto;
-            padding: 20px;
             min-height: 100vh;
+            background: var(--light);
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        
+        /* Header */
+        .app-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 4px solid var(--primary-dark);
+        }
+        
+        .app-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .app-header .logo {
+            font-size: 28px;
+        }
+        
+        /* Screens */
+        .screen {
+            padding: 24px;
+            min-height: calc(100vh - 76px);
             display: flex;
             flex-direction: column;
-            justify-content: center;
         }
         
         .hidden {
             display: none !important;
         }
         
-        /* بطاقة الترحيب */
-        .welcome-card {
+        /* Cards */
+        .card {
             background: white;
-            border-radius: 24px;
-            padding: 40px 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+            border-radius: var(--radius-lg);
+            padding: 24px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+        }
+        
+        .card-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 16px;
             text-align: center;
-            animation: fadeInUp 0.6s ease;
-        }
-        
-        .logo-container {
-            margin-bottom: 40px;
-        }
-        
-        .logo {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px;
-            color: white;
-            font-size: 48px;
-            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
+            gap: 10px;
         }
         
-        h1 {
-            color: var(--primary);
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            font-family: 'Tajawal', sans-serif;
-        }
-        
-        .tagline {
-            color: var(--gray);
-            font-size: 16px;
-            margin-bottom: 10px;
-            font-family: 'Tajawal', sans-serif;
-        }
-        
-        /* الأزرار */
-        .welcome-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
+        /* Buttons */
         .btn {
             padding: 16px 24px;
-            border-radius: 12px;
+            border-radius: var(--radius);
             border: none;
             font-family: 'Tajawal', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            color: white;
-            transition: all 0.3s ease;
             font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
             width: 100%;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+            margin-bottom: 12px;
+            position: relative;
+            overflow: hidden;
         }
         
         .btn:active {
-            transform: translateY(0);
-        }
-        
-        .btn-large {
-            padding: 18px 28px;
-            font-size: 18px;
+            transform: translateY(2px);
         }
         
         .btn-primary {
             background: var(--primary);
+            color: white;
         }
         
         .btn-primary:hover {
             background: var(--primary-dark);
-        }
-        
-        .btn-driver {
-            background: var(--driver);
-        }
-        
-        .btn-driver:hover {
-            background: #15803d;
+            box-shadow: 0 6px 20px rgba(79, 70, 229, 0.3);
         }
         
         .btn-secondary {
             background: var(--secondary);
+            color: white;
         }
         
         .btn-secondary:hover {
-            background: #6d28d9;
+            background: var(--secondary-dark);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
         }
         
-        .btn-whatsapp {
-            background: #25D366;
+        .btn-driver {
+            background: var(--driver);
+            color: white;
         }
         
-        .btn-whatsapp:hover {
-            background: #128C7E;
+        .btn-driver:hover {
+            background: #15803d;
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.3);
         }
         
-        .btn-back {
-            background: var(--gray-light);
-            color: var(--gray);
-        }
-        
-        .btn-back:hover {
-            background: #d1d5db;
-        }
-        
-        /* البطاقات */
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            animation: slideUp 0.4s ease;
-        }
-        
-        .card-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .card-header h2 {
+        .btn-outline {
+            background: transparent;
             color: var(--primary);
-            font-size: 24px;
-            margin-bottom: 10px;
-            font-family: 'Tajawal', sans-serif;
+            border: 2px solid var(--primary);
         }
         
-        .card-header p {
-            color: var(--gray);
-            font-size: 14px;
-            font-family: 'Tajawal', sans-serif;
+        .btn-outline:hover {
+            background: var(--primary-light);
         }
         
-        /* حقول الإدخال */
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: var(--danger-dark);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
+        }
+        
+        /* Forms */
         .form-group {
             margin-bottom: 20px;
         }
         
-        input {
-            width: 100%;
-            padding: 16px 20px;
-            border: 2px solid var(--gray-light);
-            border-radius: 12px;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 16px;
-            background: var(--light);
-            transition: all 0.3s;
+        .form-label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+            font-size: 14px;
         }
         
-        input:focus {
+        .form-input {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+        
+        .form-input:focus {
             outline: none;
             border-color: var(--primary);
-            background: white;
             box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
         }
         
-        /* المحددات */
-        .divider {
+        .form-input::placeholder {
+            color: var(--gray);
+        }
+        
+        /* Welcome Screen */
+        .welcome-card {
+            text-align: center;
+            padding: 40px 24px;
+            background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+            border: none;
+            margin-top: 40px;
+        }
+        
+        .welcome-icon {
+            font-size: 64px;
+            margin-bottom: 24px;
+            color: var(--primary);
+        }
+        
+        .welcome-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+        
+        .welcome-subtitle {
+            color: var(--gray);
+            font-size: 16px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+        
+        .role-selection {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .role-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 24px;
             display: flex;
             align-items: center;
-            margin: 20px 0;
-            color: var(--gray);
-            font-family: 'Tajawal', sans-serif;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+            text-align: right;
         }
         
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--gray-light);
+        .role-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-light);
         }
         
-        .divider span {
-            padding: 0 15px;
-            font-size: 14px;
+        .role-icon {
+            font-size: 32px;
+            color: var(--primary);
         }
         
-        /* رسائل النجاح */
-        .success-message {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
+        .role-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--dark);
         }
         
-        .success-message p {
-            color: var(--success);
-            margin-bottom: 5px;
-            font-family: 'Tajawal', sans-serif;
-        }
-        
-        .small {
+        .role-info p {
             font-size: 14px;
             color: var(--gray);
+            line-height: 1.5;
         }
         
-        .note {
-            margin-top: 15px;
-            color: var(--gray);
-            font-size: 12px;
+        /* Login Screens */
+        .login-form {
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .form-footer {
             text-align: center;
-            font-family: 'Tajawal', sans-serif;
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--gray-light);
         }
         
-        /* الواجهات العائمة */
+        .form-footer a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .form-footer a:hover {
+            text-decoration: underline;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border-right: 4px solid var(--primary);
+            animation: slideIn 0.3s ease;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .notification-icon {
+            font-size: 24px;
+        }
+        
+        .notification-success {
+            border-right-color: var(--secondary);
+        }
+        
+        .notification-error {
+            border-right-color: var(--danger);
+        }
+        
+        .notification-warning {
+            border-right-color: var(--warning);
+        }
+        
+        /* Overlay Modals */
         .overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.9);
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            z-index: 9999;
             animation: fadeIn 0.3s ease;
         }
         
-        .modal {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            width: 100%;
-            max-width: 400px;
-            animation: slideUp 0.4s ease;
-        }
-        
-        .modal-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .modal-header h3 {
-            color: var(--primary);
-            margin-bottom: 10px;
-            font-family: 'Tajawal', sans-serif;
-        }
-        
-        .modal-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .staff-access {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--gray-light);
-            font-family: 'Tajawal', sans-serif;
-        }
-        
-        .staff-access small {
-            color: var(--gray);
-        }
-        
-        .staff-access a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        
-        .staff-access a:hover {
-            text-decoration: underline;
-        }
-        
-        /* الرسوم المتحركة */
         @keyframes fadeIn {
             from { opacity: 0; }
             to { opacity: 1; }
         }
         
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .modal {
+            background: white;
+            border-radius: var(--radius-xl);
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+            animation: slideUp 0.4s ease;
         }
         
         @keyframes slideUp {
             from {
-                transform: translateY(20px);
+                transform: translateY(40px);
                 opacity: 0;
             }
             to {
@@ -377,420 +436,848 @@
             }
         }
         
-        /* إشعارات */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
+        .modal-header {
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        
+        .modal-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 8px;
+        }
+        
+        .modal-subtitle {
+            color: var(--gray);
+            font-size: 16px;
+        }
+        
+        /* Home Screen */
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .user-avatar {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: 700;
+        }
+        
+        .user-info h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: var(--dark);
+        }
+        
+        .user-info p {
+            color: var(--gray);
+            font-size: 14px;
+        }
+        
+        .verified-badge {
+            background: var(--secondary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .home-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 20px;
+        }
+        
+        .action-card {
             background: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            z-index: 99999;
-            animation: slideInRight 0.5s ease;
-            border-right: 5px solid var(--primary);
-            max-width: 300px;
-            font-family: 'Tajawal', sans-serif;
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid var(--gray-light);
         }
         
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary-light);
         }
         
-        /* التجاوبية */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .welcome-card {
-                padding: 30px 20px;
-            }
-            
-            .logo {
-                width: 80px;
-                height: 80px;
-                font-size: 40px;
-            }
-            
-            h1 {
-                font-size: 28px;
-            }
-            
-            .btn {
-                padding: 14px 20px;
-                font-size: 15px;
-            }
-            
-            .btn-large {
-                padding: 16px 24px;
-                font-size: 16px;
-            }
+        .action-icon {
+            font-size: 32px;
+            margin-bottom: 12px;
+            color: var(--primary);
         }
         
+        .action-card h4 {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--dark);
+        }
+        
+        /* Ride Request */
+        .map-container {
+            width: 100%;
+            height: 250px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            margin-bottom: 24px;
+            border: 2px solid var(--gray-light);
+        }
+        
+        .vehicle-options {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .vehicle-option {
+            border: 2px solid var(--gray-light);
+            border-radius: var(--radius);
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+        
+        .vehicle-option:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .vehicle-option.selected {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+        
+        .vehicle-icon {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+        
+        .vehicle-name {
+            font-weight: 700;
+            margin-bottom: 4px;
+            font-size: 14px;
+        }
+        
+        .vehicle-price {
+            color: var(--primary);
+            font-weight: 800;
+            font-size: 18px;
+        }
+        
+        .price-breakdown {
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+        
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .price-row:last-child {
+            border-bottom: none;
+            font-weight: 800;
+            font-size: 20px;
+            color: var(--primary);
+        }
+        
+        /* Driver Dashboard */
+        .driver-status {
+            background: var(--light);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        
+        .status-offline {
+            background: #fee2e2;
+            color: var(--danger);
+        }
+        
+        .status-online {
+            background: #dcfce7;
+            color: var(--secondary-dark);
+        }
+        
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        
+        .status-offline .status-dot {
+            background: var(--danger);
+        }
+        
+        .status-online .status-dot {
+            background: var(--secondary);
+        }
+        
+        .driver-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: var(--radius);
+            padding: 16px;
+            text-align: center;
+            border: 1px solid var(--gray-light);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+        }
+        
+        /* Responsive */
         @media (max-width: 480px) {
+            .screen {
+                padding: 16px;
+            }
+            
             .card {
-                padding: 20px 15px;
+                padding: 20px;
             }
             
-            input {
-                padding: 14px 16px;
-                font-size: 15px;
+            .vehicle-options {
+                grid-template-columns: 1fr;
             }
             
-            .notification {
-                right: 10px;
-                left: 10px;
-                max-width: none;
+            .home-actions {
+                grid-template-columns: 1fr;
             }
         }
         
-        @media (max-width: 320px) {
-            .container {
-                padding: 10px;
-            }
-            
-            .welcome-card {
-                padding: 20px 15px;
-            }
-            
-            .logo {
-                width: 70px;
-                height: 70px;
-                font-size: 35px;
-            }
-            
-            h1 {
-                font-size: 24px;
-            }
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
         }
         
-        /* تحسين العرض على الهواتف الصغيرة */
-        html, body {
-            -webkit-text-size-adjust: 100%;
-            -moz-text-size-adjust: 100%;
-            -ms-text-size-adjust: 100%;
-            text-size-adjust: 100%;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
         
-        /* تحسين أداء اللمس على الهواتف */
-        button, input, .btn {
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
+        /* Utility Classes */
+        .text-center { text-align: center; }
+        .mb-1 { margin-bottom: 8px; }
+        .mb-2 { margin-bottom: 16px; }
+        .mb-3 { margin-bottom: 24px; }
+        .mt-1 { margin-top: 8px; }
+        .mt-2 { margin-top: 16px; }
+        .mt-3 { margin-top: 24px; }
+        .p-1 { padding: 8px; }
+        .p-2 { padding: 16px; }
+        .p-3 { padding: 24px; }
     </style>
 </head>
 <body>
-
-    <!-- شاشة اختيار نوع الحساب -->
-    <div id="welcome-screen" class="container">
-        <div class="welcome-card">
-            <div class="logo-container">
-                <div class="logo">🚖</div>
-                <h1>ترحال السودان</h1>
-                <p class="tagline">رحلتك الآمنة بين يديك</p>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <h1>
+                <span class="logo">🚕</span>
+                ترحال السودان
+            </h1>
+        </header>
+        
+        <!-- Welcome Screen -->
+        <section id="welcome-screen" class="screen">
+            <div class="welcome-card card">
+                <div class="welcome-icon">🚕</div>
+                <h1 class="welcome-title">مرحباً بك في ترحال</h1>
+                <p class="welcome-subtitle">
+                    تطبيق النقل الأول في السودان. اختر طريقة دخولك للبدء
+                </p>
+                
+                <div class="role-selection">
+                    <div class="role-card" onclick="showCustomerLogin()">
+                        <div class="role-icon">👤</div>
+                        <div class="role-info">
+                            <h3>طالب رحلة</h3>
+                            <p>اطلب رحلة بسهولة وأمان من أقرب سائق لك</p>
+                        </div>
+                        <ion-icon name="chevron-forward-outline"></ion-icon>
+                    </div>
+                    
+                    <div class="role-card" onclick="showDriverLogin()">
+                        <div class="role-icon">🚗</div>
+                        <div class="role-info">
+                            <h3>سائق</h3>
+                            <p>انضم كسائق وابدأ كسب المال مع ترحال</p>
+                        </div>
+                        <ion-icon name="chevron-forward-outline"></ion-icon>
+                    </div>
+                    
+                    <div class="form-footer mt-3">
+                        <a href="admin-login.html">
+                            <ion-icon name="shield-checkmark-outline"></ion-icon>
+                            دخول الموظفين
+                        </a>
+                    </div>
+                </div>
             </div>
-            
-            <div class="welcome-buttons">
-                <button class="btn btn-primary btn-large" onclick="showSection('customer-login')">
-                    <span>👤 دخول طالب رحلة</span>
+        </section>
+        
+        <!-- Customer Login -->
+        <section id="customer-login-screen" class="screen hidden">
+            <div class="card">
+                <h2 class="card-title">
+                    <ion-icon name="person-circle-outline"></ion-icon>
+                    دخول طالب الرحلة
+                </h2>
+                
+                <form class="login-form" id="customerLoginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="customer-phone">رقم الواتساب</label>
+                        <input type="tel" id="customer-phone" class="form-input" 
+                               placeholder="ادخل رقم الواتساب" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="customer-password">كلمة المرور</label>
+                        <input type="password" id="customer-password" class="form-input" 
+                               placeholder="ادخل كلمة المرور" required>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" onclick="loginCustomer()">
+                        <ion-icon name="log-in-outline"></ion-icon>
+                        تسجيل الدخول
+                    </button>
+                </form>
+                
+                <div class="form-footer">
+                    <p>ليس لديك حساب؟ 
+                        <a href="#" onclick="showCustomerRegister()">سجل حساب الآن</a>
+                    </p>
+                    <a href="#" onclick="showWelcomeScreen()">
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة للخيارات
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Customer Registration -->
+        <section id="customer-register-screen" class="screen hidden">
+            <div class="card">
+                <h2 class="card-title">
+                    <ion-icon name="person-add-outline"></ion-icon>
+                    تسجيل حساب جديد
+                </h2>
+                
+                <form class="login-form" id="customerRegisterForm">
+                    <div class="form-group">
+                        <label class="form-label" for="register-fullname">الاسم الرباعي</label>
+                        <input type="text" id="register-fullname" class="form-input" 
+                               placeholder="الاسم الرباعي" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="register-phone">رقم الواتساب</label>
+                        <input type="tel" id="register-phone" class="form-input" 
+                               placeholder="رقم الواتساب (للتسجيل)" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="register-phone2">رقم إضافي (اختياري)</label>
+                        <input type="tel" id="register-phone2" class="form-input" 
+                               placeholder="رقم إضافي للتواصل">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="register-password">كلمة المرور</label>
+                        <input type="password" id="register-password" class="form-input" 
+                               placeholder="اختر كلمة مرور قوية" required>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" onclick="registerCustomer()">
+                        <ion-icon name="create-outline"></ion-icon>
+                        تسجيل الحساب
+                    </button>
+                </form>
+                
+                <div id="verification-section" class="hidden mt-3">
+                    <div class="card" style="background: #f0f9ff; border: 2px dashed var(--secondary);">
+                        <h3 class="mb-2" style="color: var(--secondary);">
+                            <ion-icon name="checkmark-circle-outline"></ion-icon>
+                            تم التسجيل بنجاح!
+                        </h3>
+                        <p class="mb-2">لتفعيل حسابك، يرجى الضغط على الزر أدناه لإرسال رسالة تأكيد:</p>
+                        
+                        <button type="button" class="btn btn-secondary" onclick="sendVerificationWhatsApp()">
+                            <ion-icon name="logo-whatsapp"></ion-icon>
+                            تأكيد الحساب عبر واتساب
+                        </button>
+                        
+                        <p class="mt-2" style="font-size: 14px; color: var(--gray);">
+                            بعد إرسال الرسالة، سيتم تفعيل حسابك تلقائياً خلال دقائق
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="form-footer mt-3">
+                    <a href="#" onclick="showCustomerLogin()">
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة لتسجيل الدخول
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Driver Login -->
+        <section id="driver-login-screen" class="screen hidden">
+            <div class="card">
+                <h2 class="card-title">
+                    <ion-icon name="car-sport-outline"></ion-icon>
+                    دخول السائقين
+                </h2>
+                
+                <form class="login-form" id="driverLoginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="driver-phone">رقم واتساب السائق</label>
+                        <input type="tel" id="driver-phone" class="form-input" 
+                               placeholder="رقم الواتساب المسجل" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="driver-password">كلمة المرور</label>
+                        <input type="password" id="driver-password" class="form-input" 
+                               placeholder="كلمة مرور السائق" required>
+                    </div>
+                    
+                    <button type="button" class="btn btn-driver" onclick="loginDriver()">
+                        <ion-icon name="log-in-outline"></ion-icon>
+                        دخول السائق
+                    </button>
+                </form>
+                
+                <div class="form-footer">
+                    <p>ليس لديك حساب سائق؟ 
+                        <a href="#" onclick="showDriverRegisterInfo()">سجل كسائق الآن</a>
+                    </p>
+                    <a href="#" onclick="showWelcomeScreen()">
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة للخيارات
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Driver Registration Info -->
+        <section id="driver-register-info-screen" class="screen hidden">
+            <div class="card">
+                <h2 class="card-title">
+                    <ion-icon name="information-circle-outline"></ion-icon>
+                    التسجيل كسائق
+                </h2>
+                
+                <div class="mb-3">
+                    <p>للتسجيل كسائق في تطبيق ترحال، يرجى التواصل مع إدارتنا على واتساب لإكمال عملية التسجيل:</p>
+                    
+                    <div class="p-3" style="background: #f0f9ff; border-radius: var(--radius); margin: 20px 0;">
+                        <h4 class="mb-2" style="color: var(--primary);">المستندات المطلوبة:</h4>
+                        <ul style="padding-right: 20px; line-height: 1.8;">
+                            <li>رخصة القيادة السارية</li>
+                            <li>استمارة السيارة</li>
+                            <li>صورة شخصية</li>
+                            <li>صورة السيارة من الخارج</li>
+                            <li>صورة لوحة السيارة</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-driver" onclick="contactAdminForDriverRegistration()">
+                    <ion-icon name="logo-whatsapp"></ion-icon>
+                    التواصل مع الإدارة على واتساب
                 </button>
                 
-                <button class="btn btn-driver btn-large" onclick="showSection('driver-login')">
-                    <span>🚗 دخول سائق</span>
+                <div class="form-footer mt-3">
+                    <a href="#" onclick="showDriverLogin()">
+                        <ion-icon name="arrow-back-outline"></ion-icon>
+                        العودة لتسجيل الدخول
+                    </a>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Home Screen (After Login) -->
+        <section id="home-screen" class="screen hidden">
+            <div class="user-profile">
+                <div class="user-avatar" id="user-avatar">?</div>
+                <div class="user-info">
+                    <h3 id="user-name">مرحباً</h3>
+                    <p id="user-phone-display"></p>
+                    <div id="verification-status" class="hidden mt-1">
+                        <span class="verified-badge">
+                            <ion-icon name="checkmark-circle"></ion-icon>
+                            حساب موثق
+                        </span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="home-actions">
+                <div class="action-card" onclick="requestRide()">
+                    <div class="action-icon">🚖</div>
+                    <h4>طلب رحلة</h4>
+                </div>
+                
+                <div class="action-card" onclick="showMyRides()">
+                    <div class="action-icon">📋</div>
+                    <h4>رحلاتي</h4>
+                </div>
+                
+                <div class="action-card" onclick="showWallet()">
+                    <div class="action-icon">💰</div>
+                    <h4>المحفظة</h4>
+                </div>
+                
+                <div class="action-card" onclick="showSettings()">
+                    <div class="action-icon">⚙️</div>
+                    <h4>الإعدادات</h4>
+                </div>
+            </div>
+            
+            <button class="btn btn-outline mt-3" onclick="logout()">
+                <ion-icon name="log-out-outline"></ion-icon>
+                تسجيل الخروج
+            </button>
+        </section>
+        
+        <!-- Ride Request Screen -->
+        <section id="ride-request-screen" class="screen hidden">
+            <div class="card">
+                <h2 class="card-title">
+                    <ion-icon name="navigate-outline"></ion-icon>
+                    طلب رحلة جديدة
+                </h2>
+                
+                <div class="map-container" id="ride-map">
+                    <!-- سيتم تهيئة الخريطة هنا -->
+                </div>
+                
+                <div class="mb-3">
+                    <h4 class="form-label">اختر نوع المركبة:</h4>
+                    <div class="vehicle-options">
+                        <div class="vehicle-option" data-type="tuktuk" onclick="selectVehicle('tuktuk')">
+                            <div class="vehicle-icon">🛺</div>
+                            <div class="vehicle-name">توك توك</div>
+                            <div class="vehicle-price">5,000 SDG</div>
+                        </div>
+                        
+                        <div class="vehicle-option" data-type="economy" onclick="selectVehicle('economy')">
+                            <div class="vehicle-icon">🚗</div>
+                            <div class="vehicle-name">اقتصادية</div>
+                            <div class="vehicle-price">6,000 SDG</div>
+                        </div>
+                        
+                        <div class="vehicle-option" data-type="comfort" onclick="selectVehicle('comfort')">
+                            <div class="vehicle-icon">🚙</div>
+                            <div class="vehicle-name">متوسطة</div>
+                            <div class="vehicle-price">7,000 SDG</div>
+                        </div>
+                        
+                        <div class="vehicle-option" data-type="vip" onclick="selectVehicle('vip')">
+                            <div class="vehicle-icon">⭐</div>
+                            <div class="vehicle-name">VIP</div>
+                            <div class="vehicle-price">10,000 SDG</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="price-calculation" class="price-breakdown hidden">
+                    <div class="price-row">
+                        <span>المسافة:</span>
+                        <span id="distance-display">0 كم</span>
+                    </div>
+                    <div class="price-row">
+                        <span>السعر الأساسي:</span>
+                        <span id="base-price-display">0 SDG</span>
+                    </div>
+                    <div class="price-row">
+                        <span>رسوم إضافية:</span>
+                        <span id="extra-price-display">0 SDG</span>
+                    </div>
+                    <div class="price-row">
+                        <span>المجموع:</span>
+                        <span id="total-price-display">0 SDG</span>
+                    </div>
+                </div>
+                
+                <button id="confirm-ride-btn" class="btn btn-primary" onclick="confirmRide()" disabled>
+                    <ion-icon name="search-outline"></ion-icon>
+                    بحث عن سائق
+                </button>
+                
+                <button class="btn btn-outline mt-2" onclick="goHome()">
+                    <ion-icon name="arrow-back-outline"></ion-icon>
+                    إلغاء والعودة
                 </button>
             </div>
-            
-            <div class="staff-access">
-                <small>للوصول إلى لوحة التحكم: <a href="#" onclick="showStaffAccess()">اضغط هنا</a></small>
-            </div>
-        </div>
-    </div>
-
-    <!-- شاشة تسجيل الدخول للزبون -->
-    <div id="customer-login" class="container hidden">
-        <div class="card">
-            <div class="card-header">
-                <h2>👤 تسجيل دخول طالب رحلة</h2>
-                <p>أدخل رقم الواتساب وكلمة المرور</p>
-            </div>
-            
-            <div class="form-group">
-                <input type="tel" id="customer-login-phone" placeholder="رقم الواتساب" required>
-            </div>
-            
-            <div class="form-group">
-                <input type="password" id="customer-login-password" placeholder="كلمة المرور" required>
-            </div>
-            
-            <button class="btn btn-primary" onclick="loginCustomer()">
-                <span>🚀 تسجيل الدخول</span>
-            </button>
-            
-            <div class="divider">
-                <span>أو</span>
-            </div>
-            
-            <button class="btn btn-secondary" onclick="showSection('customer-register')">
-                <span>📝 ليس لديك حساب؟ سجل حساب الآن</span>
-            </button>
-            
-            <button class="btn btn-back" onclick="showSection('welcome-screen')">
-                <span>↩️ العودة</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- شاشة تسجيل زبون جديد -->
-    <div id="customer-register" class="container hidden">
-        <div class="card">
-            <div class="card-header">
-                <h2>📝 تسجيل حساب جديد</h2>
-                <p>املأ البيانات التالية لإنشاء حساب</p>
-            </div>
-            
-            <div id="registration-form">
-                <div class="form-group">
-                    <input type="text" id="fullname" placeholder="الاسم الرباعي" required>
+        </section>
+        
+        <!-- Driver Dashboard -->
+        <section id="driver-dashboard-screen" class="screen hidden">
+            <div class="card">
+                <div class="user-profile">
+                    <div class="user-avatar" id="driver-avatar">?</div>
+                    <div class="user-info">
+                        <h3 id="driver-name">سائق</h3>
+                        <p id="driver-car-info">مركبة</p>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <input type="tel" id="phone" placeholder="رقم الواتساب" required>
+                <div class="driver-status">
+                    <div id="driver-status-indicator" class="status-indicator status-offline">
+                        <span class="status-dot"></span>
+                        <span id="driver-status-text">غير متصل</span>
+                    </div>
+                    
+                    <button id="toggle-online-btn" class="btn btn-driver" onclick="toggleDriverStatus()">
+                        <ion-icon name="power-outline"></ion-icon>
+                        تفعيل وضع العمل
+                    </button>
                 </div>
                 
-                <div class="form-group">
-                    <input type="tel" id="phone2" placeholder="رقم إضافي (اختياري)">
+                <div class="driver-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="driver-balance">0</div>
+                        <div class="stat-label">رصيدك (SDG)</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value" id="today-trips">0</div>
+                        <div class="stat-label">رحلات اليوم</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value" id="today-earnings">0</div>
+                        <div class="stat-label">أرباح اليوم</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-trips">0</div>
+                        <div class="stat-label">إجمالي الرحلات</div>
+                    </div>
                 </div>
                 
-                <div class="form-group">
-                    <input type="password" id="password" placeholder="كلمة المرور" required>
-                </div>
-                
-                <button class="btn btn-primary" id="btn-register" onclick="handleRegister()">
-                    <span>✅ تسجيل حساب جديد</span>
-                </button>
-            </div>
-            
-            <div id="verification-section" class="hidden" style="margin-top: 20px;">
-                <div class="success-message">
-                    <p>✅ تم حفظ بياناتك بنجاح!</p>
-                    <p class="small">اضغط أدناه للتفعيل عبر واتساب الإدارة:</p>
-                </div>
-                <button class="btn btn-whatsapp" id="btn-verify" onclick="sendWhatsAppMessage()">
-                    <span>💬 تأكيد الحساب عبر رقم واتساب</span>
+                <button class="btn btn-outline" onclick="showDriverProfile()">
+                    <ion-icon name="person-outline"></ion-icon>
+                    الملف الشخصي
                 </button>
                 
-                <div class="note">
-                    <small>بعد إرسال رسالة التفعيل، ستصلك رسالة تأكيد خلال دقائق</small>
-                </div>
+                <button class="btn btn-outline mt-2" onclick="logoutDriver()">
+                    <ion-icon name="log-out-outline"></ion-icon>
+                    تسجيل خروج السائق
+                </button>
             </div>
-            
-            <button class="btn btn-back" onclick="showSection('customer-login')">
-                <span>↩️ العودة لتسجيل الدخول</span>
-            </button>
-        </div>
+        </section>
     </div>
-
-    <!-- شاشة تسجيل الدخول للسائق -->
-    <div id="driver-login" class="container hidden">
-        <div class="card">
-            <div class="card-header">
-                <h2>🚗 تسجيل دخول السائق</h2>
-                <p>أدخل رقم الواتساب وكلمة المرور</p>
-            </div>
-            
-            <div class="form-group">
-                <input type="tel" id="driver-login-phone" placeholder="رقم الواتساب" required>
-            </div>
-            
-            <div class="form-group">
-                <input type="password" id="driver-login-password" placeholder="كلمة المرور" required>
-            </div>
-            
-            <button class="btn btn-driver" onclick="loginDriver()">
-                <span>🚗 دخول السائق</span>
-            </button>
-            
-            <div class="divider">
-                <span>أو</span>
-            </div>
-            
-            <button class="btn btn-secondary" onclick="openDriverRegistrationWhatsApp()">
-                <span>📋 ليس لديك حساب سائق؟ سجل كسائق الآن</span>
-            </button>
-            
-            <button class="btn btn-back" onclick="showSection('welcome-screen')">
-                <span>↩️ العودة</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- نافذة رمز التحقق للموظفين -->
-    <div id="staff-passcode-modal" class="overlay hidden">
+    
+    <!-- Modals -->
+    <div id="notification-area"></div>
+    
+    <!-- Ride Request Modal (For Driver) -->
+    <div id="incoming-ride-modal" class="overlay hidden">
         <div class="modal">
             <div class="modal-header">
-                <h3>🔒 دخول لوحة التحكم</h3>
-                <p>أدخل رمز التحقق للوصول إلى لوحة الإدارة</p>
+                <div style="font-size: 48px; margin-bottom: 16px;">🚨</div>
+                <h2 class="modal-title">طلب رحلة جديد!</h2>
+                <p class="modal-subtitle">لديك 40 ثانية للرد</p>
             </div>
             
-            <div class="form-group">
-                <input type="password" id="staff-passcode" placeholder="كلمة المرور" autocomplete="off">
+            <div class="card" style="background: #fef2f2;">
+                <div id="ride-details">
+                    <!-- سيتم تعبئة تفاصيل الرحلة هنا -->
+                </div>
             </div>
             
-            <div class="modal-actions">
-                <button class="btn btn-primary" onclick="verifyStaffPasscode()">
-                    <span>✅ تأكيد الدخول</span>
+            <div style="display: flex; gap: 12px; margin-top: 24px;">
+                <button class="btn btn-driver" onclick="acceptRide()" style="flex: 1;">
+                    <ion-icon name="checkmark-outline"></ion-icon>
+                    قبول الرحلة
                 </button>
-                <button class="btn btn-back" onclick="closeStaffPasscodeModal()">
-                    <span>↩️ إلغاء</span>
+                <button class="btn btn-danger" onclick="declineRide()" style="flex: 1;">
+                    <ion-icon name="close-outline"></ion-icon>
+                    رفض
                 </button>
+            </div>
+            
+            <div class="countdown" style="text-align: center; font-size: 32px; font-weight: 800; color: var(--danger); margin-top: 20px;">
+                40
+            </div>
+        </div>
+    </div>
+    
+    <!-- Active Trip Modal -->
+    <div id="active-trip-modal" class="overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <div style="font-size: 48px; margin-bottom: 16px;">🚗</div>
+                <h2 class="modal-title">الرحلة سارية الآن</h2>
+            </div>
+            
+            <div id="trip-details">
+                <!-- سيتم تعبئة تفاصيل الرحلة هنا -->
             </div>
         </div>
     </div>
 
-    <!-- منطقة الإشعارات -->
-    <div id="notification-area"></div>
-
     <script>
-        // إعدادات Supabase
+        // --- Supabase Configuration ---
         const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZURI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
-        const sb = window.supabase.createClient(SB_URL, SB_KEY);
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
+        const supabase = supabaseClient.createClient(SB_URL, SB_KEY);
         
-        // متغيرات عامة
+        // --- Application State ---
         let currentUser = null;
         let currentDriver = null;
+        let isDriverOnline = false;
+        let selectedVehicleType = null;
+        let rideMap = null;
+        let userMarker = null;
+        let destinationMarker = null;
+        let userPosition = null;
+        let destinationPosition = null;
+        let currentRideId = null;
+        let rideCountdownInterval = null;
+        let rideTimeout = 40;
         
-        // تهيئة التطبيق
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('تم تحميل التطبيق');
-            initApp();
-            registerServiceWorker();
-            
-            // إضافة استماع للأخطاء
-            window.addEventListener('error', function(e) {
-                console.error('حدث خطأ:', e.error);
-                showNotification('حدث خطأ في التطبيق', 'error');
-            });
+        // Vehicle prices
+        const VEHICLE_PRICES = {
+            tuktuk: { base: 5000, perKm: 2000, name: 'توك توك', icon: '🛺' },
+            economy: { base: 6000, perKm: 3000, name: 'اقتصادية', icon: '🚗' },
+            comfort: { base: 7000, perKm: 3500, name: 'متوسطة', icon: '🚙' },
+            vip: { base: 10000, perKm: 5000, name: 'VIP', icon: '⭐' }
+        };
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuth();
+            initServiceWorker();
         });
         
-        async function initApp() {
-            console.log('بدء تهيئة التطبيق...');
-            
-            // التحقق من وجود مستخدم مسجل
+        function initServiceWorker() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .catch(err => console.log('Service Worker registration failed: ', err));
+            }
+        }
+        
+        function checkAuth() {
             const savedUser = localStorage.getItem('tarhal_customer');
             const savedDriver = localStorage.getItem('tarhal_driver');
             
             if (savedDriver) {
-                console.log('تم العثور على سائق محفوظ');
-                // تحميل لوحة السائق
-                window.location.href = 'driver-dashboard.html';
+                currentDriver = JSON.parse(savedDriver);
+                showScreen('driver-dashboard-screen');
+                updateDriverDashboard();
             } else if (savedUser) {
-                console.log('تم العثور على زبون محفوظ');
-                // تحميل الصفحة الرئيسية للزبون
-                window.location.href = 'home.html';
+                currentUser = JSON.parse(savedUser);
+                showScreen('home-screen');
+                updateUserProfile();
             } else {
-                console.log('لا توجد جلسة محفوظة، عرض شاشة الترحيب');
-                // عرض شاشة الترحيب
-                showSection('welcome-screen');
+                showScreen('welcome-screen');
             }
         }
         
-        // دوال التنقل - تم تصحيحها
-        function showSection(sectionId) {
-            console.log('محاولة عرض القسم:', sectionId);
-            
-            // إخفاء جميع الحاويات
-            const containers = document.querySelectorAll('.container');
-            containers.forEach(c => {
-                c.classList.add('hidden');
-                console.log('إخفاء:', c.id);
+        // --- Screen Navigation ---
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.add('hidden');
             });
-            
-            // إخفاء الـ overlays
-            const overlays = document.querySelectorAll('.overlay');
-            overlays.forEach(o => o.classList.add('hidden'));
-            
-            // إظهار القسم المطلوب
-            const targetSection = document.getElementById(sectionId);
-            if (targetSection) {
-                targetSection.classList.remove('hidden');
-                console.log('تم إظهار:', sectionId);
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+        
+        function showWelcomeScreen() {
+            showScreen('welcome-screen');
+        }
+        
+        function showCustomerLogin() {
+            showScreen('customer-login-screen');
+        }
+        
+        function showCustomerRegister() {
+            showScreen('customer-register-screen');
+            document.getElementById('verification-section').classList.add('hidden');
+        }
+        
+        function showDriverLogin() {
+            showScreen('driver-login-screen');
+        }
+        
+        function showDriverRegisterInfo() {
+            showScreen('driver-register-info-screen');
+        }
+        
+        function goHome() {
+            if (currentUser) {
+                showScreen('home-screen');
+            } else if (currentDriver) {
+                showScreen('driver-dashboard-screen');
             } else {
-                console.error('القسم غير موجود:', sectionId);
+                showScreen('welcome-screen');
             }
         }
         
-        // دخول الموظفين
-        function showStaffAccess() {
-            console.log('فتح نافذة دخول الموظفين');
-            document.getElementById('staff-passcode-modal').classList.remove('hidden');
-        }
-        
-        function closeStaffPasscodeModal() {
-            document.getElementById('staff-passcode-modal').classList.add('hidden');
-            document.getElementById('staff-passcode').value = '';
-        }
-        
-        async function verifyStaffPasscode() {
-            const passcode = document.getElementById('staff-passcode').value;
-            console.log('التحقق من كلمة المرور...');
-            
-            if (!passcode) {
-                showNotification('الرجاء إدخال كلمة المرور', 'error');
-                return;
-            }
-            
-            try {
-                const { data: settings, error } = await sb
-                    .from('system_settings')
-                    .select('value')
-                    .eq('key', 'staff_passcode')
-                    .single();
-                
-                if (error) {
-                    console.error('خطأ في جلب كلمة المرور:', error);
-                    // إذا لم تكن كلمة المرور موجودة، استخدم الافتراضي
-                    const defaultPasscode = '123456';
-                    if (passcode === defaultPasscode) {
-                        window.location.href = 'admin-panel.html';
-                    } else {
-                        showNotification('كلمة المرور غير صحيحة', 'error');
-                    }
-                    return;
-                }
-                
-                if (settings && settings.value === passcode) {
-                    console.log('كلمة المرور صحيحة، فتح لوحة التحكم');
-                    // فتح لوحة التحكم
-                    window.location.href = 'admin-panel.html';
-                } else {
-                    showNotification('كلمة المرور غير صحيحة', 'error');
-                }
-            } catch (error) {
-                console.error('Error verifying passcode:', error);
-                showNotification('حدث خطأ في التحقق', 'error');
-            }
-        }
-        
-        // تسجيل السائق الجديد عبر واتساب
-        function openDriverRegistrationWhatsApp() {
-            const adminNumber = "249XXXXXXXXX"; // ضع رقم واتساب الإدارة هنا
-            const message = "مرحباً، أرغب في التسجيل كسائق في تطبيق ترحال";
-            const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
-            console.log('فتح رابط واتساب للتسجيل:', whatsappUrl);
-            window.open(whatsappUrl, '_blank');
-        }
-        
-        // --- دوال تسجيل الدخول والتحقق ---
-        
+        // --- Customer Functions ---
         async function loginCustomer() {
-            console.log('بدء تسجيل دخول الزبون...');
-            const phone = document.getElementById('customer-login-phone').value.trim();
-            const password = document.getElementById('customer-login-password').value;
-            
-            console.log('بيانات الإدخال:', { phone: phone.substring(0, 3) + '***', password: password ? '****' : 'فارغ' });
+            const phone = document.getElementById('customer-phone').value.trim();
+            const password = document.getElementById('customer-password').value;
             
             if (!phone || !password) {
                 showNotification('الرجاء إدخال رقم الواتساب وكلمة المرور', 'error');
@@ -798,95 +1285,72 @@
             }
             
             try {
-                const { data: customer, error } = await sb
+                const { data: customer, error } = await supabase
                     .from('customers')
                     .select('*')
                     .eq('phone', phone)
                     .single();
                 
                 if (error) {
-                    if (error.code === 'PGRST116') {
-                        showNotification('رقم الواتساب غير مسجل', 'error');
-                    } else {
-                        console.error('خطأ في جلب بيانات الزبون:', error);
-                        throw error;
-                    }
+                    showNotification('رقم الواتساب غير مسجل', 'error');
                     return;
                 }
                 
-                console.log('تم العثور على زبون:', customer.full_name);
-                
-                // التحقق من تفعيل الحساب
-                if (!customer.is_verified) {
-                    showNotification('لم تقم بتأكيد حسابك عبر رسالة واتساب للإدارة', 'error');
-                    return;
-                }
-                
-                // التحقق من كلمة المرور
                 if (customer.password !== password) {
                     showNotification('كلمة المرور غير صحيحة', 'error');
                     return;
                 }
                 
-                // حفظ بيانات المستخدم
+                if (!customer.is_verified) {
+                    showNotification('حسابك غير مفعل. يرجى تفعيل الحساب عبر واتساب الإدارة', 'warning');
+                    return;
+                }
+                
                 currentUser = customer;
                 localStorage.setItem('tarhal_customer', JSON.stringify(customer));
-                console.log('تم حفظ جلسة الزبون');
-                showNotification('مرحباً مرة أخرى! ' + customer.full_name, 'success');
                 
-                // التوجيه إلى الصفحة الرئيسية
-                setTimeout(() => {
-                    window.location.href = 'home.html';
-                }, 1500);
+                showNotification('تم تسجيل الدخول بنجاح!', 'success');
+                showScreen('home-screen');
+                updateUserProfile();
                 
             } catch (error) {
                 console.error('Login error:', error);
-                showNotification('حدث خطأ في تسجيل الدخول: ' + error.message, 'error');
+                showNotification('حدث خطأ أثناء تسجيل الدخول', 'error');
             }
         }
         
-        async function handleRegister() {
-            console.log('بدء تسجيل زبون جديد...');
-            const fullname = document.getElementById('fullname').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const phone2 = document.getElementById('phone2').value.trim();
-            const password = document.getElementById('password').value;
-            
-            console.log('بيانات التسجيل:', { 
-                fullname: fullname, 
-                phone: phone.substring(0, 3) + '***', 
-                phone2: phone2.substring(0, 3) + '***',
-                password: password ? '****' : 'فارغ' 
-            });
+        async function registerCustomer() {
+            const fullname = document.getElementById('register-fullname').value.trim();
+            const phone = document.getElementById('register-phone').value.trim();
+            const phone2 = document.getElementById('register-phone2').value.trim();
+            const password = document.getElementById('register-password').value;
             
             if (!fullname || !phone || !password) {
-                showNotification('الرجاء ملء البيانات الأساسية (الاسم، رقم الواتساب، كلمة المرور)', 'error');
+                showNotification('الرجاء ملء جميع الحقول المطلوبة', 'error');
                 return;
             }
             
-            // التحقق من صحة رقم الواتساب
-            if (phone.length < 10) {
-                showNotification('رقم الواتساب يجب أن يكون صحيحاً', 'error');
+            // Validate phone number (Sudanese format)
+            if (!phone.match(/^(?:\+249|0)[0-9]{9}$/)) {
+                showNotification('الرجاء إدخال رقم واتساب سوداني صحيح', 'error');
                 return;
             }
             
             try {
-                // التحقق من عدم تكرار رقم الواتساب
-                const { data: existingCustomer, error: checkError } = await sb
+                // Check if phone already exists
+                const { data: existingCustomer, error: checkError } = await supabase
                     .from('customers')
                     .select('id')
                     .eq('phone', phone)
                     .single();
                 
                 if (existingCustomer) {
-                    showNotification('رقم الواتساب مسجل بالفعل!', 'error');
+                    showNotification('رقم الواتساب مسجل بالفعل', 'error');
                     return;
                 }
                 
-                console.log('جاري حفظ بيانات الزبون في قاعدة البيانات...');
-                
-                // حفظ البيانات في قاعدة البيانات
-                const { data, error } = await sb
+                // Register new customer
+                const { data: newCustomer, error } = await supabase
                     .from('customers')
                     .insert([{
                         full_name: fullname,
@@ -896,69 +1360,56 @@
                         is_verified: false,
                         created_at: new Date()
                     }])
-                    .select();
+                    .select()
+                    .single();
                 
-                if (error) {
-                    console.error('خطأ في حفظ البيانات:', error);
-                    throw error;
-                }
+                if (error) throw error;
                 
-                console.log('تم حفظ البيانات بنجاح:', data);
+                // Store phone for verification
+                window.registeredPhone = phone;
                 
-                // إظهار رسالة النجاح
-                document.getElementById('registration-form').style.opacity = "0.5";
-                document.getElementById('btn-register').disabled = true;
+                // Show verification section
                 document.getElementById('verification-section').classList.remove('hidden');
+                document.getElementById('customerRegisterForm').style.opacity = '0.5';
+                document.querySelector('#customerRegisterForm button').disabled = true;
                 
-                // حفظ رقم الهاتف للاستخدام لاحقاً
-                localStorage.setItem('pending_verification_phone', phone);
-                
-                showNotification('تم حفظ بياناتك بنجاح!', 'success');
+                showNotification('تم تسجيل الحساب بنجاح! قم بتأكيد الحساب عبر واتساب', 'success');
                 
             } catch (error) {
                 console.error('Registration error:', error);
-                showNotification('حدث خطأ في التسجيل: ' + (error.message || 'بيانات غير مكتملة'), 'error');
+                showNotification('حدث خطأ أثناء التسجيل: ' + error.message, 'error');
             }
         }
         
-        // إرسال رسالة واتساب للتأكيد
-        function sendWhatsAppMessage() {
-            const phone = document.getElementById('phone').value;
-            const savedPhone = localStorage.getItem('pending_verification_phone');
-            const adminNumber = "249XXXXXXXXX"; // ضع رقم واتساب الإدارة هنا
+        function sendVerificationWhatsApp() {
+            if (!window.registeredPhone) return;
+            
+            const adminNumber = "249XXXXXXXXX"; // Replace with your admin WhatsApp number
             const message = "تفعيل ترحال زونا";
-            
-            // استخدام الرقم المحفوظ إذا كان موجوداً
-            const phoneToUse = savedPhone || phone;
-            
-            if (!phoneToUse) {
-                showNotification('لم يتم العثور على رقم الواتساب', 'error');
-                return;
-            }
-            
-            console.log('إرسال رسالة واتساب للتفعيل:', phoneToUse);
-            
-            // رابط الواتساب لفتح المحادثة وإرسال الرسالة تلقائياً
             const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
             
             window.open(whatsappUrl, '_blank');
             
-            // إظهار رسالة توضيحية
-            showNotification('برجاء إرسال رسالة التأكيد إلى واتساب الإدارة', 'info');
-            
-            // حذف الرقم المحفوظ
-            localStorage.removeItem('pending_verification_phone');
+            showNotification('تم فتح واتساب. أرسل الرسالة لتأكيد حسابك', 'info');
         }
         
-        async function loginDriver() {
-            console.log('بدء تسجيل دخول السائق...');
-            const phone = document.getElementById('driver-login-phone').value.trim();
-            const password = document.getElementById('driver-login-password').value;
+        function updateUserProfile() {
+            if (!currentUser) return;
             
-            console.log('بيانات تسجيل دخول السائق:', { 
-                phone: phone.substring(0, 3) + '***', 
-                password: password ? '****' : 'فارغ' 
-            });
+            document.getElementById('user-avatar').textContent = currentUser.full_name.charAt(0);
+            document.getElementById('user-name').textContent = currentUser.full_name;
+            document.getElementById('user-phone-display').textContent = currentUser.phone;
+            
+            // Show verification badge if verified
+            if (currentUser.is_verified) {
+                document.getElementById('verification-status').classList.remove('hidden');
+            }
+        }
+        
+        // --- Driver Functions ---
+        async function loginDriver() {
+            const phone = document.getElementById('driver-phone').value.trim();
+            const password = document.getElementById('driver-password').value;
             
             if (!phone || !password) {
                 showNotification('الرجاء إدخال رقم الواتساب وكلمة المرور', 'error');
@@ -966,20 +1417,17 @@
             }
             
             try {
-                const { data: driver, error } = await sb
+                const { data: driver, error } = await supabase
                     .from('drivers')
                     .select('*')
                     .eq('whatsapp_number', phone)
                     .eq('is_active', true)
                     .single();
                 
-                if (error || !driver) {
-                    console.error('خطأ في جلب بيانات السائق:', error);
+                if (error) {
                     showNotification('رقم الواتساب غير مسجل أو الحساب غير مفعل', 'error');
                     return;
                 }
-                
-                console.log('تم العثور على سائق:', driver.full_name);
                 
                 if (driver.password !== password) {
                     showNotification('كلمة المرور غير صحيحة', 'error');
@@ -988,184 +1436,367 @@
                 
                 currentDriver = driver;
                 localStorage.setItem('tarhal_driver', JSON.stringify(driver));
-                console.log('تم حفظ جلسة السائق');
-                showNotification('مرحباً مرة أخرى! ' + driver.full_name, 'success');
                 
-                setTimeout(() => {
-                    window.location.href = 'driver-dashboard.html';
-                }, 1500);
+                showNotification('مرحباً بعودتك أيها السائق!', 'success');
+                showScreen('driver-dashboard-screen');
+                updateDriverDashboard();
                 
             } catch (error) {
                 console.error('Driver login error:', error);
-                showNotification('حدث خطأ في الدخول', 'error');
+                showNotification('حدث خطأ أثناء تسجيل الدخول', 'error');
             }
         }
         
-        // --- وظائف مساعدة ---
+        function contactAdminForDriverRegistration() {
+            const adminNumber = "249XXXXXXXXX"; // Replace with your admin WhatsApp number
+            const message = "مرحباً، أريد التسجيل كسائق في تطبيق ترحال";
+            const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
+            
+            window.open(whatsappUrl, '_blank');
+        }
         
-        function showNotification(message, type = 'info') {
-            console.log('عرض إشعار:', type, message);
-            const notificationArea = document.getElementById('notification-area');
+        async function updateDriverDashboard() {
+            if (!currentDriver) return;
             
-            const colors = {
-                success: '#10b981',
-                error: '#ef4444',
-                warning: '#f59e0b',
-                info: '#3b82f6'
-            };
+            document.getElementById('driver-avatar').textContent = currentDriver.full_name.charAt(0);
+            document.getElementById('driver-name').textContent = currentDriver.full_name;
+            document.getElementById('driver-car-info').textContent = 
+                `${currentDriver.car_model || 'سيارة'} - ${getVehicleTypeName(currentDriver.car_type)}`;
             
-            const icons = {
-                success: '✅',
-                error: '❌',
-                warning: '⚠️',
-                info: 'ℹ️'
-            };
+            // Update balance
+            document.getElementById('driver-balance').textContent = 
+                currentDriver.balance?.toLocaleString() || '0';
             
-            const titles = {
-                success: 'نجاح',
-                error: 'خطأ',
-                warning: 'تحذير',
-                info: 'معلومة'
-            };
-            
-            // إنشاء عنصر الإشعار
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.style.borderRightColor = colors[type] || colors.info;
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="font-size: 24px;">
-                        ${icons[type] || icons.info}
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: bold; margin-bottom: 5px; color: #1f2937;">
-                            ${titles[type] || titles.info}
-                        </div>
-                        <div style="color: #4b5563; font-size: 14px;">${message}</div>
-                    </div>
-                </div>
-            `;
-            
-            // إضافة الإشعار إلى المنطقة
-            notificationArea.appendChild(notification);
-            
-            // إزالة الإشعار بعد 3 ثواني
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.style.animation = 'slideInRight 0.5s ease reverse';
-                    setTimeout(() => {
-                        if (notification.parentNode) {
-                            notification.parentNode.removeChild(notification);
-                        }
-                    }, 500);
+            // Fetch today's stats
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                const { data: rides, error } = await supabase
+                    .from('rides')
+                    .select('*')
+                    .eq('driver_id', currentDriver.id)
+                    .gte('created_at', today.toISOString())
+                    .eq('status', 'completed');
+                
+                if (!error && rides) {
+                    const todayEarnings = rides.reduce((sum, ride) => sum + (ride.driver_earnings || 0), 0);
+                    document.getElementById('today-trips').textContent = rides.length;
+                    document.getElementById('today-earnings').textContent = todayEarnings.toLocaleString();
                 }
+                
+                // Total trips
+                const { data: totalRides, error: totalError } = await supabase
+                    .from('rides')
+                    .select('id')
+                    .eq('driver_id', currentDriver.id)
+                    .eq('status', 'completed');
+                
+                if (!totalError && totalRides) {
+                    document.getElementById('total-trips').textContent = totalRides.length;
+                }
+                
+            } catch (error) {
+                console.error('Error fetching driver stats:', error);
+            }
+        }
+        
+        function toggleDriverStatus() {
+            isDriverOnline = !isDriverOnline;
+            const statusIndicator = document.getElementById('driver-status-indicator');
+            const statusText = document.getElementById('driver-status-text');
+            const toggleBtn = document.getElementById('toggle-online-btn');
+            
+            if (isDriverOnline) {
+                statusIndicator.className = 'status-indicator status-online';
+                statusText.textContent = 'متصل وجاهز';
+                toggleBtn.innerHTML = '<ion-icon name="power-outline"></ion-icon> إيقاف وضع العمل';
+                toggleBtn.classList.add('btn-danger');
+                toggleBtn.classList.remove('btn-driver');
+                
+                startDriverTracking();
+                showNotification('أنت الآن متصل وجاهز لاستقبال طلبات الركوب', 'success');
+            } else {
+                statusIndicator.className = 'status-indicator status-offline';
+                statusText.textContent = 'غير متصل';
+                toggleBtn.innerHTML = '<ion-icon name="power-outline"></ion-icon> تفعيل وضع العمل';
+                toggleBtn.classList.remove('btn-danger');
+                toggleBtn.classList.add('btn-driver');
+                
+                stopDriverTracking();
+                showNotification('تم إيقاف وضع العمل', 'info');
+            }
+        }
+        
+        function startDriverTracking() {
+            // In a real app, this would use geolocation API
+            showNotification('بدأ تتبع موقعك...', 'info');
+        }
+        
+        function stopDriverTracking() {
+            // Stop tracking logic
+        }
+        
+        // --- Ride Functions ---
+        function requestRide() {
+            showScreen('ride-request-screen');
+            initRideMap();
+        }
+        
+        function initRideMap() {
+            if (rideMap) {
+                rideMap.remove();
+            }
+            
+            // Initialize map (using Leaflet)
+            rideMap = L.map('ride-map').setView([15.5007, 32.5599], 12);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(rideMap);
+            
+            // Get user location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition((position) => {
+                    userPosition = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    rideMap.setView([userPosition.lat, userPosition.lng], 15);
+                    
+                    // Add user marker
+                    userMarker = L.marker([userPosition.lat, userPosition.lng], {
+                        icon: L.divIcon({
+                            html: '<div style="background: #4f46e5; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>'
+                        })
+                    }).addTo(rideMap).bindPopup('موقعك الحالي');
+                    
+                    // Add click listener for destination
+                    rideMap.on('click', (e) => {
+                        setDestination(e.latlng.lat, e.latlng.lng);
+                    });
+                    
+                }, (error) => {
+                    showNotification('الرجاء السماح بالوصول للموقع الجغرافي', 'warning');
+                });
+            }
+        }
+        
+        function setDestination(lat, lng) {
+            destinationPosition = { lat, lng };
+            
+            if (destinationMarker) {
+                destinationMarker.setLatLng([lat, lng]);
+            } else {
+                destinationMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        html: '<div style="background: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>'
+                    })
+                }).addTo(rideMap).bindPopup('نقطة الوصول');
+                
+                // Draw route line
+                if (userMarker) {
+                    L.polyline([
+                        [userPosition.lat, userPosition.lng],
+                        [lat, lng]
+                    ], {
+                        color: '#4f46e5',
+                        weight: 3,
+                        opacity: 0.7,
+                        dashArray: '10, 10'
+                    }).addTo(rideMap);
+                }
+            }
+            
+            if (selectedVehicleType) {
+                calculateRidePrice();
+            }
+        }
+        
+        function selectVehicle(type) {
+            selectedVehicleType = type;
+            
+            // Update UI
+            document.querySelectorAll('.vehicle-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.querySelector(`.vehicle-option[data-type="${type}"]`).classList.add('selected');
+            
+            if (destinationPosition) {
+                calculateRidePrice();
+            }
+        }
+        
+        function calculateRidePrice() {
+            if (!userPosition || !destinationPosition || !selectedVehicleType) return;
+            
+            // Calculate distance (simplified)
+            const latDiff = destinationPosition.lat - userPosition.lat;
+            const lngDiff = destinationPosition.lng - userPosition.lng;
+            const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111;
+            
+            const vehicle = VEHICLE_PRICES[selectedVehicleType];
+            const additionalKm = Math.max(0, distance - 1);
+            const basePrice = vehicle.base;
+            const extraPrice = additionalKm * vehicle.perKm;
+            const totalPrice = basePrice + extraPrice;
+            
+            // Show price breakdown
+            document.getElementById('price-calculation').classList.remove('hidden');
+            document.getElementById('distance-display').textContent = `${distance.toFixed(1)} كم`;
+            document.getElementById('base-price-display').textContent = `${basePrice.toLocaleString()} SDG`;
+            document.getElementById('extra-price-display').textContent = `${extraPrice.toLocaleString()} SDG`;
+            document.getElementById('total-price-display').textContent = `${totalPrice.toLocaleString()} SDG`;
+            
+            document.getElementById('confirm-ride-btn').disabled = false;
+        }
+        
+        async function confirmRide() {
+            if (!selectedVehicleType || !destinationPosition) {
+                showNotification('الرجاء تحديد الوجهة واختيار نوع المركبة', 'warning');
+                return;
+            }
+            
+            showNotification('جاري البحث عن سائق قريب...', 'info');
+            
+            // In a real app, this would search for nearby drivers
+            setTimeout(() => {
+                showNotification('تم العثور على سائق! جاري الاتصال...', 'success');
+                // Simulate finding a driver
+                setTimeout(() => {
+                    showActiveRideModal();
+                }, 2000);
             }, 3000);
         }
         
-        // تسجيل Service Worker
-        function registerServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('/service-worker.js')
-                        .then(registration => {
-                            console.log('Service Worker registered successfully:', registration.scope);
-                            
-                            // التحقق من التحديثات
-                            registration.addEventListener('updatefound', () => {
-                                const newWorker = registration.installing;
-                                console.log('Service Worker update found:', newWorker.state);
-                                
-                                newWorker.addEventListener('statechange', () => {
-                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                        console.log('New service worker installed, showing update prompt');
-                                        // عرض رسالة للمستخدم حول التحديث المتاح
-                                        if (confirm('تحديث جديد متاح. هل تريد تحديث التطبيق؟')) {
-                                            newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                            window.location.reload();
-                                        }
-                                    }
-                                });
-                            });
-                        })
-                        .catch(error => {
-                            console.log('Service Worker registration failed:', error);
-                        });
-                });
-            } else {
-                console.log('Service Worker not supported');
-            }
+        function showActiveRideModal() {
+            // Show modal with ride details
+            const modal = document.getElementById('active-trip-modal');
+            modal.classList.remove('hidden');
+            
+            // Add trip details
+            const tripDetails = document.getElementById('trip-details');
+            tripDetails.innerHTML = `
+                <div class="card mb-3">
+                    <div class="price-row">
+                        <span>نوع المركبة:</span>
+                        <span>${VEHICLE_PRICES[selectedVehicleType].name}</span>
+                    </div>
+                    <div class="price-row">
+                        <span>السائق:</span>
+                        <span>محمد أحمد</span>
+                    </div>
+                    <div class="price-row">
+                        <span>رقم السائق:</span>
+                        <span>+249 90 123 4567</span>
+                    </div>
+                    <div class="price-row" style="font-weight: 800; color: var(--primary);">
+                        <span>المجموع:</span>
+                        <span id="total-price-display">10,000 SDG</span>
+                    </div>
+                </div>
+                
+                <div class="mb-3">
+                    <button class="btn btn-secondary" onclick="cancelRide()">
+                        <ion-icon name="close-outline"></ion-icon>
+                        إلغاء الرحلة
+                    </button>
+                </div>
+                
+                <p style="text-align: center; color: var(--gray); font-size: 14px;">
+                    سيتم اتصالك بالسائق خلال ثوانٍ
+                </p>
+            `;
         }
         
-        // طلب إذن الإشعارات
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission().then(permission => {
-                    console.log('Notification permission:', permission);
-                });
-            }
+        // --- Helper Functions ---
+        function getVehicleTypeName(type) {
+            const names = {
+                tuktuk: 'توك توك',
+                economy: 'اقتصادية',
+                comfort: 'متوسطة',
+                vip: 'VIP'
+            };
+            return names[type] || type;
         }
         
-        // استدعاء طلب الإذن عند تحميل الصفحة
-        requestNotificationPermission();
+        function showNotification(message, type = 'info') {
+            const notificationArea = document.getElementById('notification-area');
+            
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            else if (type === 'error') icon = '❌';
+            else if (type === 'warning') icon = '⚠️';
+            
+            notification.innerHTML = `
+                <div class="notification-icon">${icon}</div>
+                <div>${message}</div>
+            `;
+            
+            notificationArea.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateY(-20px)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
         
-        // تصحيح مشكلة عدم ظهور الأزرار (إضافة تحميل إضافي)
-        window.addEventListener('load', function() {
-            console.log('صفحة محملة بالكامل');
-            
-            // إعادة تعيين display للعناصر المخفية
-            const hiddenElements = document.querySelectorAll('.hidden');
-            hiddenElements.forEach(el => {
-                if (el.style.display !== 'none') {
-                    el.style.display = 'none';
-                }
-            });
-            
-            // إظهار شاشة الترحيب إذا لم يكن هناك قسم ظاهر
-            const visibleSections = Array.from(document.querySelectorAll('.container')).filter(
-                el => !el.classList.contains('hidden')
-            );
-            
-            if (visibleSections.length === 0) {
-                console.log('لا توجد أقسام ظاهرة، عرض شاشة الترحيب');
-                showSection('welcome-screen');
+        function logout() {
+            localStorage.removeItem('tarhal_customer');
+            currentUser = null;
+            showScreen('welcome-screen');
+            showNotification('تم تسجيل الخروج بنجاح', 'success');
+        }
+        
+        function logoutDriver() {
+            if (isDriverOnline) {
+                toggleDriverStatus();
             }
-        });
+            localStorage.removeItem('tarhal_driver');
+            currentDriver = null;
+            showScreen('welcome-screen');
+            showNotification('تم تسجيل خروج السائق', 'success');
+        }
         
-        // إضافة استماع لأخطاء الروابط
-        document.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', function(e) {
-                if (this.getAttribute('href') === '#') {
-                    e.preventDefault();
-                }
-            });
-        });
+        // Placeholder functions for other features
+        function showMyRides() {
+            showNotification('قريباً: عرض الرحلات السابقة', 'info');
+        }
         
-        // إصلاح مشكلة عرض النصوص والأيقونات
-        setTimeout(() => {
-            console.log('فحص عناصر واجهة المستخدم...');
-            
-            // التحقق من ظهور الأزرار
-            const buttons = document.querySelectorAll('button');
-            console.log('عدد الأزرار:', buttons.length);
-            buttons.forEach((btn, index) => {
-                console.log(`زر ${index}:`, {
-                    text: btn.textContent,
-                    display: getComputedStyle(btn).display,
-                    visibility: getComputedStyle(btn).visibility
-                });
-            });
-            
-            // إضافة خط Tajawal للعناصر التي قد تفتقده
-            const textElements = document.querySelectorAll('h1, h2, h3, p, span, button, input, label');
-            textElements.forEach(el => {
-                if (!el.style.fontFamily.includes('Tajawal')) {
-                    el.style.fontFamily = "'Tajawal', sans-serif";
-                }
-            });
-        }, 500);
+        function showWallet() {
+            showNotification('قريباً: المحفظة الإلكترونية', 'info');
+        }
         
-        // التهيئة النهائية
-        console.log('التطبيق جاهز للاستخدام');
+        function showSettings() {
+            showNotification('قريباً: إعدادات الحساب', 'info');
+        }
+        
+        function showDriverProfile() {
+            showNotification('قريباً: الملف الشخصي للسائق', 'info');
+        }
+        
+        function cancelRide() {
+            document.getElementById('active-trip-modal').classList.add('hidden');
+            showNotification('تم إلغاء الرحلة', 'info');
+            goHome();
+        }
+        
+        function acceptRide() {
+            document.getElementById('incoming-ride-modal').classList.add('hidden');
+            showNotification('تم قبول الرحلة بنجاح', 'success');
+            showActiveRideModal();
+        }
+        
+        function declineRide() {
+            document.getElementById('incoming-ride-modal').classList.add('hidden');
+            showNotification('تم رفض الرحلة', 'info');
+        }
     </script>
 </body>
 </html>
