@@ -1,35 +1,30 @@
-const CACHE_NAME = 'tarhal-v1.0.3'; // زد الرقم عند تحديثات مستقبلية
+const CACHE_NAME = 'tarhal-v1.0.4'; // تم تحديث الإصدار
 
 const urlsToCache = [
   './',
-  'index.html',
-  'admin-login.html',
-  'manifest.json',
-  // المسارات نسبية لتجنب مشاكل النشر في مسارات فرعية
-  'icons/icon-192x192.png',
-  'icons/icon-384x384.png',
-  'icons/icon-512x512.png'
+  './index.html',
+  './admin-login.html',
+  './manifest.json',
+  './icons/icon-192x192.png',
+  './icons/icon-384x384.png',
+  './icons/icon-512x512.png'
 ];
 
-// Install - خزّن الملفات الأساسية لكن لا تفشل لو مورد غير موجود
+// Install - مع معالجة أفضل للأخطاء
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(async cache => {
-      const promises = urlsToCache.map(async url => {
-        try {
-          const response = await fetch(url, { cache: 'no-cache' });
-          if (response && response.ok) {
-            await cache.put(url, response.clone());
-            console.log('Cached:', url);
-          } else {
-            console.warn('Resource not cached (not ok):', url, response && response.status);
-          }
-        } catch (err) {
-          console.warn('Resource failed to fetch (skipped):', url, err);
-        }
-      });
-      await Promise.all(promises);
-    })
+    (async () => {
+      const cache = await caches.open(CACHE_NAME);
+      
+      // محاولة إضافة جميع الموارد دون أن يفشل التثبيت
+      try {
+        await cache.addAll(urlsToCache);
+        console.log('All resources cached successfully');
+      } catch (error) {
+        console.log('Some resources failed to cache:', error);
+        // لا نرمي خطأ هنا حتى لا يفشل التثبيت
+      }
+    })()
   );
   self.skipWaiting();
 });
@@ -51,30 +46,55 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch - استرجاع من الكاش أولاً ثم الشبكة، وتخزين آمن للملفات الناجحة فقط
+// Fetch - استراتيجية Cache First مع fallback
 self.addEventListener('fetch', event => {
-  // تعامل فقط مع GET ومن نفس الأصل
-  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) return;
-
+  // تجاهل طلبات POST وغير GET
+  if (event.request.method !== 'GET') return;
+  
+  // تجاهل الطلبات من مصادر خارجية
+  if (!event.request.url.startsWith(self.location.origin)) return;
+  
   event.respondWith(
-    caches.match(event.request).then(async cachedResponse => {
-      if (cachedResponse) return cachedResponse;
-
+    (async () => {
+      // حاول أولاً الحصول من الكاش
+      const cachedResponse = await caches.match(event.request);
+      
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+      
       try {
+        // إذا لم يكن في الكاش، جلب من الشبكة
         const networkResponse = await fetch(event.request);
-        // خزّن في الكاش فقط إذا كانت الاستجابة ناجحة وصالحة
-        if (networkResponse && networkResponse.ok) {
+        
+        // تحقق من أن الرد صالح للتخزين المؤقت
+        if (networkResponse.status === 200) {
           const cache = await caches.open(CACHE_NAME);
           cache.put(event.request, networkResponse.clone());
         }
+        
         return networkResponse;
-      } catch (err) {
-        // إذا فشل الشبكة، وللطلبات الوثائقية أعد index.html
-        if (event.request.destination === 'document' || event.request.mode === 'navigate') {
-          return caches.match('index.html');
+      } catch (error) {
+        // إذا فشل الاتصال بالشبكة
+        if (event.request.destination === 'document' || 
+            event.request.mode === 'navigate') {
+          // للصفحات، ارجع إلى index.html
+          return caches.match('./index.html');
         }
-        return new Response('', { status: 503, statusText: 'Service Unavailable' });
+        
+        // للصور والملفات الأخرى، ارجع رد افتراضي
+        return new Response('Network error occurred', {
+          status: 503,
+          statusText: 'Service Unavailable'
+        });
       }
-    })
+    })()
   );
+});
+
+// Listen for messages
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
