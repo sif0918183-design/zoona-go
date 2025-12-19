@@ -1,33 +1,40 @@
-const CACHE_NAME = 'tarhal-v1.0.2'; // قم بزيادة الرقم عند كل تحديث كبير
+const CACHE_NAME = 'tarhal-v1.0.3'; // زد الرقم عند تحديثات مستقبلية
 
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/admin-login.html',
-  '/manifest.json',
-  // تم حذف service-worker.js من هنا لضمان التحديث السلس
-  '/icons/icon-72x72.png',
-  '/icons/icon-96x96.png',
-  '/icons/icon-128x128.png',
-  '/icons/icon-144x144.png',
-  '/icons/icon-152x152.png',
-  '/icons/icon-192x192.png',
-  '/icons/icon-384x384.png',
-  '/icons/icon-512x512.png'
+  './',
+  'index.html',
+  'admin-login.html',
+  'manifest.json',
+  // المسارات نسبية لتجنب مشاكل النشر في مسارات فرعية
+  'icons/icon-192x192.png',
+  'icons/icon-384x384.png',
+  'icons/icon-512x512.png'
 ];
 
-// Install - تخزين الملفات الأساسية فقط
+// Install - خزّن الملفات الأساسية لكن لا تفشل لو مورد غير موجود
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('Caching shell assets');
-      return cache.addAll(urlsToCache);
+    caches.open(CACHE_NAME).then(async cache => {
+      const promises = urlsToCache.map(async url => {
+        try {
+          const response = await fetch(url, { cache: 'no-cache' });
+          if (response && response.ok) {
+            await cache.put(url, response.clone());
+            console.log('Cached:', url);
+          } else {
+            console.warn('Resource not cached (not ok):', url, response && response.status);
+          }
+        } catch (err) {
+          console.warn('Resource failed to fetch (skipped):', url, err);
+        }
+      });
+      await Promise.all(promises);
     })
   );
   self.skipWaiting();
 });
 
-// Activate - تنظيف الكاش القديم
+// Activate - حذف الكاش القديم
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(cacheNames => {
@@ -44,26 +51,29 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// Fetch - استراتيجية ذكية
+// Fetch - استرجاع من الكاش أولاً ثم الشبكة، وتخزين آمن للملفات الناجحة فقط
 self.addEventListener('fetch', event => {
-  // تجاهل الطلبات من خارج الموقع (مثل إحصائيات جوجل)
-  if (!event.request.url.startsWith(self.location.origin)) return;
+  // تعامل فقط مع GET ومن نفس الأصل
+  if (event.request.method !== 'GET' || !event.request.url.startsWith(self.location.origin)) return;
 
   event.respondWith(
-    caches.match(event.request).then(response => {
-      // إذا وجد في الكاش ارجعه، وإلا اطلبه من الشبكة
-      return response || fetch(event.request).then(fetchResponse => {
-        // لا تقم بتخزين طلبات الـ API أو الصفحات الديناميكية هنا إلا بحذر
-        return caches.open(CACHE_NAME).then(cache => {
-          // تخزين نسخة من الملف الجديد في الكاش للمرة القادمة
-          cache.put(event.request, fetchResponse.clone());
-          return fetchResponse;
-        });
-      });
-    }).catch(() => {
-      // إذا انقطع الإنترنت تماماً والملف غير موجود
-      if (event.request.destination === 'document') {
-        return caches.match('/index.html');
+    caches.match(event.request).then(async cachedResponse => {
+      if (cachedResponse) return cachedResponse;
+
+      try {
+        const networkResponse = await fetch(event.request);
+        // خزّن في الكاش فقط إذا كانت الاستجابة ناجحة وصالحة
+        if (networkResponse && networkResponse.ok) {
+          const cache = await caches.open(CACHE_NAME);
+          cache.put(event.request, networkResponse.clone());
+        }
+        return networkResponse;
+      } catch (err) {
+        // إذا فشل الشبكة، وللطلبات الوثائقية أعد index.html
+        if (event.request.destination === 'document' || event.request.mode === 'navigate') {
+          return caches.match('index.html');
+        }
+        return new Response('', { status: 503, statusText: 'Service Unavailable' });
       }
     })
   );
