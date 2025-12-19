@@ -1,14 +1,22 @@
 {
-  "name": "ترحال السودان",
-  "short_name": "ترحال",
-  "description": "تطبيق النقل الأول في السودان",
+   "name": "ترحال زونا السودان ",
+  "short_name": "ترحال زونا ",
+  "description": "تطبيق النقل الأول في السودان" "lang": "ar",
+  "dir": "rtl",
   "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "display": "standalone",
+  "display_override": [
+    "standalone",
+    "fullscreen",
+    "minimal-ui",
+    "window-controls-overlay",
+    "tabbed"
+  ],
   "background_color": "#4f46e5",
   "theme_color": "#4f46e5",
   "orientation": "portrait",
-  "dir": "rtl",
-  "lang": "ar",
   "icons": [
     {
       "src": "/icons/icon-72x72.png",
