@@ -8,366 +8,20 @@
     <!-- إعدادات PWA -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
-    
+    <link rel="icon" href="data:,"> 
+
     <!-- مكتبات خارجية -->
+    <script src="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.x/dist/maplibre-gl.css" rel="stylesheet" />
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- خط Tajawal -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     
     <!-- ملفات التطبيق -->
     <link rel="stylesheet" href="css/main.css">
-    <style>
-        /* أنماط إضافية للصفحة الرئيسية */
-        .container {
-            width: 100%;
-            max-width: 500px;
-            margin: 0 auto;
-            padding: 20px;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        
-        .hidden {
-            display: none !important;
-        }
-        
-        .welcome-card {
-            background: white;
-            border-radius: 24px;
-            padding: 40px 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-            text-align: center;
-            animation: fadeInUp 0.6s ease;
-        }
-        
-        .logo-container {
-            margin-bottom: 40px;
-        }
-        
-        .logo {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, var(--primary), var(--secondary));
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 20px;
-            color: white;
-            font-size: 48px;
-            box-shadow: 0 10px 30px rgba(79, 70, 229, 0.3);
-        }
-        
-        h1 {
-            color: var(--primary);
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 10px;
-        }
-        
-        .tagline {
-            color: var(--gray);
-            font-size: 16px;
-            margin-bottom: 10px;
-        }
-        
-        .welcome-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 30px;
-        }
-        
-        .btn {
-            padding: 16px 24px;
-            border-radius: 12px;
-            border: none;
-            font-family: 'Tajawal', sans-serif;
-            font-weight: 500;
-            cursor: pointer;
-            color: white;
-            transition: all 0.3s ease;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            width: 100%;
-        }
-        
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-        }
-        
-        .btn-large {
-            padding: 18px 28px;
-            font-size: 18px;
-        }
-        
-        .btn-primary {
-            background: var(--primary);
-        }
-        
-        .btn-driver {
-            background: var(--driver);
-        }
-        
-        .btn-secondary {
-            background: var(--secondary);
-        }
-        
-        .btn-whatsapp {
-            background: #25D366;
-        }
-        
-        .btn-back {
-            background: var(--gray-light);
-            color: var(--gray);
-        }
-        
-        .card {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-            animation: slideUp 0.4s ease;
-        }
-        
-        .card-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .card-header h2 {
-            color: var(--primary);
-            font-size: 24px;
-            margin-bottom: 10px;
-        }
-        
-        .card-header p {
-            color: var(--gray);
-            font-size: 14px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        input {
-            width: 100%;
-            padding: 16px 20px;
-            border: 2px solid var(--gray-light);
-            border-radius: 12px;
-            font-family: 'Tajawal', sans-serif;
-            font-size: 16px;
-            background: var(--light);
-            transition: all 0.3s;
-        }
-        
-        input:focus {
-            outline: none;
-            border-color: var(--primary);
-            background: white;
-            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
-        }
-        
-        .divider {
-            display: flex;
-            align-items: center;
-            margin: 20px 0;
-            color: var(--gray);
-        }
-        
-        .divider::before,
-        .divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--gray-light);
-        }
-        
-        .divider span {
-            padding: 0 15px;
-            font-size: 14px;
-        }
-        
-        .success-message {
-            background: #f0fdf4;
-            border: 1px solid #bbf7d0;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-        }
-        
-        .success-message p {
-            color: var(--success);
-            margin-bottom: 5px;
-        }
-        
-        .small {
-            font-size: 14px;
-            color: var(--gray);
-        }
-        
-        .note {
-            margin-top: 15px;
-            color: var(--gray);
-            font-size: 12px;
-            text-align: center;
-        }
-        
-        .overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.9);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            z-index: 9999;
-            animation: fadeIn 0.3s ease;
-        }
-        
-        .modal {
-            background: white;
-            border-radius: 20px;
-            padding: 30px;
-            width: 100%;
-            max-width: 400px;
-            animation: slideUp 0.4s ease;
-        }
-        
-        .modal-header {
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        
-        .modal-header h3 {
-            color: var(--primary);
-            margin-bottom: 10px;
-        }
-        
-        .modal-actions {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        
-        .staff-access {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--gray-light);
-        }
-        
-        .staff-access small {
-            color: var(--gray);
-        }
-        
-        .staff-access a {
-            color: var(--primary);
-            text-decoration: none;
-            font-weight: 500;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        @keyframes slideUp {
-            from {
-                transform: translateY(20px);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-        
-        /* إشعارات */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: white;
-            padding: 15px 20px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-            z-index: 99999;
-            animation: slideInRight 0.5s ease;
-            border-right: 5px solid var(--primary);
-            max-width: 300px;
-            font-family: 'Tajawal', sans-serif;
-        }
-        
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        /* التجاوبية */
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-            
-            .welcome-card {
-                padding: 30px 20px;
-            }
-            
-            .logo {
-                width: 80px;
-                height: 80px;
-                font-size: 40px;
-            }
-            
-            h1 {
-                font-size: 28px;
-            }
-            
-            .btn {
-                padding: 14px 20px;
-                font-size: 15px;
-            }
-            
-            .btn-large {
-                padding: 16px 24px;
-                font-size: 16px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .card {
-                padding: 20px 15px;
-            }
-            
-            input {
-                padding: 14px 16px;
-                font-size: 15px;
-            }
-        }
-    </style>
 </head>
 <body>
 
@@ -514,6 +168,14 @@
         </div>
     </div>
 
+    <!-- باقي الأقسام كما هي في الكود الأصلي (Home Screen, Ride Request, Driver Dashboard, etc.) -->
+    <!-- سيتم نقلها إلى ملفات منفصلة -->
+    <div id="home-screen" class="container hidden"></div>
+    <div id="ride-request" class="container hidden"></div>
+    <div id="driver-dashboard" class="container hidden"></div>
+    <div id="active-trip-overlay" class="overlay hidden"></div>
+    <div id="incoming-ride-overlay" class="overlay hidden"></div>
+
     <!-- نافذة رمز التحقق للموظفين -->
     <div id="staff-passcode-modal" class="overlay hidden">
         <div class="modal">
@@ -540,6 +202,7 @@
     <!-- منطقة الإشعارات -->
     <div id="notification-area"></div>
 
+    <!-- ملفات JavaScript -->
     <script>
         // إعدادات Supabase
         const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
@@ -549,11 +212,18 @@
         // متغيرات عامة
         let currentUser = null;
         let currentDriver = null;
-        
+    </script>
+    
+    <script src="js/auth.js"></script>
+    <script src="js/map.js"></script>
+    <script src="js/ride.js"></script>
+    <script src="js/driver.js"></script>
+    <script src="js/notifications.js"></script>
+    
+    <script>
         // تهيئة التطبيق
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
-            registerServiceWorker();
         });
         
         async function initApp() {
@@ -621,302 +291,11 @@
             window.open(whatsappUrl, '_blank');
         }
         
-        // --- دوال تسجيل الدخول والتحقق ---
-        
-        async function loginCustomer() {
-            const phone = document.getElementById('customer-login-phone').value.trim();
-            const password = document.getElementById('customer-login-password').value;
-            
-            if (!phone || !password) {
-                showNotification('الرجاء إدخال رقم الواتساب وكلمة المرور', 'error');
-                return;
-            }
-            
-            try {
-                const { data: customer, error } = await supabase
-                    .from('customers')
-                    .select('*')
-                    .eq('phone', phone)
-                    .single();
-                
-                if (error) {
-                    if (error.code === 'PGRST116') {
-                        showNotification('رقم الواتساب غير مسجل', 'error');
-                    } else {
-                        throw error;
-                    }
-                    return;
-                }
-                
-                // التحقق من تفعيل الحساب
-                if (!customer.is_verified) {
-                    showNotification('لم تقم بتأكيد حسابك عبر رسالة واتساب للإدارة', 'error');
-                    return;
-                }
-                
-                // التحقق من كلمة المرور
-                if (customer.password !== password) {
-                    showNotification('كلمة المرور غير صحيحة', 'error');
-                    return;
-                }
-                
-                // حفظ بيانات المستخدم
-                currentUser = customer;
-                localStorage.setItem('tarhal_customer', JSON.stringify(customer));
-                showNotification('مرحباً مرة أخرى!', 'success');
-                
-                // التوجيه إلى الصفحة الرئيسية
-                setTimeout(() => {
-                    window.location.href = 'home.html';
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Login error:', error);
-                showNotification('حدث خطأ في تسجيل الدخول', 'error');
-            }
-        }
-        
-        async function handleRegister() {
-            const fullname = document.getElementById('fullname').value.trim();
-            const phone = document.getElementById('phone').value.trim();
-            const phone2 = document.getElementById('phone2').value.trim();
-            const password = document.getElementById('password').value;
-            
-            if (!fullname || !phone || !password) {
-                showNotification('الرجاء ملء البيانات الأساسية (الاسم، رقم الواتساب، كلمة المرور)', 'error');
-                return;
-            }
-            
-            // التحقق من صحة رقم الواتساب
-            if (phone.length < 10) {
-                showNotification('رقم الواتساب يجب أن يكون صحيحاً', 'error');
-                return;
-            }
-            
-            try {
-                // التحقق من عدم تكرار رقم الواتساب
-                const { data: existingCustomer, error: checkError } = await supabase
-                    .from('customers')
-                    .select('id')
-                    .eq('phone', phone)
-                    .single();
-                
-                if (existingCustomer) {
-                    showNotification('رقم الواتساب مسجل بالفعل!', 'error');
-                    return;
-                }
-                
-                // حفظ البيانات في قاعدة البيانات
-                const { data, error } = await supabase
-                    .from('customers')
-                    .insert([{
-                        full_name: fullname,
-                        phone: phone,
-                        phone2: phone2 || null,
-                        password: password,
-                        is_verified: false,
-                        created_at: new Date()
-                    }])
-                    .select();
-                
-                if (error) throw error;
-                
-                // إظهار رسالة النجاح
-                document.getElementById('registration-form').style.opacity = "0.5";
-                document.getElementById('btn-register').disabled = true;
-                document.getElementById('verification-section').classList.remove('hidden');
-                
-                // حفظ رقم الهاتف للاستخدام لاحقاً
-                localStorage.setItem('pending_verification_phone', phone);
-                
-                showNotification('تم حفظ بياناتك بنجاح!', 'success');
-                
-            } catch (error) {
-                console.error('Registration error:', error);
-                showNotification('حدث خطأ في التسجيل: ' + (error.message || 'بيانات غير مكتملة'), 'error');
-            }
-        }
-        
-        // إرسال رسالة واتساب للتأكيد
-        function sendWhatsAppMessage() {
-            const phone = document.getElementById('phone').value;
-            const savedPhone = localStorage.getItem('pending_verification_phone');
-            const adminNumber = "249XXXXXXXXX"; // ضع رقم واتساب الإدارة هنا
-            const message = "تفعيل ترحال زونا";
-            
-            // استخدام الرقم المحفوظ إذا كان موجوداً
-            const phoneToUse = savedPhone || phone;
-            
-            if (!phoneToUse) {
-                showNotification('لم يتم العثور على رقم الواتساب', 'error');
-                return;
-            }
-            
-            // رابط الواتساب لفتح المحادثة وإرسال الرسالة تلقائياً
-            const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
-            
-            window.open(whatsappUrl, '_blank');
-            
-            // إظهار رسالة توضيحية
-            showNotification('برجاء إرسال رسالة التأكيد إلى واتساب الإدارة', 'info');
-            
-            // حذف الرقم المحفوظ
-            localStorage.removeItem('pending_verification_phone');
-        }
-        
-        async function loginDriver() {
-            const phone = document.getElementById('driver-login-phone').value.trim();
-            const password = document.getElementById('driver-login-password').value;
-            
-            if (!phone || !password) {
-                showNotification('الرجاء إدخال رقم الواتساب وكلمة المرور', 'error');
-                return;
-            }
-            
-            try {
-                const { data: driver, error } = await supabase
-                    .from('drivers')
-                    .select('*')
-                    .eq('whatsapp_number', phone)
-                    .eq('is_active', true)
-                    .single();
-                
-                if (error || !driver) {
-                    showNotification('رقم الواتساب غير مسجل أو الحساب غير مفعل', 'error');
-                    return;
-                }
-                
-                if (driver.password !== password) {
-                    showNotification('كلمة المرور غير صحيحة', 'error');
-                    return;
-                }
-                
-                currentDriver = driver;
-                localStorage.setItem('tarhal_driver', JSON.stringify(driver));
-                showNotification('مرحباً مرة أخرى!', 'success');
-                
-                setTimeout(() => {
-                    window.location.href = 'driver-dashboard.html';
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Driver login error:', error);
-                showNotification('حدث خطأ في الدخول', 'error');
-            }
-        }
-        
-        // --- وظائف مساعدة ---
-        
+        // وظيفة عرض الإشعارات (سيتم تفصيلها في notifications.js)
         function showNotification(message, type = 'info') {
-            const notificationArea = document.getElementById('notification-area');
-            
-            const colors = {
-                success: '#10b981',
-                error: '#ef4444',
-                warning: '#f59e0b',
-                info: '#3b82f6'
-            };
-            
-            const icons = {
-                success: '✅',
-                error: '❌',
-                warning: '⚠️',
-                info: 'ℹ️'
-            };
-            
-            const notification = document.createElement('div');
-            notification.className = 'notification';
-            notification.style.borderRightColor = colors[type] || colors.info;
-            notification.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 10px;">
-                    <div style="font-size: 24px;">
-                        ${icons[type] || icons.info}
-                    </div>
-                    <div style="flex: 1;">
-                        <div style="font-weight: bold; margin-bottom: 5px; color: #1f2937;">
-                            ${type === 'success' ? 'نجاح' : type === 'error' ? 'خطأ' : type === 'warning' ? 'تحذير' : 'معلومة'}
-                        </div>
-                        <div style="color: #4b5563; font-size: 14px;">${message}</div>
-                    </div>
-                </div>
-            `;
-            
-            notificationArea.appendChild(notification);
-            
-            // إضافة أنماط للرسوم المتحركة
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideInRight {
-                    from { transform: translateX(100%); opacity: 0; }
-                    to { transform: translateX(0); opacity: 1; }
-                }
-                @keyframes slideOutRight {
-                    from { transform: translateX(0); opacity: 1; }
-                    to { transform: translateX(100%); opacity: 0; }
-                }
-            `;
-            document.head.appendChild(style);
-            
-            setTimeout(() => {
-                notification.style.animation = 'slideOutRight 0.5s ease forwards';
-                setTimeout(() => {
-                    if (notification.parentNode) {
-                        notification.parentNode.removeChild(notification);
-                    }
-                }, 500);
-            }, 3000);
+            // سيتم تفصيل هذه الوظيفة في ملف notifications.js
+            console.log(`${type}: ${message}`);
         }
-        
-        // تسجيل Service Worker
-        function registerServiceWorker() {
-            if ('serviceWorker' in navigator) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('/service-worker.js')
-                        .then(registration => {
-                            console.log('Service Worker registered:', registration);
-                            
-                            // التحقق من التحديثات
-                            registration.addEventListener('updatefound', () => {
-                                const newWorker = registration.installing;
-                                console.log('Service Worker update found:', newWorker.state);
-                                
-                                newWorker.addEventListener('statechange', () => {
-                                    if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                        // عرض رسالة للمستخدم حول التحديث المتاح
-                                        if (confirm('تحديث جديد متاح. هل تريد تحديث التطبيق؟')) {
-                                            newWorker.postMessage({ type: 'SKIP_WAITING' });
-                                            window.location.reload();
-                                        }
-                                    }
-                                });
-                            });
-                        })
-                        .catch(error => {
-                            console.log('Service Worker registration failed:', error);
-                        });
-                });
-            }
-        }
-        
-        // طلب إذن الإشعارات
-        function requestNotificationPermission() {
-            if ('Notification' in window && Notification.permission === 'default') {
-                Notification.requestPermission();
-            }
-        }
-        
-        // استدعاء طلب الإذن عند تحميل الصفحة
-        requestNotificationPermission();
-        
-        // تهيئة أولية
-        setTimeout(() => {
-            if (document.getElementById('welcome-screen').classList.contains('hidden') && 
-                document.getElementById('customer-login').classList.contains('hidden') &&
-                document.getElementById('customer-register').classList.contains('hidden') &&
-                document.getElementById('driver-login').classList.contains('hidden')) {
-                showSection('welcome-screen');
-            }
-        }, 100);
     </script>
 </body>
 </html>
