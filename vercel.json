@@ -1,55 +1,36 @@
 {
-  "builds": [
-    {
-      "src": "*.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "*.json",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "icons/*",
-      "use": "@vercel/static"
-    }
-  ],
-  "routes": [
-    {
-      "src": "^/admin-login(?:\\.html)?$",
-      "dest": "/admin-login.html"
-    },
-    {
-      "src": "^/manifest\\.json$",
-      "dest": "/manifest.json",
-      "headers": {
-        "content-type": "application/manifest+json",
-        "cache-control": "public, max-age=3600"
-      }
-    },
-    {
-      "src": "^/service-worker\\.js$",
-      "dest": "/service-worker.js",
-      "headers": {
-        "content-type": "application/javascript",
-        "cache-control": "no-cache"
-      }
-    },
-    {
-      "src": "^/icons/(.*)$",
-      "dest": "/icons/$1",
-      "headers": {
-        "cache-control": "public, max-age=86400"
-      }
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
-    }
-  ],
   "cleanUrls": true,
-  "trailingSlash": false
+  "trailingSlash": false,
+  "rewrites": [
+    {
+      "source": "/admin-login",
+      "destination": "/admin-login.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/manifest.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/manifest+json" },
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
+    },
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        { "key": "Content-Type", "value": "application/javascript" },
+        { "key": "Cache-Control", "value": "no-cache" }
+      ]
+    },
+    {
+      "source": "/icons/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=86400" }
+      ]
+    }
+  ]
 }
