@@ -861,7 +861,8 @@
         const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
         
-        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+        // التصحيح: استخدام اسم مختلف عن supabase
+        const tarhalDB = supabase.createClient(SB_URL, SB_KEY);
         
         // --- Application State ---
         let adminLoggedIn = false;
@@ -894,7 +895,7 @@
             
             try {
                 // Fetch password from system_settings
-                const { data: settings, error } = await supabase
+                const { data: settings, error } = await tarhalDB
                     .from('system_settings')
                     .select('value')
                     .eq('key', 'staff_passcode')
@@ -942,7 +943,7 @@
                 // Verify token is valid (simplified check)
                 const decoded = atob(token).split(':')[1];
                 
-                const { data: settings, error } = await supabase
+                const { data: settings, error } = await tarhalDB
                     .from('system_settings')
                     .select('value')
                     .eq('key', 'staff_passcode')
@@ -969,7 +970,7 @@
         async function loadDashboardStats() {
             try {
                 // Load total customers
-                const { count: customerCount, error: custError } = await supabase
+                const { count: customerCount, error: custError } = await tarhalDB
                     .from('customers')
                     .select('*', { count: 'exact', head: true });
                 
@@ -978,7 +979,7 @@
                 }
                 
                 // Load total drivers
-                const { count: driverCount, error: driverError } = await supabase
+                const { count: driverCount, error: driverError } = await tarhalDB
                     .from('drivers')
                     .select('*', { count: 'exact', head: true });
                 
@@ -987,7 +988,7 @@
                 }
                 
                 // Load active rides
-                const { count: activeRidesCount, error: ridesError } = await supabase
+                const { count: activeRidesCount, error: ridesError } = await tarhalDB
                     .from('rides')
                     .select('*', { count: 'exact', head: true })
                     .eq('status', 'driver_accepted');
@@ -997,7 +998,7 @@
                 }
                 
                 // Load total earnings
-                const { data: allRides, error: earningsError } = await supabase
+                const { data: allRides, error: earningsError } = await tarhalDB
                     .from('rides')
                     .select('amount')
                     .eq('status', 'completed');
@@ -1014,7 +1015,7 @@
         
         async function loadCustomers() {
             try {
-                const { data: customers, error } = await supabase
+                const { data: customers, error } = await tarhalDB
                     .from('customers')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -1100,7 +1101,7 @@
         
         async function loadDrivers() {
             try {
-                const { data: drivers, error } = await supabase
+                const { data: drivers, error } = await tarhalDB
                     .from('drivers')
                     .select('*')
                     .order('created_at', { ascending: false });
@@ -1177,7 +1178,6 @@
                                     <ion-icon name="cash-outline"></ion-icon>
                                     رصيد
                                 </button>
-                            </div>
                         </div>
                     </div>
                 `;
@@ -1220,7 +1220,7 @@
         // --- Customer Management ---
         async function viewCustomerDetails(customerId) {
             try {
-                const { data: customer, error } = await supabase
+                const { data: customer, error } = await tarhalDB
                     .from('customers')
                     .select('*')
                     .eq('id', customerId)
@@ -1290,7 +1290,7 @@
         
         async function verifyCustomer(customerId, fromModal = false) {
             try {
-                const { error } = await supabase
+                const { error } = await tarhalDB
                     .from('customers')
                     .update({ 
                         is_verified: true,
@@ -1325,7 +1325,7 @@
             }
             
             try {
-                const { error } = await supabase
+                const { error } = await tarhalDB
                     .from('customers')
                     .update({ 
                         is_verified: newStatus,
@@ -1353,7 +1353,7 @@
         // --- Driver Management ---
         async function viewDriverDetails(driverId) {
             try {
-                const { data: driver, error } = await supabase
+                const { data: driver, error } = await tarhalDB
                     .from('drivers')
                     .select('*')
                     .eq('id', driverId)
@@ -1362,7 +1362,7 @@
                 if (error) throw error;
                 
                 // Get driver's recent rides
-                const { data: rides, error: ridesError } = await supabase
+                const { data: rides, error: ridesError } = await tarhalDB
                     .from('rides')
                     .select('*')
                     .eq('driver_id', driverId)
@@ -1480,7 +1480,7 @@
             }
             
             try {
-                const { error } = await supabase
+                const { error } = await tarhalDB
                     .from('drivers')
                     .update({ 
                         is_active: newStatus,
@@ -1534,7 +1534,7 @@
             
             try {
                 // Get current balance
-                const { data: driver, error: fetchError } = await supabase
+                const { data: driver, error: fetchError } = await tarhalDB
                     .from('drivers')
                     .select('balance, full_name')
                     .eq('id', currentSelectedDriverId)
@@ -1544,7 +1544,7 @@
                 
                 // Update balance
                 const newBalance = (driver.balance || 0) + parseInt(amount);
-                const { error } = await supabase
+                const { error } = await tarhalDB
                     .from('drivers')
                     .update({ 
                         balance: newBalance,
@@ -1556,7 +1556,7 @@
                 
                 // Record transaction in transactions table if exists
                 try {
-                    await supabase
+                    await tarhalDB
                         .from('transactions')
                         .insert({
                             driver_id: currentSelectedDriverId,
@@ -1605,7 +1605,7 @@
             
             // Check for duplicate plate number
             try {
-                const { data: existingDriver, error } = await supabase
+                const { data: existingDriver, error } = await tarhalDB
                     .from('drivers')
                     .select('id')
                     .eq('car_plate', carPlate)
@@ -1621,7 +1621,7 @@
             
             // Check for duplicate phone number
             try {
-                const { data: existingPhone, error } = await supabase
+                const { data: existingPhone, error } = await tarhalDB
                     .from('drivers')
                     .select('id')
                     .eq('whatsapp_number', driverPhone)
@@ -1641,7 +1641,7 @@
             addBtn.disabled = true;
             
             try {
-                const { data, error } = await supabase
+                const { data, error } = await tarhalDB
                     .from('drivers')
                     .insert([{
                         full_name: driverName,
@@ -1732,7 +1732,7 @@
             }
             
             try {
-                const { error } = await supabase
+                const { error } = await tarhalDB
                     .from('system_settings')
                     .update({ 
                         value: newPassword,
@@ -1761,7 +1761,7 @@
             
             try {
                 // Update in system_settings
-                const { error } = await supabase
+                const { error } = await tarhalDB
                     .from('system_settings')
                     .update({ 
                         value: newNumber,
@@ -1771,7 +1771,7 @@
                 
                 if (error) {
                     // If key doesn't exist, insert it
-                    await supabase
+                    await tarhalDB
                         .from('system_settings')
                         .insert({
                             key: 'admin_whatsapp',
@@ -1791,7 +1791,7 @@
         async function updateSystemInfo() {
             try {
                 // Get last update time
-                const { data: settings, error } = await supabase
+                const { data: settings, error } = await tarhalDB
                     .from('system_settings')
                     .select('updated_at')
                     .order('updated_at', { ascending: false })
@@ -1807,7 +1807,7 @@
                 today.setHours(0, 0, 0, 0);
                 
                 // This is a simplified version - in a real app, you would track user activity
-                const { count: activeCount, error: activeError } = await supabase
+                const { count: activeCount, error: activeError } = await tarhalDB
                     .from('customers')
                     .select('*', { count: 'exact', head: true })
                     .gte('updated_at', today.toISOString());
