@@ -343,6 +343,23 @@
             align-items: center;
             gap: 6px;
         }
+.form-footer .register-text {
+    margin-bottom: 20px; /* مسافة بين الزرين */
+}
+
+.form-footer .register-text a {
+    display: inline; /* يبقى كنص */
+}
+
+.form-footer .back-link {
+    display: inline-flex;
+    justify-content: center;
+    margin-top: 8px;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background: #f1f2ff;
+    font-size: 14px;
+}
         
         .form-footer a:hover {
             text-decoration: underline;
@@ -845,14 +862,16 @@
                 </form>
                 
                 <div class="form-footer">
-                    <p>ليس لديك حساب؟ 
-                        <a href="#" onclick="showCustomerRegister()">سجل حساب الآن</a>
-                    </p>
-                    <a href="#" onclick="showWelcomeScreen()">
-                        <ion-icon name="arrow-back-outline"></ion-icon>
-                        العودة للخيارات
-                    </a>
-                </div>
+    <p class="register-text">
+        ليس لديك حساب؟
+        <a href="#" onclick="showCustomerRegister()">سجل حساب الآن</a>
+    </p>
+
+    <a href="#" class="back-link" onclick="showWelcomeScreen()">
+        <ion-icon name="arrow-back-outline"></ion-icon>
+        العودة للخيارات
+    </a>
+</div>
             </div>
         </section>
         
