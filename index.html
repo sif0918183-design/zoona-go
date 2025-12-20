@@ -2,6 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ترحال السودان - Tarhal</title>
     
@@ -771,42 +772,53 @@
     </header>
         
         <!-- Welcome Screen -->
-        <section id="welcome-screen" class="screen">
-            <div class="welcome-card card">
-                <div class="welcome-icon">🚕</div>
-                <h1 class="welcome-title">مرحباً بك في ترحال</h1>
-                <p class="welcome-subtitle">
-                    تطبيق النقل الأول في السودان. اختر طريقة دخولك للبدء
-                </p>
-                
-                <div class="role-selection">
-                    <div class="role-card" onclick="showCustomerLogin()">
-                        <div class="role-icon">👤</div>
-                        <div class="role-info">
-                            <h3>طالب رحلة</h3>
-                            <p>اطلب رحلة بسهولة وأمان من أقرب سائق لك</p>
-                        </div>
-                        <ion-icon name="chevron-forward-outline"></ion-icon>
-                    </div>
-                    
-                    <div class="role-card" onclick="showDriverLogin()">
-                        <div class="role-icon">🚗</div>
-                        <div class="role-info">
-                            <h3>سائق</h3>
-                            <p>انضم كسائق وابدأ كسب المال مع ترحال</p>
-                        </div>
-                        <ion-icon name="chevron-forward-outline"></ion-icon>
-                    </div>
-                    
-                    <div class="form-footer mt-3">
-                        <a href="/admin-login.html">
-                            <ion-icon name="shield-checkmark-outline"></ion-icon>
-                            دخول الموظفين
-                        </a>
-                    </div>
+<section id="welcome-screen" class="screen">
+    <div class="welcome-card card">
+        <div class="welcome-icon">
+            <i class="fa-solid fa-taxi"></i>
+        </div>
+
+        <h1 class="welcome-title">مرحباً بك في ترحال</h1>
+        <p class="welcome-subtitle">
+            تطبيق النقل الأول في السودان. اختر طريقة دخولك للبدء
+        </p>
+        
+        <div class="role-selection">
+
+            <!-- طالب رحلة -->
+            <div class="role-card" onclick="showCustomerLogin()">
+                <div class="role-icon">
+                    <i class="fa-solid fa-user"></i>
                 </div>
+                <div class="role-info">
+                    <h3>طالب رحلة</h3>
+                    <p>اطلب رحلة بسهولة وأمان من أقرب سائق لك</p>
+                </div>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
             </div>
-        </section>
+
+            <!-- سائق -->
+            <div class="role-card" onclick="showDriverLogin()">
+                <div class="role-icon">
+                    <i class="fa-solid fa-car"></i>
+                </div>
+                <div class="role-info">
+                    <h3>سائق</h3>
+                    <p>انضم كسائق وابدأ كسب المال مع ترحال</p>
+                </div>
+                <ion-icon name="chevron-forward-outline"></ion-icon>
+            </div>
+
+            <div class="form-footer mt-3">
+                <a href="/admin-login.html">
+                    <ion-icon name="shield-checkmark-outline"></ion-icon>
+                    دخول الموظفين
+                </a>
+            </div>
+
+        </div>
+    </div>
+</section>
         
         <!-- Customer Login -->
         <section id="customer-login-screen" class="screen hidden">
