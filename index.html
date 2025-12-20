@@ -2224,6 +2224,48 @@ function showDriverRegisterInfo() {
     document.getElementById('driver-login-screen').classList.add('hidden');
     document.getElementById('driver-register-info-screen').classList.remove('hidden');
 }
+// 🔥 أضف هذا الكود في index.html داخل <script> الحالي
+async function setupPushNotifications() {
+  // 1. اطلب الإذن من السائق
+  const permission = await Notification.requestPermission();
+  if (permission !== 'granted') {
+    alert('يجب السماح بالإشعارات لاستقبال طلبات الركوب');
+    return;
+  }
+  
+  // 2. سجل Service Worker
+  await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+  
+  // 3. احصل على رمز السائق (FCM Token)
+  const messaging = firebase.messaging();
+  const token = await messaging.getToken();
+  
+  console.log('رمز السائق:', token);
+  
+  // 4. احفظ الرمز في JSONBin (ستحتاج Bin جديد)
+  await fetch('https://api.jsonbin.io/v3/b/69470e32ae596e708fa76869', {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': '$2a$10$.o4BAbiMjGS4tEZUVokTsufL18lsFyO30xIOXO8wT4dP/sqGN/61e'
+    },
+    body: JSON.stringify({
+      driverToken: token,
+      driverId: currentDriver.id,
+      isOnline: true
+    })
+  });
+}
+
+// استدعي هذه الدالة عندما يصبح السائق "متصل"
+function toggleDriverStatus() {
+  isDriverOnline = !isDriverOnline;
+  
+  if (isDriverOnline) {
+    setupPushNotifications(); // 🔥 هذا المهم
+    showNotification('أنت الآن متصل وجاهز لطلبات الركوب', 'success');
+  }
+}
     </script>
 </body>
 </html>
