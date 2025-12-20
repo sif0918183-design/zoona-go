@@ -1218,10 +1218,11 @@
 
     <script>
         // --- Supabase Configuration ---
-const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
+        const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
         
-        // التصحيح: استخدام supabase.createClient مباشرة
+        // التصحيح: استخدام اسم مختلف عن supabase
+        const tarhalDB = supabase.createClient(SB_URL, SB_KEY);
         
         // --- Application State ---
         let currentUser = null;
@@ -1459,7 +1460,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
             loginBtn.disabled = true;
             
             try {
-                const { data: customer, error } = await supabase
+                const { data: customer, error } = await tarhalDB
                     .from('customers')
                     .select('*')
                     .eq('phone', phone)
@@ -1533,7 +1534,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
             
             try {
                 // Check if phone already exists
-                const { data: existingCustomer, error: checkError } = await supabase
+                const { data: existingCustomer, error: checkError } = await tarhalDB
                     .from('customers')
                     .select('id')
                     .eq('phone', phone)
@@ -1547,7 +1548,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
                 }
                 
                 // Register new customer
-                const { data: newCustomer, error } = await supabase
+                const { data: newCustomer, error } = await tarhalDB
                     .from('customers')
                     .insert([{
                         full_name: fullname,
@@ -1584,7 +1585,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
             const phoneToVerify = phone || registeredPhone;
             if (!phoneToVerify) return;
             
-            const adminNumber = "249XXXXXXXXX"; // استبدل برقم الإدارة الحقيقي
+            const adminNumber = "249918183521"; // استبدل برقم الإدارة الحقيقي
             const message = "تفعيل ترحال زونا";
             const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
             
@@ -1622,7 +1623,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
             loginBtn.disabled = true;
             
             try {
-                const { data: driver, error } = await supabase
+                const { data: driver, error } = await tarhalDB
                     .from('drivers')
                     .select('*')
                     .eq('whatsapp_number', phone)
@@ -1660,7 +1661,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
         }
         
         function contactAdminForDriverRegistration() {
-            const adminNumber = "249XXXXXXXXX"; // استبدل برقم الإدارة الحقيقي
+            const adminNumber = "249918183521"; // استبدل برقم الإدارة الحقيقي
             const message = "مرحباً، أريد التسجيل كسائق في تطبيق ترحال السودان";
             const whatsappUrl = `https://wa.me/${adminNumber}?text=${encodeURIComponent(message)}`;
             
@@ -1685,7 +1686,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 
-                const { data: rides, error } = await supabase
+                const { data: rides, error } = await tarhalDB
                     .from('rides')
                     .select('*')
                     .eq('driver_id', currentDriver.id)
@@ -1699,7 +1700,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
                 }
                 
                 // Total trips
-                const { data: totalRides, error: totalError } = await supabase
+                const { data: totalRides, error: totalError } = await tarhalDB
                     .from('rides')
                     .select('id')
                     .eq('driver_id', currentDriver.id)
@@ -1745,7 +1746,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     try {
-                        await supabase
+                        await tarhalDB
                             .from('driver_locations')
                             .upsert({
                                 driver_id: currentDriver.id,
@@ -1923,7 +1924,7 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
                 const totalPrice = vehicle.base + (additionalKm * vehicle.perKm);
                 
                 // إنشاء طلب الرحلة في قاعدة البيانات
-                const { data: ride, error } = await supabase
+                const { data: ride, error } = await tarhalDB
                     .from('rides')
                     .insert([{
                         customer_id: currentUser.id,
