@@ -1227,11 +1227,11 @@
                 const driverId = localStorage.getItem('driver_id');
                 if (!driverId) return;
                 
-                await fetch('https://api.jsonbin.io/v3/b/YOUR_BIN_ID', {
+                await fetch('https://api.jsonbin.io/v3/b/69470e32ae596e708fa76869', {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-Master-Key': 'مفتاحك_هنا'
+                        'X-Master-Key': '$2a$10$.o4BAbiMjGS4tEZUVokTsufL18lsFyO30xIOXO8wT4dP/sqGN/61e'
                     },
                     body: JSON.stringify({
                         last_ride_status: status,
