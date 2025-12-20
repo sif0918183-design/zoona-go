@@ -1071,7 +1071,7 @@
                             <div class="user-phone">${customer.phone}</div>
                             <div class="user-details">
                                 ${customer.phone2 ? `رقم إضافي: ${customer.phone2} • ` : ''}
-                                مسجل في: ${new Date(customer.created_at).toLocaleDateString('ar-SA')}
+                                مسجل في: ${formatGregorianDate(customer.created_at)}
                             </div>
                         </div>
                         <div>
@@ -1159,7 +1159,7 @@
                                 ${driver.car_model} • ${getVehicleTypeName(driver.car_type)} • ${driver.car_plate}
                                 <br>
                                 الرصيد: <strong>${(driver.balance || 0).toLocaleString()} SDG</strong>
-                                • مسجل في: ${new Date(driver.created_at).toLocaleDateString('ar-SA')}
+                                • مسجل في: ${formatGregorianDate(driver.created_at)}
                             </div>
                         </div>
                         <div>
@@ -1178,6 +1178,7 @@
                                     <ion-icon name="cash-outline"></ion-icon>
                                     رصيد
                                 </button>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -1254,11 +1255,7 @@
                             </div>
                             <div>
                                 <strong>تاريخ التسجيل:</strong>
-                                <div>${new Date(customer.created_at).toLocaleDateString('ar-SA')}</div>
-                            </div>
-                            <div>
-                                <strong>آخر تحديث:</strong>
-                                <div>${new Date(customer.updated_at || customer.created_at).toLocaleDateString('ar-SA')}</div>
+                                <div>${formatGregorianDate(customer.created_at)}</div>
                             </div>
                         </div>
                         
@@ -1293,8 +1290,7 @@
                 const { error } = await tarhalDB
                     .from('customers')
                     .update({ 
-                        is_verified: true,
-                        updated_at: new Date().toISOString()
+                        is_verified: true
                     })
                     .eq('id', customerId);
                 
@@ -1328,8 +1324,7 @@
                 const { error } = await tarhalDB
                     .from('customers')
                     .update({ 
-                        is_verified: newStatus,
-                        updated_at: new Date().toISOString()
+                        is_verified: newStatus
                     })
                     .eq('id', customerId);
                 
@@ -1412,11 +1407,7 @@
                             </div>
                             <div>
                                 <strong>تاريخ التسجيل:</strong>
-                                <div>${new Date(driver.created_at).toLocaleDateString('ar-SA')}</div>
-                            </div>
-                            <div>
-                                <strong>آخر تحديث:</strong>
-                                <div>${new Date(driver.updated_at || driver.created_at).toLocaleDateString('ar-SA')}</div>
+                                <div>${formatGregorianDate(driver.created_at)}</div>
                             </div>
                         </div>
                         
@@ -1426,7 +1417,7 @@
                             ${rides.map(ride => `
                                 <div style="padding: 8px 0; border-bottom: 1px solid var(--gray-light);">
                                     <div style="display: flex; justify-content: space-between;">
-                                        <span>${new Date(ride.created_at).toLocaleDateString('ar-SA')}</span>
+                                        <span>${formatGregorianDate(ride.created_at)}</span>
                                         <span><strong>${ride.amount?.toLocaleString()} SDG</strong></span>
                                     </div>
                                     <div style="font-size: 12px; color: var(--gray);">
@@ -1483,8 +1474,7 @@
                 const { error } = await tarhalDB
                     .from('drivers')
                     .update({ 
-                        is_active: newStatus,
-                        updated_at: new Date().toISOString()
+                        is_active: newStatus
                     })
                     .eq('id', driverId);
                 
@@ -1542,32 +1532,16 @@
                 
                 if (fetchError) throw fetchError;
                 
-                // Update balance
+                // Update balance فقط بدون updated_at
                 const newBalance = (driver.balance || 0) + parseInt(amount);
                 const { error } = await tarhalDB
                     .from('drivers')
                     .update({ 
-                        balance: newBalance,
-                        updated_at: new Date().toISOString()
+                        balance: newBalance
                     })
                     .eq('id', currentSelectedDriverId);
                 
                 if (error) throw error;
-                
-                // Record transaction in transactions table if exists
-                try {
-                    await tarhalDB
-                        .from('transactions')
-                        .insert({
-                            driver_id: currentSelectedDriverId,
-                            amount: parseInt(amount),
-                            type: 'admin_add',
-                            note: note || `إضافة رصيد من قبل الإدارة`,
-                            created_at: new Date().toISOString()
-                        });
-                } catch (e) {
-                    console.log('Transactions table might not exist');
-                }
                 
                 showNotification(`تم إضافة ${parseInt(amount).toLocaleString()} SDG إلى رصيد السائق ${driver.full_name}`, 'success');
                 
@@ -1576,7 +1550,7 @@
                 
             } catch (error) {
                 console.error('Error adding balance:', error);
-                showNotification('حدث خطأ أثناء إضافة الرصيد', 'error');
+                showNotification('حدث خطأ أثناء إضافة الرصيد: ' + error.message, 'error');
             }
         }
         
@@ -1654,8 +1628,7 @@
                         balance: parseInt(initialBalance) || 15000,
                         status: 'OFFLINE',
                         is_active: true,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
+                        created_at: new Date().toISOString()
                     }])
                     .select();
                 
@@ -1735,12 +1708,20 @@
                 const { error } = await tarhalDB
                     .from('system_settings')
                     .update({ 
-                        value: newPassword,
-                        updated_at: new Date().toISOString()
+                        value: newPassword
                     })
                     .eq('key', 'staff_passcode');
                 
-                if (error) throw error;
+                if (error) {
+                    // If key doesn't exist, insert it
+                    await tarhalDB
+                        .from('system_settings')
+                        .insert({
+                            key: 'staff_passcode',
+                            value: newPassword,
+                            created_at: new Date().toISOString()
+                        });
+                }
                 
                 showNotification('تم تحديث كلمة مرور الموظفين بنجاح', 'success');
                 document.getElementById('new-staff-password').value = '';
@@ -1760,12 +1741,11 @@
             }
             
             try {
-                // Update in system_settings
+                // Update in system_settings بدون updated_at
                 const { error } = await tarhalDB
                     .from('system_settings')
                     .update({ 
-                        value: newNumber,
-                        updated_at: new Date().toISOString()
+                        value: newNumber
                     })
                     .eq('key', 'admin_whatsapp');
                 
@@ -1790,30 +1770,22 @@
         
         async function updateSystemInfo() {
             try {
-                // Get last update time
-                const { data: settings, error } = await tarhalDB
-                    .from('system_settings')
-                    .select('updated_at')
-                    .order('updated_at', { ascending: false })
-                    .limit(1);
+                // استخدام وقت النظام الحالي بدلاً من الاستعلام
+                const now = new Date();
+                document.getElementById('last-update').textContent = 
+                    formatGregorianDateWithTime(now.toISOString());
                 
-                if (!error && settings && settings.length > 0) {
-                    document.getElementById('last-update').textContent = 
-                        new Date(settings[0].updated_at).toLocaleDateString('ar-SA');
-                }
-                
-                // Get active users count (users logged in today)
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                
-                // This is a simplified version - in a real app, you would track user activity
-                const { count: activeCount, error: activeError } = await tarhalDB
-                    .from('customers')
-                    .select('*', { count: 'exact', head: true })
-                    .gte('updated_at', today.toISOString());
-                
-                if (!activeError) {
-                    document.getElementById('active-users').textContent = activeCount || 0;
+                // حساب المستخدمين النشطين
+                try {
+                    const { count: activeCount, error: activeError } = await tarhalDB
+                        .from('customers')
+                        .select('*', { count: 'exact', head: true });
+                    
+                    if (!activeError) {
+                        document.getElementById('active-users').textContent = activeCount || 0;
+                    }
+                } catch (e) {
+                    console.log('Error counting active users:', e);
                 }
                 
             } catch (error) {
@@ -1822,6 +1794,28 @@
         }
         
         // --- Helper Functions ---
+        function formatGregorianDate(dateString) {
+            if (!dateString) return 'غير محدد';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric'
+            });
+        }
+        
+        function formatGregorianDateWithTime(dateString) {
+            if (!dateString) return 'غير محدد';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-GB', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+        
         function isValidSudanesePhone(phone) {
             // تحقق من صيغة رقم الهاتف السوداني
             const sudanesePhoneRegex = /^(?:\+249|0)?(?:9[0123456789]|1[012])\d{7}$/;
