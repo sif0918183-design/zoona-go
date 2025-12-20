@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>قبول الرحلة - ترحال</title>
+</head>
+<body>
+    <div id="ride-details">جاري تحميل تفاصيل الرحلة...</div>
+    <button onclick="acceptRide()">✅ قبول الرحلة</button>
+    <button onclick="declineRide()">❌ رفض</button>
+    
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const rideId = urlParams.get('rideId');
+        
+        if (rideId) {
+            document.getElementById('ride-details').innerHTML = 
+                `طلب رحلة #${rideId}<br>جاهز للقبول`;
+        }
+    </script>
+</body>
+</html>
