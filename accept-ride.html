@@ -389,6 +389,78 @@
     </style>
 </head>
 <body>
+<!-- أضف هذا داخل <body> في بداية الصفحة -->
+<div id="audio-enabler" style="
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.8);
+    z-index: 99999;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: 'Tajawal';
+">
+    <div style="
+        background: white;
+        border-radius: 20px;
+        padding: 30px;
+        max-width: 400px;
+        width: 90%;
+        text-align: center;
+    ">
+        <div style="font-size: 48px; margin-bottom: 20px;">🔊</div>
+        <h3 style="color: #4f46e5; margin-bottom: 15px;">تفعيل الأصوات</h3>
+        <p style="color: #666; margin-bottom: 25px;">
+            لتلقي إشعارات الرحلات بشكل صحيح، يرجى تفعيل الأصوات الآن.
+        </p>
+        <button onclick="enableAudioSystem()" style="
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        ">
+            تفعيل الأصوات الآن
+        </button>
+    </div>
+</div>
+
+<script>
+function enableAudioSystem() {
+    // 1. إزالة واجهة التفعيل
+    document.getElementById('audio-enabler').remove();
+    
+    // 2. تشغيل صوت اختبار لتفعيل النظام
+    const testSound = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-retro-game-emergency-alarm-1000.mp3');
+    testSound.volume = 0.3;
+    
+    testSound.play().then(() => {
+        // 3. تخزين أن الصوت مفعل
+        localStorage.setItem('audio_enabled', 'true');
+        
+        // 4. إشعار النجاح
+        showNotification('✅ تم تفعيل الأصوات بنجاح!');
+        
+        // 5. تشغيل صوت الرحلة
+        if (window.soundManager) {
+            window.soundManager.enabled = true;
+            window.soundManager.play('new_ride');
+        }
+        
+    }).catch(error => {
+        showNotification('⚠️ تعذر تفعيل الصوت. تأكد من إعدادات المتصفح', 'error');
+    });
+}
+
+// التحقق إذا كان الصوت مفعلاً مسبقاً
+if (localStorage.getItem('audio_enabled') === 'true') {
+    document.getElementById('audio-enabler').style.display = 'none';
+}
+</script>
     <!-- ✅ تحكم الصوت -->
     <div class="sound-control">
         <div class="sound-toggle" id="sound-toggle" onclick="toggleSound()">
@@ -1205,5 +1277,161 @@ this.soundLibrary = {
         
         console.log('🎯 صفحة قبول الرحية جاهزة للعمل!');
     </script>
+// ==============================================
+// ✅ نظام تفعيل الصوت الإجباري
+// ==============================================
+function enableAudioSystem() {
+    console.log('🎵 محاولة تفعيل الصوت...');
+    
+    // 1. إخفاء واجهة التفعيل
+    document.getElementById('audio-enabler').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('audio-enabler').style.display = 'none';
+    }, 300);
+    
+    // 2. محاولة تشغيل صوت صامت
+    const silentAudio = new Audio();
+    silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+    silentAudio.volume = 0.001;
+    
+    silentAudio.play().then(() => {
+        console.log('✅ تم تفعيل النظام الصوتي');
+        
+        // 3. تخزين في localStorage
+        localStorage.setItem('tarhal_audio_activated', 'true');
+        localStorage.setItem('tarhal_audio_time', Date.now());
+        
+        // 4. تشغيل صوت الاختبار
+        playTestSound();
+        
+        // 5. تفعيل soundManager إذا موجود
+        if (window.soundManager) {
+            window.soundManager.enabled = true;
+            window.soundManager.initialized = true;
+            
+            // تشغيل صوت الرحلة الجديدة
+            setTimeout(() => {
+                if (window.soundManager.play) {
+                    window.soundManager.play('new_ride', { volume: 0.7 });
+                }
+            }, 500);
+        }
+        
+        // 6. إشعار النجاح
+        showAudioNotification('✅ تم تفعيل الأصوات بنجاح!');
+        
+    }).catch(error => {
+        console.log('❌ فشل التفعيل التلقائي:', error);
+        
+        // تجربة طريقة بديلة
+        tryManualAudioEnable();
+    });
+}
+
+function tryManualAudioEnable() {
+    // طريقة يدوية للتأكد
+    const testAudio = new Audio('https://assets.mixkit.co/sfx/download/mixkit-alarm-digital-clock-beep-989.mp3');
+    testAudio.volume = 0.3;
+    
+    testAudio.play().then(() => {
+        console.log('✅ التفعيل اليدوي نجح');
+        localStorage.setItem('tarhal_audio_activated', 'true');
+        
+        // إعادة تحميل الصفحة للتأكد
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+        
+    }).catch(error => {
+        console.log('❌ فشل كامل:', error);
+        
+        // إظهار رسالة إرشادية
+        showAudioNotification(`
+            ⚠️ تعذر تفعيل الصوت تلقائياً<br>
+            <small>الرجاء الضغط على أي مكان في الصفحة ثم المحاولة مرة أخرى</small>
+        `, 'warning');
+        
+        // إعادة عرض زر التفعيل بعد 3 ثواني
+        setTimeout(() => {
+            document.getElementById('audio-enabler').style.display = 'flex';
+            document.getElementById('audio-enabler').style.opacity = '1';
+        }, 3000);
+    });
+}
+
+function skipAudio() {
+    document.getElementById('audio-enabler').style.opacity = '0';
+    setTimeout(() => {
+        document.getElementById('audio-enabler').style.display = 'none';
+    }, 300);
+    
+    localStorage.setItem('tarhal_audio_skipped', 'true');
+    showAudioNotification('🔇 تم إلغاء تفعيل الصوت');
+}
+
+function playTestSound() {
+    try {
+        const audio = new Audio('https://assets.mixkit.co/sfx/download/mixkit-alarm-digital-clock-beep-989.mp3');
+        audio.volume = 0.5;
+        audio.play();
+    } catch (error) {
+        console.log('تعذر تشغيل صوت الاختبار:', error);
+    }
+}
+
+function showAudioNotification(message, type = 'success') {
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        left: 20px;
+        background: ${type === 'warning' ? '#f59e0b' : '#10b981'};
+        color: white;
+        padding: 15px;
+        border-radius: 12px;
+        text-align: center;
+        font-weight: bold;
+        z-index: 100000;
+        animation: slideDown 0.3s ease;
+        max-width: 400px;
+        margin: 0 auto;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    `;
+    
+    notification.innerHTML = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 3000);
+}
+
+// التحقق من التفعيل السابق عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    const audioActivated = localStorage.getItem('tarhal_audio_activated');
+    const audioSkipped = localStorage.getItem('tarhal_audio_skipped');
+    
+    if (audioActivated === 'true' || audioSkipped === 'true') {
+        // إذا كان الصوت مفعلاً مسبقاً، إخفاء واجهة التفعيل
+        document.getElementById('audio-enabler').style.display = 'none';
+    } else {
+        // إظهار واجهة التفعيل بعد تأخير قصير
+        setTimeout(() => {
+            document.getElementById('audio-enabler').style.opacity = '1';
+        }, 500);
+    }
+});
+
+// ==============================================
+// ✅ تعديل soundManager ليعمل مع النظام الجديد
+// ==============================================
+// في class TarhalSoundManager، أضف في constructor:
+// بعد this.soundLibrary = { ... };
+if (!localStorage.getItem('tarhal_audio_activated')) {
+    this.enabled = false;
+    this.initialized = false;
+}
 </body>
 </html>
