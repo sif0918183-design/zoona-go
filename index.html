@@ -2271,6 +2271,40 @@ function toggleDriverStatus() {
     showNotification('أنت الآن متصل وجاهز لطلبات الركوب', 'success');
   }
 }
+function testNotification() {
+    // خيارات الاختبار
+    const testOptions = {
+        rideId: 'TEST_' + Date.now(),
+        sound: true,
+        vibration: true,
+        autoOpen: true
+    };
+    
+    // فتح صفحة الاختبار
+    if (testOptions.autoOpen) {
+        const testUrl = `accept-ride.html?rideId=${testOptions.rideId}&sound=${testOptions.sound}&vibration=${testOptions.vibration}`;
+        window.open(testUrl, '_blank', 'width=420,height=700');
+    }
+    
+    // عرض تقرير الاختبار
+    const testReport = `
+        <div style="background: #f0f9ff; padding: 15px; border-radius: 12px; margin: 15px 0; border: 2px solid #4f46e5;">
+            <h4 style="color: #4f46e5; margin-bottom: 10px;">🧪 تقرير اختبار الإشعارات</h4>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>رقم الرحلة: <strong>${testOptions.rideId}</strong></div>
+                <div>الصوت: <strong>${testOptions.sound ? '✅ مفعل' : '❌ معطل'}</strong></div>
+                <div>الاهتزاز: <strong>${testOptions.vibration ? '✅ مفعل' : '❌ معطل'}</strong></div>
+                <div>الوقت: <strong>${new Date().toLocaleTimeString()}</strong></div>
+            </div>
+        </div>
+    `;
+    
+    // عرض التقرير في صفحة الاختبار
+    showNotification(testReport, 'info');
+    
+    // تسجيل الاختبار
+    console.log('📊 اختبار الإشعارات:', testOptions);
+}
     </script>
 </body>
 </html>
