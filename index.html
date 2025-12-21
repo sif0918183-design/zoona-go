@@ -26,6 +26,8 @@
     
     <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sound-manager.js"></script>
+<script src="audio-utils.js"></script>
     
     <style>
         :root {
@@ -2306,5 +2308,96 @@ function testNotification() {
     console.log('📊 اختبار الإشعارات:', testOptions);
 }
     </script>
+<!-- في body - أضف زر التحكم بالصوت -->
+<div class="sound-control-panel" style="position: fixed; bottom: 80px; left: 20px; z-index: 1000;">
+    <button id="sound-toggle" onclick="toggleAppSound()" 
+            style="width: 50px; height: 50px; border-radius: 50%; 
+                   background: #4f46e5; border: none; color: white;
+                   display: flex; align-items: center; justify-content: center;
+                   cursor: pointer; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);">
+        <ion-icon name="volume-high" id="sound-icon" style="font-size: 24px;"></ion-icon>
+    </button>
+    
+    <div id="volume-slider" style="display: none; margin-top: 10px; background: white; padding: 10px; border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <input type="range" min="0" max="100" value="70" 
+               oninput="changeVolume(this.value)" style="width: 100%;">
+    </div>
+</div>
+
+<script>
+// تهيئة نظام الصوت الدائم
+let soundManager = null;
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // تهيئة نظام الصوت
+    soundManager = new TarhalSoundManager();
+    window.soundManager = soundManager; // جعله متاحاً عالمياً
+    
+    // تحميل التفضيلات السابقة
+    const savedVolume = soundManager.getVolume();
+    soundManager.setVolume(savedVolume);
+    
+    // ضبط زر الصوت
+    updateSoundButton();
+    
+    // تفعيل الصوت عند أول زيارة
+    if (!localStorage.getItem('tarhal_sound_initialized')) {
+        setTimeout(() => {
+            soundManager.showEnablePrompt();
+            localStorage.setItem('tarhal_sound_initialized', 'true');
+        }, 3000);
+    }
+});
+
+// وظائف التحكم
+function toggleAppSound() {
+    const enabled = soundManager.toggle();
+    updateSoundButton();
+    
+    // إظهار/إخفاء منزلق الصوت
+    const slider = document.getElementById('volume-slider');
+    if (enabled) {
+        slider.style.display = 'block';
+        setTimeout(() => slider.style.display = 'none', 3000);
+    } else {
+        slider.style.display = 'none';
+    }
+}
+
+function updateSoundButton() {
+    const icon = document.getElementById('sound-icon');
+    const enabled = soundManager.enabled;
+    
+    icon.name = enabled ? 'volume-high' : 'volume-mute';
+    document.getElementById('sound-toggle').style.background = 
+        enabled ? '#4f46e5' : '#6b7280';
+}
+
+function changeVolume(value) {
+    const volume = value / 100;
+    soundManager.setVolume(volume);
+    
+    // اختبار الصوت عند تغيير المستوى
+    if (volume > 0 && soundManager.enabled) {
+        soundManager.play('notification', { volume: volume * 0.5 });
+    }
+}
+
+// دالة لاستخدام الصوت في أي مكان في التطبيق
+function playAppSound(soundName, options = {}) {
+    if (!soundManager) return false;
+    
+    const volume = soundManager.getVolume();
+    return soundManager.play(soundName, {
+        volume: volume * (options.volume || 1),
+        ...options
+    });
+}
+
+// أمثلة للاستخدام:
+// playAppSound('new_ride'); // عند طلب رحلة جديدة
+// playAppSound('ride_accepted'); // عند قبول الرحلة
+// playAppSound('time_warning', { loop: true }); // عند قرب انتهاء الوقت
+</script>
 </body>
 </html>
