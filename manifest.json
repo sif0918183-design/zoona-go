@@ -1,31 +1,96 @@
 {
   "name": "ترحال زونا السودان",
-  "short_name": "ترحال زونا",
-  "description": "تطبيق النقل الأول في السودان",
+  "short_name": "ترحال",
+  "description": "تطبيق النقل الأول في السودان - طلب رحلات بسهولة وأمان",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "./",
-  "scope": "./",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#4f46e5",
-  "theme_color": "#4f46e5",
+  "display_override": ["window-controls-overlay", "standalone"],
   "orientation": "portrait",
+  "theme_color": "#4f46e5",
+  "background_color": "#ffffff",
   "icons": [
     {
-      "src": "./icons/icon-192x192.png",
+      "src": "icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "./icons/icon-384x384.png",
+      "src": "icons/icon-384x384.png",
       "sizes": "384x384",
       "type": "image/png"
     },
     {
-      "src": "./icons/icon-512x512.png",
+      "src": "icons/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/screenshot1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "شاشة الطلب الرئيسية"
+    },
+    {
+      "src": "screenshots/screenshot2.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "label": "شاشة السائق"
+    }
+  ],
+  "categories": ["travel", "navigation", "transportation"],
+  "shortcuts": [
+    {
+      "name": "طلب رحلة جديدة",
+      "short_name": "طلب",
+      "description": "اطلب رحلة جديدة",
+      "url": "/?source=shortcut&action=newride",
+      "icons": [{ "src": "icons/ride-icon.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "لوحة السائق",
+      "short_name": "سائق",
+      "description": "فتح لوحة السائق",
+      "url": "/?source=shortcut&action=driver",
+      "icons": [{ "src": "icons/driver-icon.png", "sizes": "96x96" }]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": ["auto"]
+  },
+  "handle_links": "preferred",
+  "edge_side_panel": {
+    "preferred_width": 480
+  }
 }
