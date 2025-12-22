@@ -9,10 +9,10 @@
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#4f46e5">
-    <link rel="icon" href="icons/icon-384x384.png">
+    <link rel="icon" href="icons/icon-192x192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="icons/icon-384x384.png">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
     
     <!-- Tajawal Font -->
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
@@ -90,32 +90,30 @@
         }
         
         /* Header */
-.app-header {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-    color: white;
-    padding: 10px 24px; /* قللنا من 20px إلى 10px */
-    text-align: center;
-    box-shadow: var(--shadow);
-    position: sticky;
-    top: 0;
-    z-index: 9999 !important;
-    border-bottom: 4px solid var(--primary-dark);
-}
-
-.app-header h1 {
-    font-size: 24px;
-    font-weight: 800;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-}
-
-.app-header .logo {
-    max-height: 50px; /* قللنا الارتفاع لتناسب الهيدر */
-    width: auto;
-    padding: 0; /* إزالة البادينج الكبير */
-}
+        .app-header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 20px 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+            position: sticky;
+            top: 0;
+            z-index: 9999 !important;
+            border-bottom: 4px solid var(--primary-dark);
+        }
+        
+        .app-header h1 {
+            font-size: 24px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+        
+        .app-header .logo {
+            font-size: 28px;
+        }
         
         /* Screens */
         .screen {
@@ -565,7 +563,7 @@
         /* Ride Request */
         .map-container {
             width: 100%;
-            height: 250px;
+            height: 280px;
             border-radius: var(--radius);
             overflow: hidden;
             margin-bottom: 24px;
@@ -844,6 +842,146 @@
             padding: 10px;
             border-radius: 10px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        /* New Styles for Map Controls */
+        .map-wrapper {
+            position: relative;
+            margin-bottom: 24px;
+            border-radius: var(--radius);
+            overflow: hidden;
+            border: 2px solid var(--gray-light);
+        }
+        
+        .map-controls {
+            position: absolute;
+            bottom: 15px;
+            left: 15px; /* تغيير من right إلى left لأن direction: rtl */
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .map-control-btn {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border: 2px solid var(--gray-light);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            color: var(--primary);
+            font-size: 18px;
+        }
+        
+        .map-control-btn:hover {
+            background: var(--primary-light);
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .map-control-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Location Loading Indicator */
+        .location-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 25px;
+            border-radius: var(--radius);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            z-index: 1000;
+            box-shadow: var(--shadow-xl);
+            text-align: center;
+            max-width: 300px;
+            width: 90%;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, -40%); }
+            to { opacity: 1; transform: translate(-50%, -50%); }
+        }
+        
+        .location-loading .loading {
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--primary-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        /* Instruction Message */
+        .instruction-message {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            z-index: 1000;
+            box-shadow: var(--shadow);
+            text-align: center;
+            max-width: 90%;
+            animation: slideDownMessage 0.5s ease;
+        }
+        
+        @keyframes slideDownMessage {
+            from {
+                transform: translate(-50%, -20px);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+        
+        /* Hide Leaflet Locate Control Circle */
+        .leaflet-control-locate .leaflet-bar .leaflet-control-locate-location {
+            display: none !important;
+        }
+        
+        /* Custom marker styles */
+        .user-marker {
+            background: var(--primary);
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(79, 70, 229, 0.8);
+            width: 20px !important;
+            height: 20px !important;
+        }
+        
+        .destination-marker {
+            background: var(--secondary);
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.8);
+            width: 20px !important;
+            height: 20px !important;
+        }
+        
+        .route-line {
+            stroke-dasharray: 10, 10;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
     </style>
 </head>
@@ -1164,68 +1302,73 @@
         </section>
         
         <!-- Ride Request Screen -->
-<section id="ride-request-screen" class="screen hidden">
-    <div class="card">
-        <h2 class="card-title">
-            <ion-icon name="navigate-outline"></ion-icon>
-            طلب رحلة جديدة
-        </h2>
-        
-        <!-- إضافة عنصر تحكم للخريطة -->
-        <div class="map-wrapper">
-            <div class="map-container" id="ride-map">
-                <!-- سيتم تهيئة الخريطة هنا -->
-            </div>
-            <div class="map-controls">
-                <button class="map-control-btn" onclick="recenterMap()" title="تحديد موقعك الحالي">
-                    <ion-icon name="locate-outline"></ion-icon>
-                </button>
-                <button class="map-control-btn" onclick="refreshLocation()" title="تحديث الموقع">
-                    <ion-icon name="refresh-outline"></ion-icon>
-                </button>
-            </div>
-        </div>
-        
-        <div class="mb-3">
-            <h4 class="form-label">اختر نوع المركبة:</h4>
-            <div class="vehicle-options">
-                <div class="vehicle-option" data-type="tuktuk" onclick="selectVehicle('tuktuk')">
-                    <div class="vehicle-icon">🛺</div>
-                    <div class="vehicle-name">توك توك</div>
-                    <div class="vehicle-price">5,000 SDG</div>
+        <section id="ride-request-screen" class="screen hidden">
+            <div class="card">
+                <h2 class="card-title">
+                    <ion-icon name="navigate-outline"></ion-icon>
+                    طلب رحلة جديدة
+                </h2>
+                
+                <!-- إضافة عنصر تحكم للخريطة -->
+                <div class="map-wrapper">
+                    <div class="map-container" id="ride-map">
+                        <!-- سيتم تهيئة الخريطة هنا -->
+                    </div>
+                    <div class="map-controls">
+                        <button class="map-control-btn" onclick="recenterMap()" title="التمركز على موقعك">
+                            <ion-icon name="locate-outline"></ion-icon>
+                        </button>
+                        <button class="map-control-btn" onclick="refreshLocation()" title="تحديث الموقع">
+                            <ion-icon name="refresh-outline"></ion-icon>
+                        </button>
+                    </div>
                 </div>
                 
-                <div class="vehicle-option" data-type="economy" onclick="selectVehicle('economy')">
-                    <div class="vehicle-icon">🚗</div>
-                    <div class="vehicle-name">اقتصادية</div>
-                    <div class="vehicle-price">6,000 SDG</div>
+                <!-- رسالة التعليمات -->
+                <div id="instruction-message" class="instruction-message hidden">
+                    يرجى تحديد نقطة الوصول على الخريطة
                 </div>
                 
-                <div class="vehicle-option" data-type="comfort" onclick="selectVehicle('comfort')">
-                    <div class="vehicle-icon">🚙</div>
-                    <div class="vehicle-name">متوسطة</div>
-                    <div class="vehicle-price">7,000 SDG</div>
+                <div class="mb-3">
+                    <h4 class="form-label">اختر نوع المركبة:</h4>
+                    <div class="vehicle-options">
+                        <div class="vehicle-option" data-type="tuktuk" onclick="selectVehicle('tuktuk')">
+                            <div class="vehicle-icon">🛺</div>
+                            <div class="vehicle-name">توك توك</div>
+                            <div class="vehicle-price">5,000 SDG</div>
+                        </div>
+                        
+                        <div class="vehicle-option" data-type="economy" onclick="selectVehicle('economy')">
+                            <div class="vehicle-icon">🚗</div>
+                            <div class="vehicle-name">اقتصادية</div>
+                            <div class="vehicle-price">6,000 SDG</div>
+                        </div>
+                        
+                        <div class="vehicle-option" data-type="comfort" onclick="selectVehicle('comfort')">
+                            <div class="vehicle-icon">🚙</div>
+                            <div class="vehicle-name">متوسطة</div>
+                            <div class="vehicle-price">7,000 SDG</div>
+                        </div>
+                        
+                        <div class="vehicle-option" data-type="vip" onclick="selectVehicle('vip')">
+                            <div class="vehicle-icon">⭐</div>
+                            <div class="vehicle-name">VIP</div>
+                            <div class="vehicle-price">10,000 SDG</div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="vehicle-option" data-type="vip" onclick="selectVehicle('vip')">
-                    <div class="vehicle-icon">⭐</div>
-                    <div class="vehicle-name">VIP</div>
-                    <div class="vehicle-price">10,000 SDG</div>
-                </div>
-            </div>
-        </div>
-        
-        <div id="price-calculation" class="price-breakdown hidden">
-            <div class="price-row">
-                <span>المسافة:</span>
-                <span id="distance-display">0 كم</span>
-            </div>
-            <div class="price-row">
-                <span>السعر الأساسي:</span>
-                <span id="base-price-display">0 SDG</span>
-            </div>
-            <div class="price-row">
-                <span>رسوم إضافية:</span>
+                <div id="price-calculation" class="price-breakdown hidden">
+                    <div class="price-row">
+                        <span>المسافة:</span>
+                        <span id="distance-display">0 كم</span>
+                    </div>
+                    <div class="price-row">
+                        <span>السعر الأساسي:</span>
+                        <span id="base-price-display">0 SDG</span>
+                    </div>
+                    <div class="price-row">
+                        <span>رسوم إضافية:</span>
                         <span id="extra-price-display">0 SDG</span>
                     </div>
                     <div class="price-row">
@@ -1239,175 +1382,13 @@
                     بحث عن سائق
                 </button>
                 
-                <button class="btn btn-outline mt-2" onclick="goHome()">
+                <button class="btn btn-outline mt-2" onclick="returnToHome()">
                     <ion-icon name="arrow-back-outline"></ion-icon>
                     إلغاء والعودة
                 </button>
             </div>
         </section>
 
-        <style>
-            /* إضافة أنماط CSS جديدة */
-            .map-wrapper {
-                position: relative;
-                margin-bottom: 24px;
-                border-radius: var(--radius);
-                overflow: hidden;
-                border: 2px solid var(--gray-light);
-            }
-            
-            .map-controls {
-                position: absolute;
-                bottom: 15px;
-                right: 15px;
-                display: flex;
-                flex-direction: column;
-                gap: 10px;
-                z-index: 1000;
-            }
-            
-            .map-control-btn {
-                width: 45px;
-                height: 45px;
-                background: white;
-                border: 2px solid var(--gray-light);
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                cursor: pointer;
-                box-shadow: var(--shadow);
-                transition: all 0.3s ease;
-                color: var(--primary);
-                font-size: 20px;
-            }
-            
-            .map-control-btn:hover {
-                background: var(--primary-light);
-                border-color: var(--primary);
-                transform: scale(1.05);
-            }
-            
-            .map-control-btn:active {
-                transform: scale(0.95);
-            }
-            
-            /* تحسين عرض الخريطة */
-            .map-container {
-                width: 100%;
-                height: 280px;
-                border-radius: var(--radius);
-                overflow: hidden;
-                position: relative;
-            }
-            
-            /* إضافة أنماط للخط المحسّن */
-            .route-line {
-                stroke-dasharray: 10, 10;
-                animation: dash 1s linear infinite;
-            }
-            
-            @keyframes dash {
-                from {
-                    stroke-dashoffset: 20;
-                }
-                to {
-                    stroke-dashoffset: 0;
-                }
-            }
-            
-            .route-info {
-                background: white;
-                padding: 10px 15px;
-                border-radius: 8px;
-                margin-top: 10px;
-                border-right: 3px solid var(--primary);
-                box-shadow: var(--shadow);
-                font-size: 14px;
-            }
-            
-            /* تحسين عرض الأسعار */
-            .vehicle-price {
-                color: var(--primary);
-                font-weight: 800;
-                font-size: 16px;
-                direction: ltr;
-                text-align: center;
-            }
-            
-            .price-breakdown .price-row:last-child {
-                border-bottom: none;
-                font-weight: 800;
-                font-size: 20px;
-                color: var(--primary);
-                direction: ltr;
-                text-align: left;
-            }
-            
-            .price-breakdown .price-row span:last-child {
-                font-family: 'Tajawal', 'Segoe UI', Arial, sans-serif;
-                letter-spacing: 0.5px;
-            }
-            
-            /* تحسين التجاوب */
-            @media (max-width: 480px) {
-                .map-container {
-                    height: 240px;
-                }
-                
-                .map-control-btn {
-                    width: 40px;
-                    height: 40px;
-                    font-size: 18px;
-                }
-            }
-            
-            /* مؤشر التحميل */
-            .location-loading {
-                position: absolute;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.95);
-                padding: 20px 25px;
-                border-radius: var(--radius);
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                gap: 15px;
-                z-index: 1000;
-                box-shadow: var(--shadow-xl);
-                text-align: center;
-                max-width: 300px;
-                width: 90%;
-                animation: fadeIn 0.3s ease;
-            }
-            
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translate(-50%, -40%); }
-                to { opacity: 1; transform: translate(-50%, -50%); }
-            }
-            
-            .location-loading .loading {
-                width: 30px;
-                height: 30px;
-                border: 3px solid var(--primary-light);
-                border-top-color: var(--primary);
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-            
-            .user-marker, .user-marker-default, .destination-marker {
-                animation: pulse 2s infinite;
-            }
-            
-            @keyframes pulse {
-                0% { transform: scale(1); }
-                50% { transform: scale(1.1); }
-                100% { transform: scale(1); }
-            }
-        </style>
-        
         <!-- Driver Dashboard -->
         <section id="driver-dashboard-screen" class="screen hidden">
             <div class="card">
@@ -1561,6 +1542,8 @@
         let rideTimeout = 40;
         let registeredPhone = null;
         let deferredPrompt = null;
+        let routePolyline = null;
+        let locationUpdateInterval = null;
         
         // نظام الإشعارات
         let notificationManager = null;
@@ -1737,7 +1720,8 @@
             showScreen('driver-register-info-screen');
         }
         
-        function goHome() {
+        // --- دالة جديدة: العودة للرئيسية من شاشة طلب الرحلة ---
+        function returnToHome() {
             // إيقاف تتبع الموقع
             if (locationUpdateInterval) {
                 clearInterval(locationUpdateInterval);
@@ -1755,12 +1739,18 @@
             routePolyline = null;
             userPosition = null;
             destinationPosition = null;
-            currentRoute = null;
             
             // إزالة أي عناصر تحميل متبقية
             const loadingElements = document.querySelectorAll('.location-loading');
             loadingElements.forEach(el => el.remove());
             
+            // إخفاء رسالة التعليمات
+            const instructionMessage = document.getElementById('instruction-message');
+            if (instructionMessage) {
+                instructionMessage.classList.add('hidden');
+            }
+            
+            // العودة للشاشة الرئيسية
             if (currentUser) {
                 showScreen('home-screen');
             } else if (currentDriver) {
@@ -2225,7 +2215,7 @@
             // إعادة تعيين المتغيرات
             selectedVehicleType = null;
             destinationPosition = null;
-            userPosition = null; // إعادة تعيين موقع المستخدم
+            userPosition = null;
             
             document.querySelectorAll('.vehicle-option').forEach(option => {
                 option.classList.remove('selected');
@@ -2236,7 +2226,6 @@
             // تأخير بسيط قبل تهيئة الخريطة
             setTimeout(() => {
                 initRideMap();
-                showNotification("جاري تحديد موقعك تلقائياً...", "info");
             }, 300);
         }
         
@@ -2247,6 +2236,7 @@
                 rideMap = null;
                 userMarker = null;
                 destinationMarker = null;
+                routePolyline = null;
             }
             
             // إنشاء الخريطة مع إعدادات محسنة
@@ -2264,42 +2254,13 @@
             // تحديد موقع المستخدم تلقائياً عند فتح الشاشة
             locateUserAutomatically();
             
-            // معالجة النقر لتحديد الوجهة
-            rideMap.on('click', (e) => {
-                if (destinationMarker) {
-                    rideMap.removeLayer(destinationMarker);
-                }
-                
-                destinationMarker = L.marker(e.latlng, {
-                    icon: L.divIcon({
-                        html: '<div style="background: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">📍</div>',
-                        className: 'destination-marker',
-                        iconSize: [30, 30],
-                        iconAnchor: [15, 15]
-                    })
-                }).addTo(rideMap).bindPopup('نقطة الوصول').openPopup();
-                
-                destinationPosition = { lat: e.latlng.lat, lng: e.latlng.lng };
-                
-                // تفعيل زر الطلب وحساب التكلفة
-                document.getElementById('confirm-ride-btn').disabled = false;
-                
-                // إذا كان المستخدم قد حدد موقعاً مسبقاً، رسم المسار
-                if (userPosition) {
-                    drawRoute(userPosition, destinationPosition);
-                    showNotification("تم تحديد وجهة الوصول بنجاح ✓", "success");
-                } else {
-                    showNotification("تم تحديد الوجهة، يرجى انتظار تحديد موقعك...", "info");
-                }
-            });
-            
             // حل مشكلة أحجام البلاطات
             setTimeout(() => {
                 rideMap.invalidateSize();
             }, 400);
         }
         
-        // --- دالة جديدة: تحديد موقع المستخدم تلقائياً ---
+        // --- دالة: تحديد موقع المستخدم تلقائياً ---
         function locateUserAutomatically() {
             // إضافة مؤشر تحميل
             const loadingIndicator = document.createElement('div');
@@ -2312,7 +2273,7 @@
             
             if (navigator.geolocation) {
                 navigator.geolocation.getCurrentPosition(
-                    async (position) => {
+                    (position) => {
                         // حفظ موقع المستخدم
                         userPosition = {
                             lat: position.coords.latitude,
@@ -2325,7 +2286,7 @@
                             duration: 1.5
                         });
                         
-                        // إضافة علامة موقع المستخدم
+                        // إضافة علامة موقع المستخدم (علامة بسيطة بدون نبض)
                         userMarker = L.marker([userPosition.lat, userPosition.lng], {
                             icon: L.divIcon({
                                 html: '<div style="background: #4f46e5; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(79, 70, 229, 0.8);"></div>',
@@ -2338,13 +2299,11 @@
                         // إزالة مؤشر التحميل
                         loadingIndicator.remove();
                         
-                        // عرض رسالة نجاح
-                        showNotification(`✓ تم تحديد موقعك: ${position.coords.accuracy < 50 ? 'دقة عالية' : 'دقة متوسطة'}`, 'success');
+                        // عرض رسالة التعليمات
+                        showInstructionMessage('حدد نقطة الوصول على الخريطة');
                         
-                        // إذا كانت هناك وجهة محددة مسبقاً، رسم المسار مباشرة
-                        if (destinationPosition) {
-                            drawRoute(userPosition, destinationPosition);
-                        }
+                        // إضافة حدث النقر على الخريطة بعد تحديد الموقع
+                        rideMap.on('click', handleMapClick);
                         
                         // بدء تتبع الموقع
                         startLocationTracking();
@@ -2354,64 +2313,64 @@
                         // إزالة مؤشر التحميل
                         loadingIndicator.remove();
                         
-                        // عرض رسالة خطأ مع خيار إعادة المحاولة
-                        const errorDiv = document.createElement('div');
-                        errorDiv.className = 'location-loading';
-                        errorDiv.style.background = '#fee2e2';
-                        errorDiv.style.color = '#dc2626';
-                        errorDiv.innerHTML = `
-                            <ion-icon name="warning" style="font-size: 24px;"></ion-icon>
-                            <div style="margin: 10px 0;">تعذر تحديد موقعك تلقائياً</div>
-                            <div style="font-size: 14px; margin-bottom: 15px;">${getGeolocationError(error)}</div>
-                            <div style="display: flex; gap: 10px; justify-content: center;">
-                                <button onclick="retryUserLocation()" style="
-                                    background: var(--primary);
-                                    color: white;
-                                    border: none;
-                                    padding: 8px 16px;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                ">
-                                    إعادة المحاولة
-                                </button>
-                                <button onclick="useDefaultLocation()" style="
-                                    background: #e5e7eb;
-                                    color: var(--dark);
-                                    border: 1px solid var(--gray-light);
-                                    padding: 8px 16px;
-                                    border-radius: 8px;
-                                    cursor: pointer;
-                                ">
-                                    استخدام الموقع الافتراضي
-                                </button>
-                            </div>
-                        `;
-                        document.getElementById('ride-map').appendChild(errorDiv);
+                        // استخدام موقع افتراضي
+                        useDefaultLocation();
                         
                         console.error('خطأ في تحديد الموقع:', error);
                     },
                     {
-                        enableHighAccuracy: true,  // استخدام GPS للدقة العالية
-                        timeout: 10000,            // انتظار 10 ثواني
-                        maximumAge: 0             // عدم استخدام البيانات المخزنة
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
                     }
                 );
             } else {
                 loadingIndicator.remove();
-                showNotification('متصفحك لا يدخدم خدمة الموقع الجغرافي', 'warning');
+                showNotification('متصفحك لا يدعم خدمة الموقع الجغرافي', 'warning');
                 useDefaultLocation();
             }
         }
         
-        // --- دالة جديدة: إعادة محاولة تحديد الموقع ---
-        function retryUserLocation() {
-            const errorDiv = document.querySelector('.location-loading');
-            if (errorDiv) errorDiv.remove();
+        // --- دالة: معالجة النقر على الخريطة ---
+        function handleMapClick(e) {
+            if (destinationMarker) {
+                rideMap.removeLayer(destinationMarker);
+            }
             
-            locateUserAutomatically();
+            // إزالة المسار القديم إذا كان موجوداً
+            if (routePolyline) {
+                rideMap.removeLayer(routePolyline);
+                routePolyline = null;
+            }
+            
+            // حفظ موقع الوجهة
+            destinationPosition = { lat: e.latlng.lat, lng: e.latlng.lng };
+            
+            // إضافة علامة الوجهة
+            destinationMarker = L.marker([destinationPosition.lat, destinationPosition.lng], {
+                icon: L.divIcon({
+                    html: '<div style="background: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(239, 68, 68, 0.8);"></div>',
+                    className: 'destination-marker',
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                })
+            }).addTo(rideMap).bindPopup('نقطة الوصول').openPopup();
+            
+            // رسم المسار إذا كان موقع المستخدم محدداً
+            if (userPosition) {
+                drawRoute(userPosition, destinationPosition);
+            }
+            
+            // تفعيل زر الطلب
+            document.getElementById('confirm-ride-btn').disabled = false;
+            
+            // إخفاء رسالة التعليمات
+            hideInstructionMessage();
+            
+            showNotification('تم تحديد نقطة الوصول بنجاح ✓', 'success');
         }
         
-        // --- دالة جديدة: استخدام موقع افتراضي ---
+        // --- دالة: استخدام موقع افتراضي ---
         function useDefaultLocation() {
             // موقع افتراضي في وسط الخرطوم
             userPosition = {
@@ -2424,33 +2383,39 @@
             userMarker = L.marker([userPosition.lat, userPosition.lng], {
                 icon: L.divIcon({
                     html: '<div style="background: #6b7280; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>',
-                    className: 'user-marker-default',
+                    className: 'user-marker',
                     iconSize: [26, 26],
                     iconAnchor: [13, 13]
                 })
-            }).addTo(rideMap).bindPopup('الموقع الافتراضي - الرجاء تحديد موقعك يدوياً').openPopup();
+            }).addTo(rideMap).bindPopup('الموقع الافتراضي').openPopup();
             
-            showNotification('تم استخدام موقع افتراضي. يمكنك تحديد موقعك يدوياً', 'warning');
+            // عرض رسالة التعليمات
+            showInstructionMessage('حدد نقطة الوصول على الخريطة');
+            
+            // إضافة حدث النقر على الخريطة
+            rideMap.on('click', handleMapClick);
+            
+            showNotification('تم استخدام موقع افتراضي. يرجى تحديد نقطة الوصول', 'warning');
         }
         
-        // --- دالة جديدة: رسم المسار ---
+        // --- دالة: رسم المسار ---
         function drawRoute(start, end) {
             // إزالة المسار القديم إذا كان موجوداً
             if (routePolyline) {
                 rideMap.removeLayer(routePolyline);
-                routePolyline = null;
             }
             
-            // رسم خط مستقيم مؤقت
+            // رسم المسار
             routePolyline = L.polyline([
                 [start.lat, start.lng],
                 [end.lat, end.lng]
             ], {
                 color: '#4f46e5',
                 weight: 4,
-                opacity: 0.7,
+                opacity: 0.8,
                 dashArray: '10, 10',
-                lineCap: 'round'
+                lineCap: 'round',
+                className: 'route-line'
             }).addTo(rideMap);
             
             // احتواء الخريطة على كامل المسار
@@ -2468,7 +2433,32 @@
             }
         }
         
-        // --- دالة جديدة: رسالة خطأ الموقع ---
+        // --- دالة: عرض رسالة التعليمات ---
+        function showInstructionMessage(message) {
+            const instructionMessage = document.getElementById('instruction-message');
+            if (instructionMessage) {
+                instructionMessage.textContent = message;
+                instructionMessage.classList.remove('hidden');
+            }
+        }
+        
+        // --- دالة: إخفاء رسالة التعليمات ---
+        function hideInstructionMessage() {
+            const instructionMessage = document.getElementById('instruction-message');
+            if (instructionMessage) {
+                instructionMessage.classList.add('hidden');
+            }
+        }
+        
+        // --- دالة: إعادة محاولة تحديد الموقع ---
+        function retryUserLocation() {
+            const errorDiv = document.querySelector('.location-loading');
+            if (errorDiv) errorDiv.remove();
+            
+            locateUserAutomatically();
+        }
+        
+        // --- دالة: رسالة خطأ الموقع ---
         function getGeolocationError(error) {
             switch(error.code) {
                 case error.PERMISSION_DENIED:
@@ -2515,7 +2505,7 @@
             document.getElementById('confirm-ride-btn').disabled = false;
         }
         
-        // --- دالة جديدة: حساب المسافة ---
+        // --- دالة: حساب المسافة ---
         function calculateDistance(pos1, pos2) {
             // حساب المسافة باستخدام صيغة Haversine
             const R = 6371; // نصف قطر الأرض بالكيلومترات
@@ -2531,7 +2521,7 @@
             return parseFloat(distance.toFixed(2)); // إرجاع مسافة مقربة
         }
         
-        // --- دالة جديدة: إعادة التمركز ---
+        // --- دالة: إعادة التمركز ---
         function recenterMap() {
             if (userPosition && rideMap) {
                 rideMap.setView([userPosition.lat, userPosition.lng], 16);
@@ -2547,13 +2537,13 @@
             }
         }
         
-        // --- دالة جديدة: تحديث الموقع ---
+        // --- دالة: تحديث الموقع ---
         function refreshLocation() {
             if (navigator.geolocation) {
                 showNotification('جاري تحديث الموقع...', 'info');
                 
                 navigator.geolocation.getCurrentPosition(
-                    async (position) => {
+                    (position) => {
                         userPosition = {
                             lat: position.coords.latitude,
                             lng: position.coords.longitude
@@ -2584,7 +2574,7 @@
             }
         }
         
-        // --- دالة جديدة: تتبع الموقع ---
+        // --- دالة: تتبع الموقع ---
         function startLocationTracking() {
             if (locationUpdateInterval) {
                 clearInterval(locationUpdateInterval);
@@ -2617,7 +2607,7 @@
             }, 30000);
         }
         
-        // --- دالة جديدة: تحديث عرض المسافة ---
+        // --- دالة: تحديث عرض المسافة ---
         function updateDistanceDisplay(distance) {
             document.getElementById('distance-display').textContent = 
                 `${distance.toFixed(2)} كم`;
@@ -2877,7 +2867,7 @@
         function cancelRide() {
             document.getElementById('active-trip-modal').classList.add('hidden');
             showNotification('تم إلغاء الرحلة', 'info');
-            goHome();
+            returnToHome();
         }
         
         function acceptRide() {
@@ -2911,33 +2901,6 @@
                 // ننتظر حتى يكون هناك تفاعل من المستخدم
             }
         });
-        
-        // أنماط CSS إضافية
-        const style = document.createElement('style');
-        style.textContent = `
-            @keyframes slideDown {
-                from {
-                    transform: translateY(-100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-            
-            @keyframes slideUp {
-                from {
-                    transform: translateY(100%);
-                    opacity: 0;
-                }
-                to {
-                    transform: translateY(0);
-                    opacity: 1;
-                }
-            }
-        `;
-        document.head.appendChild(style);
         
         console.log('🎯 تطبيق ترحال زونا جاهز للعمل!');
     </script>
