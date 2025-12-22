@@ -1425,43 +1425,70 @@
             
             // --- تعديل دالة initRideMap ---
             function initRideMap() {
-                // إذا كانت الخريطة موجودة، إزالتها أولاً
-                if (rideMap) {
-                    rideMap.remove();
-                    rideMap = null;
-                    userMarker = null;
-                    destinationMarker = null;
-                }
-                
-                // إضافة مؤشر تحميل
-                const mapContainer = document.getElementById('ride-map');
-                const loadingIndicator = document.createElement('div');
-                loadingIndicator.className = 'location-loading';
-                loadingIndicator.innerHTML = `
-                    <div class="loading"></div>
-                    <div>جاري تحديد موقعك...</div>
-                `;
-                mapContainer.appendChild(loadingIndicator);
-                
-                // تهيئة الخريطة باستخدام Leaflet
-                rideMap = L.map('ride-map').setView([15.5007, 32.5599], 13);
-                
-                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                    attribution: '© OpenStreetMap contributors',
-                    maxZoom: 18,
-                    minZoom: 10
-                }).addTo(rideMap);
-                
-                // جلب موقع المستخدم تلقائياً
-                getCurrentLocation();
-                
-                // إضافة حدث النقر لتحديد الوجهة
-                rideMap.on('click', async (e) => {
-                    await setDestination(e.latlng.lat, e.latlng.lng);
-                });
-                
-                mapInitialized = true;
-            }
+    // 1. تنظيف الخريطة السابقة لمنع التداخل أو تعليق التطبيق
+    if (rideMap) {
+        rideMap.remove();
+        rideMap = null;
+        userMarker = null;
+        destinationMarker = null;
+    }
+    
+    // 2. إنشاء الخريطة وتعديل إعدادات العرض
+    rideMap = L.map('ride-map', {
+        zoomControl: false, // سنعتمد على أزرارنا الخاصة للتحكم
+        tap: true
+    }).setView([15.5007, 32.5599], 13);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap'
+    }).addTo(rideMap);
+    
+    // 3. تحديد الموقع بدقة عالية فوراً
+    if (navigator.geolocation) {
+        showNotification("جاري تحديد موقعك بدقة...", "info");
+        
+        navigator.geolocation.getCurrentPosition((position) => {
+            userPos = {
+                lat: position.coords.latitude,
+                lng: position.coords.longitude
+            };
+            
+            // تحريك الكاميرا لموقع المستخدم بنعومة
+            rideMap.flyTo([userPos.lat, userPos.lng], 16);
+            
+            // إضافة مؤشر موقع المستخدم (النقطة الزرقاء)
+            userMarker = L.marker([userPos.lat, userPos.lng], {
+                icon: L.divIcon({
+                    html: '<div style="background:#4f46e5; width:15px; height:15px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.3);"></div>',
+                    className: 'user-dot'
+                })
+            }).addTo(rideMap).bindPopup("أنت هنا").openPopup();
+            
+        }, (err) => {
+            showNotification("يرجى تفعيل الـ GPS لتحديد موقعك", "danger");
+        }, {
+            enableHighAccuracy: true, // أهم خاصية للدقة
+            timeout: 10000,
+            maximumAge: 0
+        });
+    }
+    
+    // 4. معالجة النقر لتحديد الوجهة
+    rideMap.on('click', (e) => {
+        if (destinationMarker) rideMap.removeLayer(destinationMarker);
+        
+        destinationMarker = L.marker(e.latlng).addTo(rideMap);
+        
+        // تفعيل زر الطلب وحساب التكلفة التقديرية
+        document.getElementById('confirm-ride-btn').disabled = false;
+        showNotification("تم تحديد وجهة الوصول بنجاح", "success");
+    });
+
+    // 5. حل مشكلة ظهور المربعات الرمادية عند فتح الشاشة
+    setTimeout(() => {
+        rideMap.invalidateSize();
+    }, 400);
+}
             
             // --- دالة جديدة: جلب الموقع الحالي ---
             function getCurrentLocation() {
