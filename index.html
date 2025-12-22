@@ -1366,15 +1366,24 @@
                 top: 50%;
                 left: 50%;
                 transform: translate(-50%, -50%);
-                background: rgba(255, 255, 255, 0.9);
-                padding: 20px;
+                background: rgba(255, 255, 255, 0.95);
+                padding: 20px 25px;
                 border-radius: var(--radius);
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 10px;
+                gap: 15px;
                 z-index: 1000;
-                box-shadow: var(--shadow);
+                box-shadow: var(--shadow-xl);
+                text-align: center;
+                max-width: 300px;
+                width: 90%;
+                animation: fadeIn 0.3s ease;
+            }
+            
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translate(-50%, -40%); }
+                to { opacity: 1; transform: translate(-50%, -50%); }
             }
             
             .location-loading .loading {
@@ -1382,651 +1391,20 @@
                 height: 30px;
                 border: 3px solid var(--primary-light);
                 border-top-color: var(--primary);
+                border-radius: 50%;
+                animation: spin 1s linear infinite;
+            }
+            
+            .user-marker, .user-marker-default, .destination-marker {
+                animation: pulse 2s infinite;
+            }
+            
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
             }
         </style>
-        
-        <script>
-            // إضافة متغيرات جديدة
-            let mapInitialized = false;
-            let locationUpdateInterval = null;
-            let currentRoute = null;
-            let routePolyline = null;
-            
-            // --- تعديل دالة requestRide ---
-            function requestRide() {
-                if (!currentUser || !currentUser.is_verified) {
-                    showNotification('يجب تفعيل حسابك أولاً لطلب رحلة', 'error');
-                    return;
-                }
-                
-                showScreen('ride-request-screen');
-                
-                // إعادة تعيين المتغيرات
-                selectedVehicleType = null;
-                destinationPosition = null;
-                currentRoute = null;
-                document.querySelectorAll('.vehicle-option').forEach(option => {
-                    option.classList.remove('selected');
-                });
-                document.getElementById('price-calculation').classList.add('hidden');
-                document.getElementById('confirm-ride-btn').disabled = true;
-                
-                // إزالة معلومات المسار القديمة
-                const oldRouteInfo = document.querySelector('.route-info');
-                if (oldRouteInfo) {
-                    oldRouteInfo.remove();
-                }
-                
-                // تهيئة الخريطة بعد تأخير بسيط
-                setTimeout(() => {
-                    initRideMap();
-                }, 100);
-            }
-            
-            // --- تعديل دالة initRideMap ---
-            function initRideMap() {
-    // 1. تنظيف الخريطة السابقة لمنع التداخل أو تعليق التطبيق
-    if (rideMap) {
-        rideMap.remove();
-        rideMap = null;
-        userMarker = null;
-        destinationMarker = null;
-    }
-    
-    // 2. إنشاء الخريطة وتعديل إعدادات العرض
-    rideMap = L.map('ride-map', {
-        zoomControl: false, // سنعتمد على أزرارنا الخاصة للتحكم
-        tap: true
-    }).setView([15.5007, 32.5599], 13);
-    
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap'
-    }).addTo(rideMap);
-    
-    // 3. تحديد الموقع بدقة عالية فوراً
-    if (navigator.geolocation) {
-        showNotification("جاري تحديد موقعك بدقة...", "info");
-        
-        navigator.geolocation.getCurrentPosition((position) => {
-            userPos = {
-                lat: position.coords.latitude,
-                lng: position.coords.longitude
-            };
-            
-            // تحريك الكاميرا لموقع المستخدم بنعومة
-            rideMap.flyTo([userPos.lat, userPos.lng], 16);
-            
-            // إضافة مؤشر موقع المستخدم (النقطة الزرقاء)
-            userMarker = L.marker([userPos.lat, userPos.lng], {
-                icon: L.divIcon({
-                    html: '<div style="background:#4f46e5; width:15px; height:15px; border-radius:50%; border:3px solid white; box-shadow:0 0 10px rgba(0,0,0,0.3);"></div>',
-                    className: 'user-dot'
-                })
-            }).addTo(rideMap).bindPopup("أنت هنا").openPopup();
-            
-        }, (err) => {
-            showNotification("يرجى تفعيل الـ GPS لتحديد موقعك", "danger");
-        }, {
-            enableHighAccuracy: true, // أهم خاصية للدقة
-            timeout: 10000,
-            maximumAge: 0
-        });
-    }
-    
-    // 4. معالجة النقر لتحديد الوجهة
-    rideMap.on('click', (e) => {
-        if (destinationMarker) rideMap.removeLayer(destinationMarker);
-        
-        destinationMarker = L.marker(e.latlng).addTo(rideMap);
-        
-        // تفعيل زر الطلب وحساب التكلفة التقديرية
-        document.getElementById('confirm-ride-btn').disabled = false;
-        showNotification("تم تحديد وجهة الوصول بنجاح", "success");
-    });
-
-    // 5. حل مشكلة ظهور المربعات الرمادية عند فتح الشاشة
-    setTimeout(() => {
-        rideMap.invalidateSize();
-    }, 400);
-}
-            
-            // --- دالة جديدة: جلب الموقع الحالي ---
-            function getCurrentLocation() {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            userPosition = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            };
-                            
-                            // تحديث عرض الخريطة
-                            rideMap.setView([userPosition.lat, userPosition.lng], 15);
-                            
-                            // إضافة علامة للمستخدم
-                            addUserMarker();
-                            
-                            // إزالة مؤشر التحميل
-                            const loadingIndicator = document.querySelector('.location-loading');
-                            if (loadingIndicator) {
-                                loadingIndicator.remove();
-                            }
-                            
-                            // بدء تحديث الموقع تلقائياً
-                            startLocationTracking();
-                            
-                        },
-                        (error) => {
-                            // إزالة مؤشر التحميل
-                            const loadingIndicator = document.querySelector('.location-loading');
-                            if (loadingIndicator) {
-                                loadingIndicator.remove();
-                            }
-                            
-                            // عرض رسالة خطأ
-                            const errorMsg = document.createElement('div');
-                            errorMsg.className = 'location-loading';
-                            errorMsg.style.background = '#fee2e2';
-                            errorMsg.style.color = '#dc2626';
-                            errorMsg.innerHTML = `
-                                <ion-icon name="warning" style="font-size: 24px;"></ion-icon>
-                                <div>تعذر تحديد الموقع</div>
-                                <button onclick="retryLocation()" style="
-                                    background: var(--primary);
-                                    color: white;
-                                    border: none;
-                                    padding: 8px 16px;
-                                    border-radius: 8px;
-                                    margin-top: 10px;
-                                    cursor: pointer;
-                                ">
-                                    إعادة المحاولة
-                                </button>
-                            `;
-                            document.getElementById('ride-map').appendChild(errorMsg);
-                            
-                            console.error('خطأ في الوصول للموقع:', error);
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 0
-                        }
-                    );
-                } else {
-                    showNotification('المتصفح لا يدعم خدمة الموقع الجغرافي', 'warning');
-                }
-            }
-            
-            // --- دالة جديدة: إعادة المحاولة ---
-            function retryLocation() {
-                const errorMsg = document.querySelector('.location-loading');
-                if (errorMsg) {
-                    errorMsg.remove();
-                }
-                
-                const loadingIndicator = document.createElement('div');
-                loadingIndicator.className = 'location-loading';
-                loadingIndicator.innerHTML = `
-                    <div class="loading"></div>
-                    <div>جاري تحديد موقعك...</div>
-                `;
-                document.getElementById('ride-map').appendChild(loadingIndicator);
-                
-                getCurrentLocation();
-            }
-            
-            // --- دالة جديدة: إضافة علامة المستخدم ---
-            function addUserMarker() {
-                if (userMarker) {
-                    userMarker.setLatLng([userPosition.lat, userPosition.lng]);
-                } else {
-                    userMarker = L.marker([userPosition.lat, userPosition.lng], {
-                        icon: L.divIcon({
-                            html: '<div style="background: #4f46e5; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">👤</div>',
-                            className: 'user-marker',
-                            iconSize: [30, 30],
-                            iconAnchor: [15, 15]
-                        })
-                    }).addTo(rideMap).bindPopup('موقعك الحالي').openPopup();
-                }
-            }
-            
-            // --- دالة جديدة: تتبع الموقع ---
-            function startLocationTracking() {
-                if (locationUpdateInterval) {
-                    clearInterval(locationUpdateInterval);
-                }
-                
-                // تحديث الموقع كل 30 ثانية
-                locationUpdateInterval = setInterval(async () => {
-                    if (navigator.geolocation && rideMap && userMarker) {
-                        navigator.geolocation.getCurrentPosition(async (position) => {
-                            const newPos = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            };
-                            
-                            // تحديث موقع المستخدم إذا تغير بشكل ملحوظ
-                            if (calculateDistance(userPosition, newPos) > 0.01) { // أكثر من 10 أمتار
-                                userPosition = newPos;
-                                addUserMarker();
-                                
-                                // إذا كانت هناك وجهة محددة، إعادة حساب المسار
-                                if (destinationPosition) {
-                                    await calculateRealRoute(userPosition, destinationPosition);
-                                    if (selectedVehicleType) {
-                                        calculateRidePrice();
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }, 30000);
-            }
-            
-            // --- تعديل دالة setDestination ---
-            async function setDestination(lat, lng) {
-                destinationPosition = { lat, lng };
-                
-                if (destinationMarker) {
-                    destinationMarker.setLatLng([lat, lng]);
-                } else {
-                    destinationMarker = L.marker([lat, lng], {
-                        icon: L.divIcon({
-                            html: '<div style="background: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">📍</div>',
-                            className: 'destination-marker',
-                            iconSize: [30, 30],
-                            iconAnchor: [15, 15]
-                        })
-                    }).addTo(rideMap).bindPopup('نقطة الوصول').openPopup();
-                }
-                
-                // إذا كان هناك موقع مستخدم، حساب المسار الحقيقي
-                if (userPosition) {
-                    await calculateRealRoute(userPosition, destinationPosition);
-                }
-                
-                if (selectedVehicleType) {
-                    calculateRidePrice();
-                }
-            }
-            
-            // --- دالة جديدة: حساب المسار الحقيقي ---
-            async function calculateRealRoute(start, end) {
-                try {
-                    // إضافة مؤشر تحميل
-                    const loadingIndicator = document.createElement('div');
-                    loadingIndicator.className = 'location-loading';
-                    loadingIndicator.innerHTML = `
-                        <div class="loading"></div>
-                        <div>جاري حساب المسار...</div>
-                    `;
-                    document.getElementById('ride-map').appendChild(loadingIndicator);
-                    
-                    // استخدام OSRM للحصول على المسار الحقيقي
-                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
-                    
-                    const response = await fetch(osrmUrl);
-                    const data = await response.json();
-                    
-                    // إزالة مؤشر التحميل
-                    loadingIndicator.remove();
-                    
-                    if (data.routes && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        
-                        // حفظ بيانات المسار
-                        currentRoute = {
-                            distance: route.distance / 1000, // تحويل إلى كم
-                            duration: route.duration / 60, // تحويل إلى دقائق
-                            geometry: route.geometry
-                        };
-                        
-                        // رسم المسار على الخريطة
-                        drawRouteOnMap(route.geometry);
-                        
-                        // تحديث عرض المسافة
-                        updateDistanceDisplay(currentRoute.distance);
-                        
-                        showNotification(`✓ المسار المحسوب: ${currentRoute.distance.toFixed(1)} كم`, 'success');
-                        
-                        return currentRoute;
-                    } else {
-                        throw new Error('لم يتم العثور على مسار');
-                    }
-                    
-                } catch (error) {
-                    console.error('خطأ في حساب المسار:', error);
-                    
-                    // استخدام المسافة المستقيمة كبديل
-                    const straightDistance = calculateDistance(start, end);
-                    drawStraightLine(start, end);
-                    updateDistanceDisplay(straightDistance);
-                    
-                    showNotification('⚠️ استخدام المسافة التقريبية', 'warning');
-                    
-                    return {
-                        distance: straightDistance,
-                        duration: (straightDistance / 40) * 60, // تقدير الوقت (سرعة 40 كم/س)
-                        geometry: null
-                    };
-                }
-            }
-            
-            // --- دالة جديدة: رسم المسار على الخريطة ---
-            function drawRouteOnMap(geometry) {
-                // إزالة المسار القديم إذا كان موجوداً
-                if (routePolyline) {
-                    rideMap.removeLayer(routePolyline);
-                }
-                
-                if (window.routeLine) {
-                    rideMap.removeLayer(window.routeLine);
-                }
-                
-                // تحويل إحداثيات GeoJSON إلى تنسيق Leaflet
-                const coordinates = geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                
-                // رسم المسار بخط متقطع أجمل
-                routePolyline = L.polyline(coordinates, {
-                    color: '#4f46e5',
-                    weight: 4,
-                    opacity: 0.8,
-                    dashArray: '10, 10',
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                    className: 'route-line'
-                }).addTo(rideMap);
-                
-                // إضافة معلومات المسار
-                if (currentRoute) {
-                    addRouteInfo();
-                }
-            }
-            
-            // --- دالة جديدة: رسم خط مستقيم (بديل) ---
-            function drawStraightLine(start, end) {
-                if (routePolyline) {
-                    rideMap.removeLayer(routePolyline);
-                }
-                
-                routePolyline = L.polyline([
-                    [start.lat, start.lng],
-                    [end.lat, end.lng]
-                ], {
-                    color: '#4f46e5',
-                    weight: 3,
-                    opacity: 0.7,
-                    dashArray: '10, 10',
-                    lineCap: 'round'
-                }).addTo(rideMap);
-            }
-            
-            // --- دالة جديدة: تحديث عرض المسافة ---
-            function updateDistanceDisplay(distance) {
-                document.getElementById('distance-display').textContent = 
-                    `${Math.round(distance * 10) / 10} كم`;
-                
-                // إذا كان هناك مسار حقيقي، إضافة معلومات إضافية
-                if (currentRoute) {
-                    const duration = Math.round(currentRoute.duration);
-                    const distanceElement = document.getElementById('distance-display');
-                    distanceElement.title = `الوقت المقدر: ${duration} دقيقة`;
-                    
-                    // إضافة وقت الرحلة بجانب المسافة
-                    const parentElement = distanceElement.parentElement;
-                    const existingDuration = parentElement.querySelector('.duration-info');
-                    
-                    if (!existingDuration) {
-                        const durationSpan = document.createElement('span');
-                        durationSpan.className = 'duration-info';
-                        durationSpan.style.cssText = `
-                            font-size: 12px;
-                            color: var(--gray);
-                            margin-right: 5px;
-                        `;
-                        durationSpan.textContent = `(${duration} دقيقة)`;
-                        parentElement.insertBefore(durationSpan, distanceElement);
-                    } else {
-                        existingDuration.textContent = `(${duration} دقيقة)`;
-                    }
-                }
-            }
-            
-            // --- دالة جديدة: إضافة معلومات المسار ---
-            function addRouteInfo() {
-                // إزالة معلومات المسار القديمة إذا كانت موجودة
-                const oldInfo = document.querySelector('.route-info');
-                if (oldInfo) {
-                    oldInfo.remove();
-                }
-                
-                if (!currentRoute) return;
-                
-                // إنشاء عنصر معلومات المسار
-                const routeInfo = document.createElement('div');
-                routeInfo.className = 'route-info';
-                routeInfo.innerHTML = `
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <strong style="color: var(--primary);">📏 المسار المحسوب</strong>
-                            <div style="font-size: 12px; color: var(--gray); margin-top: 4px;">
-                                ${currentRoute.distance.toFixed(1)} كم • ${Math.round(currentRoute.duration)} دقيقة
-                            </div>
-                        </div>
-                        <button onclick="toggleRouteDetails()" style="
-                            background: var(--primary-light);
-                            border: none;
-                            border-radius: 6px;
-                            padding: 5px 10px;
-                            font-size: 12px;
-                            cursor: pointer;
-                            color: var(--primary);
-                        ">
-                            تفاصيل
-                        </button>
-                    </div>
-                `;
-                
-                // إضافة المعلومات تحت الخريطة
-                const mapContainer = document.querySelector('.map-wrapper');
-                if (mapContainer) {
-                    mapContainer.appendChild(routeInfo);
-                }
-            }
-            
-            // --- دالة جديدة: عرض تفاصيل المسار ---
-            function toggleRouteDetails() {
-                if (currentRoute) {
-                    const routeInfo = document.querySelector('.route-info');
-                    const existingDetails = routeInfo.querySelector('.route-details');
-                    
-                    if (existingDetails) {
-                        existingDetails.remove();
-                    } else {
-                        const details = `
-                            <div style="margin-top: 10px; padding: 10px; background: #f8fafc; border-radius: 6px;">
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <span>المسافة:</span>
-                                    <strong>${currentRoute.distance.toFixed(1)} كم</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-                                    <span>الوقت المقدر:</span>
-                                    <strong>${Math.round(currentRoute.duration)} دقيقة</strong>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span>متوسط السرعة:</span>
-                                    <strong>${Math.round((currentRoute.distance / currentRoute.duration) * 60)} كم/س</strong>
-                                </div>
-                            </div>
-                        `;
-                        
-                        const detailsDiv = document.createElement('div');
-                        detailsDiv.className = 'route-details';
-                        detailsDiv.innerHTML = details;
-                        routeInfo.appendChild(detailsDiv);
-                    }
-                }
-            }
-            
-            // --- تعديل دالة calculateRidePrice ---
-            function calculateRidePrice() {
-                if (!userPosition || !destinationPosition || !selectedVehicleType) return;
-                
-                // استخدام المسافة الحقيقية إذا كانت متاحة، وإلا استخدام المسافة المستقيمة
-                let distance;
-                if (currentRoute && currentRoute.distance) {
-                    distance = currentRoute.distance;
-                } else {
-                    distance = calculateDistance(userPosition, destinationPosition);
-                }
-                
-                const vehicle = VEHICLE_PRICES[selectedVehicleType];
-                const additionalKm = Math.max(0, distance - 1);
-                const basePrice = vehicle.base;
-                const extraPrice = additionalKm * vehicle.perKm;
-                const totalPrice = basePrice + extraPrice;
-                
-                // عرض تفاصيل السعر مع تقريب الأرقام
-                document.getElementById('price-calculation').classList.remove('hidden');
-                document.getElementById('distance-display').textContent = `${Math.round(distance * 10) / 10} كم`;
-                document.getElementById('base-price-display').textContent = formatPrice(basePrice);
-                document.getElementById('extra-price-display').textContent = formatPrice(Math.round(extraPrice));
-                document.getElementById('total-price-display').textContent = formatPrice(Math.round(totalPrice));
-                
-                document.getElementById('confirm-ride-btn').disabled = false;
-            }
-            
-            // --- دالة جديدة: حساب المسافة ---
-            function calculateDistance(pos1, pos2) {
-                // حساب المسافة باستخدام صيغة Haversine
-                const R = 6371; // نصف قطر الأرض بالكيلومترات
-                const dLat = toRad(pos2.lat - pos1.lat);
-                const dLon = toRad(pos2.lng - pos1.lng);
-                const a = 
-                    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                    Math.cos(toRad(pos1.lat)) * Math.cos(toRad(pos2.lat)) * 
-                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-                const distance = R * c;
-                
-                return distance;
-            }
-            
-            function toRad(degrees) {
-                return degrees * Math.PI / 180;
-            }
-            
-            // --- دالة جديدة: تنسيق السعر ---
-            function formatPrice(amount) {
-                // تقريب السعر وإزالة الكسور
-                const roundedAmount = Math.round(amount);
-                
-                // تنسيق الرقم بفواصل الآلاف
-                return `${roundedAmount.toLocaleString('ar-EG')} SDG`;
-            }
-            
-            // --- دالة جديدة: إعادة التمركز ---
-            function recenterMap() {
-                if (userPosition && rideMap) {
-                    rideMap.setView([userPosition.lat, userPosition.lng], 15);
-                    
-                    // إذا كان هناك مسار، تضمينه في العرض
-                    if (routePolyline && currentRoute) {
-                        rideMap.fitBounds(routePolyline.getBounds());
-                    }
-                    
-                    showNotification('تم التمركز على موقعك', 'success');
-                } else {
-                    showNotification('لم يتم تحديد موقعك بعد', 'warning');
-                }
-            }
-            
-            // --- دالة جديدة: تحديث الموقع ---
-            async function refreshLocation() {
-                if (navigator.geolocation) {
-                    showNotification('جاري تحديث الموقع...', 'info');
-                    
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            userPosition = {
-                                lat: position.coords.latitude,
-                                lng: position.coords.longitude
-                            };
-                            
-                            addUserMarker();
-                            rideMap.setView([userPosition.lat, userPosition.lng], 15);
-                            
-                            // إذا كان هناك وجهة محددة، إعادة حساب المسار
-                            if (destinationPosition) {
-                                await calculateRealRoute(userPosition, destinationPosition);
-                            }
-                            
-                            showNotification('تم تحديث موقعك بنجاح', 'success');
-                        },
-                        (error) => {
-                            showNotification('تعذر تحديث الموقع', 'error');
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 5000
-                        }
-                    );
-                }
-            }
-            
-            // --- دالة جديدة: تغيير نوع المركبة ---
-            function selectVehicle(type) {
-                selectedVehicleType = type;
-                
-                document.querySelectorAll('.vehicle-option').forEach(option => {
-                    option.classList.remove('selected');
-                });
-                document.querySelector(`.vehicle-option[data-type="${type}"]`).classList.add('selected');
-                
-                if (destinationPosition) {
-                    calculateRidePrice();
-                }
-            }
-            
-            // --- تعديل دالة goHome ---
-            function goHome() {
-                // إيقاف تحديث الموقع
-                if (locationUpdateInterval) {
-                    clearInterval(locationUpdateInterval);
-                    locationUpdateInterval = null;
-                }
-                
-                // إزالة المسار إذا كان موجوداً
-                if (routePolyline) {
-                    rideMap.removeLayer(routePolyline);
-                    routePolyline = null;
-                }
-                
-                if (window.routeLine) {
-                    rideMap.removeLayer(window.routeLine);
-                    window.routeLine = null;
-                }
-                
-                // إزالة معلومات المسار
-                const routeInfo = document.querySelector('.route-info');
-                if (routeInfo) {
-                    routeInfo.remove();
-                }
-                
-                // إعادة تعيين المتغيرات
-                currentRoute = null;
-                
-                if (currentUser) {
-                    showScreen('home-screen');
-                } else if (currentDriver) {
-                    showScreen('driver-dashboard-screen');
-                } else {
-                    showScreen('welcome-screen');
-                }
-            }
-        </script>
         
         <!-- Driver Dashboard -->
         <section id="driver-dashboard-screen" class="screen hidden">
@@ -2358,6 +1736,29 @@
         }
         
         function goHome() {
+            // إيقاف تتبع الموقع
+            if (locationUpdateInterval) {
+                clearInterval(locationUpdateInterval);
+                locationUpdateInterval = null;
+            }
+            
+            // تنظيف الخريطة والبيانات
+            if (rideMap) {
+                rideMap.remove();
+                rideMap = null;
+            }
+            
+            userMarker = null;
+            destinationMarker = null;
+            routePolyline = null;
+            userPosition = null;
+            destinationPosition = null;
+            currentRoute = null;
+            
+            // إزالة أي عناصر تحميل متبقية
+            const loadingElements = document.querySelectorAll('.location-loading');
+            loadingElements.forEach(el => el.remove());
+            
             if (currentUser) {
                 showScreen('home-screen');
             } else if (currentDriver) {
@@ -2818,77 +2219,264 @@
             }
             
             showScreen('ride-request-screen');
-            initRideMap();
+            
+            // إعادة تعيين المتغيرات
+            selectedVehicleType = null;
+            destinationPosition = null;
+            userPosition = null; // إعادة تعيين موقع المستخدم
+            
+            document.querySelectorAll('.vehicle-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+            document.getElementById('price-calculation').classList.add('hidden');
+            document.getElementById('confirm-ride-btn').disabled = true;
+            
+            // تأخير بسيط قبل تهيئة الخريطة
+            setTimeout(() => {
+                initRideMap();
+                showNotification("جاري تحديد موقعك تلقائياً...", "info");
+            }, 300);
         }
         
         function initRideMap() {
+            // تنظيف الخريطة السابقة
             if (rideMap) {
                 rideMap.remove();
                 rideMap = null;
+                userMarker = null;
+                destinationMarker = null;
             }
             
-            rideMap = L.map('ride-map').setView([15.5007, 32.5599], 12);
+            // إنشاء الخريطة مع إعدادات محسنة
+            rideMap = L.map('ride-map', {
+                zoomControl: true,
+                tap: true,
+                zoomSnap: 0.5
+            }).setView([15.5007, 32.5599], 13); // عرض افتراضي للخرطوم
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap contributors'
+                attribution: '© OpenStreetMap',
+                maxZoom: 19
             }).addTo(rideMap);
             
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition((position) => {
-                    userPosition = {
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude
-                    };
-                    
-                    rideMap.setView([userPosition.lat, userPosition.lng], 15);
-                    
-                    userMarker = L.marker([userPosition.lat, userPosition.lng], {
-                        icon: L.divIcon({
-                            html: '<div style="background: #4f46e5; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>'
-                        })
-                    }).addTo(rideMap).bindPopup('موقعك الحالي').openPopup();
-                    
-                    rideMap.on('click', (e) => {
-                        setDestination(e.latlng.lat, e.latlng.lng);
-                    });
-                    
-                }, (error) => {
-                    showNotification('الرجاء السماح بالوصول للموقع الجغرافي', 'warning');
-                }, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                });
-            }
-        }
-        
-        function setDestination(lat, lng) {
-            destinationPosition = { lat, lng };
+            // تحديد موقع المستخدم تلقائياً عند فتح الشاشة
+            locateUserAutomatically();
             
-            if (destinationMarker) {
-                destinationMarker.setLatLng([lat, lng]);
-            } else {
-                destinationMarker = L.marker([lat, lng], {
+            // معالجة النقر لتحديد الوجهة
+            rideMap.on('click', (e) => {
+                if (destinationMarker) {
+                    rideMap.removeLayer(destinationMarker);
+                }
+                
+                destinationMarker = L.marker(e.latlng, {
                     icon: L.divIcon({
-                        html: '<div style="background: #ef4444; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);"></div>'
+                        html: '<div style="background: #ef4444; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">📍</div>',
+                        className: 'destination-marker',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 15]
                     })
                 }).addTo(rideMap).bindPopup('نقطة الوصول').openPopup();
                 
-                if (userMarker) {
-                    L.polyline([
-                        [userPosition.lat, userPosition.lng],
-                        [lat, lng]
-                    ], {
-                        color: '#4f46e5',
-                        weight: 3,
-                        opacity: 0.7,
-                        dashArray: '10, 10'
-                    }).addTo(rideMap);
+                destinationPosition = { lat: e.latlng.lat, lng: e.latlng.lng };
+                
+                // تفعيل زر الطلب وحساب التكلفة
+                document.getElementById('confirm-ride-btn').disabled = false;
+                
+                // إذا كان المستخدم قد حدد موقعاً مسبقاً، رسم المسار
+                if (userPosition) {
+                    drawRoute(userPosition, destinationPosition);
+                    showNotification("تم تحديد وجهة الوصول بنجاح ✓", "success");
+                } else {
+                    showNotification("تم تحديد الوجهة، يرجى انتظار تحديد موقعك...", "info");
                 }
+            });
+            
+            // حل مشكلة أحجام البلاطات
+            setTimeout(() => {
+                rideMap.invalidateSize();
+            }, 400);
+        }
+        
+        // --- دالة جديدة: تحديد موقع المستخدم تلقائياً ---
+        function locateUserAutomatically() {
+            // إضافة مؤشر تحميل
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.className = 'location-loading';
+            loadingIndicator.innerHTML = `
+                <div class="loading"></div>
+                <div>جاري تحديد موقعك بدقة عالية...</div>
+            `;
+            document.getElementById('ride-map').appendChild(loadingIndicator);
+            
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        // حفظ موقع المستخدم
+                        userPosition = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        // تحريك الخريطة لموقع المستخدم بنعومة
+                        rideMap.flyTo([userPosition.lat, userPosition.lng], 16, {
+                            animate: true,
+                            duration: 1.5
+                        });
+                        
+                        // إضافة علامة موقع المستخدم
+                        userMarker = L.marker([userPosition.lat, userPosition.lng], {
+                            icon: L.divIcon({
+                                html: '<div style="background: #4f46e5; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(79, 70, 229, 0.8);"></div>',
+                                className: 'user-marker',
+                                iconSize: [26, 26],
+                                iconAnchor: [13, 13]
+                            })
+                        }).addTo(rideMap).bindPopup('موقعك الحالي').openPopup();
+                        
+                        // إزالة مؤشر التحميل
+                        loadingIndicator.remove();
+                        
+                        // عرض رسالة نجاح
+                        showNotification(`✓ تم تحديد موقعك: ${position.coords.accuracy < 50 ? 'دقة عالية' : 'دقة متوسطة'}`, 'success');
+                        
+                        // إذا كانت هناك وجهة محددة مسبقاً، رسم المسار مباشرة
+                        if (destinationPosition) {
+                            drawRoute(userPosition, destinationPosition);
+                        }
+                        
+                        // بدء تتبع الموقع
+                        startLocationTracking();
+                        
+                    },
+                    (error) => {
+                        // إزالة مؤشر التحميل
+                        loadingIndicator.remove();
+                        
+                        // عرض رسالة خطأ مع خيار إعادة المحاولة
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'location-loading';
+                        errorDiv.style.background = '#fee2e2';
+                        errorDiv.style.color = '#dc2626';
+                        errorDiv.innerHTML = `
+                            <ion-icon name="warning" style="font-size: 24px;"></ion-icon>
+                            <div style="margin: 10px 0;">تعذر تحديد موقعك تلقائياً</div>
+                            <div style="font-size: 14px; margin-bottom: 15px;">${getGeolocationError(error)}</div>
+                            <div style="display: flex; gap: 10px; justify-content: center;">
+                                <button onclick="retryUserLocation()" style="
+                                    background: var(--primary);
+                                    color: white;
+                                    border: none;
+                                    padding: 8px 16px;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                ">
+                                    إعادة المحاولة
+                                </button>
+                                <button onclick="useDefaultLocation()" style="
+                                    background: #e5e7eb;
+                                    color: var(--dark);
+                                    border: 1px solid var(--gray-light);
+                                    padding: 8px 16px;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                ">
+                                    استخدام الموقع الافتراضي
+                                </button>
+                            </div>
+                        `;
+                        document.getElementById('ride-map').appendChild(errorDiv);
+                        
+                        console.error('خطأ في تحديد الموقع:', error);
+                    },
+                    {
+                        enableHighAccuracy: true,  // استخدام GPS للدقة العالية
+                        timeout: 10000,            // انتظار 10 ثواني
+                        maximumAge: 0             // عدم استخدام البيانات المخزنة
+                    }
+                );
+            } else {
+                loadingIndicator.remove();
+                showNotification('متصفحك لا يدخدم خدمة الموقع الجغرافي', 'warning');
+                useDefaultLocation();
             }
+        }
+        
+        // --- دالة جديدة: إعادة محاولة تحديد الموقع ---
+        function retryUserLocation() {
+            const errorDiv = document.querySelector('.location-loading');
+            if (errorDiv) errorDiv.remove();
+            
+            locateUserAutomatically();
+        }
+        
+        // --- دالة جديدة: استخدام موقع افتراضي ---
+        function useDefaultLocation() {
+            // موقع افتراضي في وسط الخرطوم
+            userPosition = {
+                lat: 15.5007,
+                lng: 32.5599
+            };
+            
+            rideMap.flyTo([userPosition.lat, userPosition.lng], 14);
+            
+            userMarker = L.marker([userPosition.lat, userPosition.lng], {
+                icon: L.divIcon({
+                    html: '<div style="background: #6b7280; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 0 10px rgba(0,0,0,0.3);"></div>',
+                    className: 'user-marker-default',
+                    iconSize: [26, 26],
+                    iconAnchor: [13, 13]
+                })
+            }).addTo(rideMap).bindPopup('الموقع الافتراضي - الرجاء تحديد موقعك يدوياً').openPopup();
+            
+            showNotification('تم استخدام موقع افتراضي. يمكنك تحديد موقعك يدوياً', 'warning');
+        }
+        
+        // --- دالة جديدة: رسم المسار ---
+        function drawRoute(start, end) {
+            // إزالة المسار القديم إذا كان موجوداً
+            if (routePolyline) {
+                rideMap.removeLayer(routePolyline);
+                routePolyline = null;
+            }
+            
+            // رسم خط مستقيم مؤقت
+            routePolyline = L.polyline([
+                [start.lat, start.lng],
+                [end.lat, end.lng]
+            ], {
+                color: '#4f46e5',
+                weight: 4,
+                opacity: 0.7,
+                dashArray: '10, 10',
+                lineCap: 'round'
+            }).addTo(rideMap);
+            
+            // احتواء الخريطة على كامل المسار
+            rideMap.fitBounds(routePolyline.getBounds(), {
+                padding: [50, 50],
+                maxZoom: 15
+            });
+            
+            // حساب المسافة وتحديث السعر
+            const distance = calculateDistance(start, end);
+            updateDistanceDisplay(distance);
             
             if (selectedVehicleType) {
                 calculateRidePrice();
+            }
+        }
+        
+        // --- دالة جديدة: رسالة خطأ الموقع ---
+        function getGeolocationError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    return "تم رفض إذن الموقع. يرجى السماح بالوصول إلى الموقع في إعدادات المتصفح.";
+                case error.POSITION_UNAVAILABLE:
+                    return "معلومات الموقع غير متوفرة. تأكد من تفعيل GPS.";
+                case error.TIMEOUT:
+                    return "انتهت مدة انتظار الموقع. يرجى المحاولة مرة أخرى.";
+                default:
+                    return "حدث خطأ غير معروف في تحديد الموقع.";
             }
         }
         
@@ -2900,7 +2488,7 @@
             });
             document.querySelector(`.vehicle-option[data-type="${type}"]`).classList.add('selected');
             
-            if (destinationPosition) {
+            if (destinationPosition && userPosition) {
                 calculateRidePrice();
             }
         }
@@ -2908,9 +2496,7 @@
         function calculateRidePrice() {
             if (!userPosition || !destinationPosition || !selectedVehicleType) return;
             
-            const latDiff = destinationPosition.lat - userPosition.lat;
-            const lngDiff = destinationPosition.lng - userPosition.lng;
-            const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111;
+            const distance = calculateDistance(userPosition, destinationPosition);
             
             const vehicle = VEHICLE_PRICES[selectedVehicleType];
             const additionalKm = Math.max(0, distance - 1);
@@ -2919,12 +2505,120 @@
             const totalPrice = basePrice + extraPrice;
             
             document.getElementById('price-calculation').classList.remove('hidden');
-            document.getElementById('distance-display').textContent = `${distance.toFixed(1)} كم`;
+            document.getElementById('distance-display').textContent = `${distance.toFixed(2)} كم`;
             document.getElementById('base-price-display').textContent = `${basePrice.toLocaleString()} SDG`;
-            document.getElementById('extra-price-display').textContent = `${extraPrice.toLocaleString()} SDG`;
-            document.getElementById('total-price-display').textContent = `${totalPrice.toLocaleString()} SDG`;
+            document.getElementById('extra-price-display').textContent = `${Math.round(extraPrice).toLocaleString()} SDG`;
+            document.getElementById('total-price-display').textContent = `${Math.round(totalPrice).toLocaleString()} SDG`;
             
             document.getElementById('confirm-ride-btn').disabled = false;
+        }
+        
+        // --- دالة جديدة: حساب المسافة ---
+        function calculateDistance(pos1, pos2) {
+            // حساب المسافة باستخدام صيغة Haversine
+            const R = 6371; // نصف قطر الأرض بالكيلومترات
+            const dLat = (pos2.lat - pos1.lat) * Math.PI / 180;
+            const dLon = (pos2.lng - pos1.lng) * Math.PI / 180;
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(pos1.lat * Math.PI / 180) * Math.cos(pos2.lat * Math.PI / 180) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            const distance = R * c;
+            
+            return parseFloat(distance.toFixed(2)); // إرجاع مسافة مقربة
+        }
+        
+        // --- دالة جديدة: إعادة التمركز ---
+        function recenterMap() {
+            if (userPosition && rideMap) {
+                rideMap.setView([userPosition.lat, userPosition.lng], 16);
+                
+                // إذا كان هناك مسار، تضمينه في العرض
+                if (routePolyline) {
+                    rideMap.fitBounds(routePolyline.getBounds());
+                }
+                
+                showNotification('تم التمركز على موقعك', 'success');
+            } else {
+                showNotification('لم يتم تحديد موقعك بعد', 'warning');
+            }
+        }
+        
+        // --- دالة جديدة: تحديث الموقع ---
+        function refreshLocation() {
+            if (navigator.geolocation) {
+                showNotification('جاري تحديث الموقع...', 'info');
+                
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        userPosition = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        // تحديث علامة المستخدم
+                        if (userMarker) {
+                            userMarker.setLatLng([userPosition.lat, userPosition.lng]);
+                        }
+                        
+                        rideMap.setView([userPosition.lat, userPosition.lng], 16);
+                        
+                        // إذا كان هناك وجهة محددة، إعادة رسم المسار
+                        if (destinationPosition) {
+                            drawRoute(userPosition, destinationPosition);
+                        }
+                        
+                        showNotification('تم تحديث موقعك بنجاح', 'success');
+                    },
+                    (error) => {
+                        showNotification('تعذر تحديث الموقع', 'error');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 5000
+                    }
+                );
+            }
+        }
+        
+        // --- دالة جديدة: تتبع الموقع ---
+        function startLocationTracking() {
+            if (locationUpdateInterval) {
+                clearInterval(locationUpdateInterval);
+            }
+            
+            // تحديث الموقع كل 30 ثانية
+            locationUpdateInterval = setInterval(() => {
+                if (navigator.geolocation && rideMap && userMarker) {
+                    navigator.geolocation.getCurrentPosition((position) => {
+                        const newPos = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        // تحديث موقع المستخدم إذا تغير بشكل ملحوظ
+                        if (calculateDistance(userPosition, newPos) > 0.01) { // أكثر من 10 أمتار
+                            userPosition = newPos;
+                            userMarker.setLatLng([userPosition.lat, userPosition.lng]);
+                            
+                            // إذا كانت هناك وجهة محددة، إعادة رسم المسار
+                            if (destinationPosition) {
+                                drawRoute(userPosition, destinationPosition);
+                                if (selectedVehicleType) {
+                                    calculateRidePrice();
+                                }
+                            }
+                        }
+                    });
+                }
+            }, 30000);
+        }
+        
+        // --- دالة جديدة: تحديث عرض المسافة ---
+        function updateDistanceDisplay(distance) {
+            document.getElementById('distance-display').textContent = 
+                `${distance.toFixed(2)} كم`;
         }
         
         async function confirmRide() {
@@ -2946,9 +2640,7 @@
             showNotification('جاري البحث عن سائق قريب...', 'info');
             
             try {
-                const latDiff = destinationPosition.lat - userPosition.lat;
-                const lngDiff = destinationPosition.lng - userPosition.lng;
-                const distance = Math.sqrt(latDiff * latDiff + lngDiff * lngDiff) * 111;
+                const distance = calculateDistance(userPosition, destinationPosition);
                 const vehicle = VEHICLE_PRICES[selectedVehicleType];
                 const additionalKm = Math.max(0, distance - 1);
                 const totalPrice = vehicle.base + (additionalKm * vehicle.perKm);
@@ -2964,7 +2656,7 @@
                         pickup_lng: userPosition.lng,
                         destination_lat: destinationPosition.lat,
                         destination_lng: destinationPosition.lng,
-                        distance_km: parseFloat(distance.toFixed(1)),
+                        distance_km: parseFloat(distance.toFixed(2)),
                         vehicle_type: selectedVehicleType,
                         amount: totalPrice,
                         status: 'searching',
@@ -2989,7 +2681,7 @@
                             customerPhone: currentUser.phone,
                             pickupLocation: 'الخرطوم - العمارات',
                             destination: 'أم درمان - السوق',
-                            distance: `${distance.toFixed(1)} كم`,
+                            distance: `${distance.toFixed(2)} كم`,
                             price: `${totalPrice.toLocaleString()} SDG`,
                             vehicleType: vehicle.name
                         });
