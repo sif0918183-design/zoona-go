@@ -88,31 +88,32 @@
         }
         
         /* Header */
-        .app-header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            padding: 20px 24px;
-            text-align: center;
-            box-shadow: var(--shadow);
-            position: sticky;
-            top: 0;
-            z-index: 9999 !important;
-            border-bottom: 4px solid var(--primary-dark);
-        }
-        
-        .app-header h1 {
-            font-size: 24px;
-            font-weight: 800;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 5px;
-        }
-        
-        .app-header .logo {
-            font-size: 28px;
-            padding: 70px 70px;
-        }
+.app-header {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    color: white;
+    padding: 10px 24px; /* قللنا من 20px إلى 10px */
+    text-align: center;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 9999 !important;
+    border-bottom: 4px solid var(--primary-dark);
+}
+
+.app-header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.app-header .logo {
+    max-height: 50px; /* قللنا الارتفاع لتناسب الهيدر */
+    width: auto;
+    padding: 0; /* إزالة البادينج الكبير */
+}
         
         /* Screens */
         .screen {
