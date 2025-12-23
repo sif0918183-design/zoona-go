@@ -102,7 +102,7 @@ class TarhalNotificationManager {
 
       if (this.fcmToken) {
         console.log('✅ FCM Token:', this.fcmToken);
-        await this.saveTokenToServer(this.fcmToken);
+        await this.saveTokenToJSONBin(this.fcmToken);
       }
 
       messaging.onMessage(payload => {
@@ -118,6 +118,40 @@ class TarhalNotificationManager {
 
     } catch (error) {
       console.error('❌ خطأ Firebase:', error);
+    }
+  }
+
+  // =========================
+  // حفظ Token في JSONBin
+  // =========================
+  async saveTokenToJSONBin(token) {
+    try {
+      const TARHAL_BIN_ID = '66a1b2c3d4e5f67890123456'; // BIN_ID الخاص بك
+      const JSONBIN_KEY = '$2a$10$oHNml.lQOJitFfK0hyyT0.81SIcJolFR5be5uAAQ8IOiECZHAELTW'; // المفتاح الرئيسي
+
+      const data = {
+        token: token,
+        userId: window.currentDriver?.id || window.currentUser?.id || null,
+        userType: window.currentDriver ? 'driver' : 'customer',
+        timestamp: Date.now()
+      };
+
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${TARHAL_BIN_ID}`, {
+        method: 'PUT', // لتحديث الـ bin
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': JSONBIN_KEY
+        },
+        body: JSON.stringify(data)
+      });
+
+      if (!response.ok) throw new Error('فشل حفظ التوكن في JSONBin');
+
+      console.log('✅ FCM Token محفوظ في JSONBin');
+      return await response.json();
+
+    } catch (error) {
+      console.error('❌ خطأ في حفظ التوكن:', error);
     }
   }
 
@@ -224,21 +258,6 @@ class TarhalNotificationManager {
 
     document.body.appendChild(n);
     setTimeout(() => n.remove(), 5000);
-  }
-
-  // =========================
-  // حفظ التوكن
-  // =========================
-  async saveTokenToServer(token) {
-    try {
-      await fetch('/api/save-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, timestamp: Date.now() })
-      });
-    } catch (e) {
-      console.error('❌ حفظ التوكن فشل', e);
-    }
   }
 
   // =========================
