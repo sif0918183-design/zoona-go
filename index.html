@@ -1650,116 +1650,106 @@
                 }
             }
             
-            // --- دالة جديدة: حساب المسار الحقيقي ---
-            async function calculateRealRoute(start, end) {
-                try {
-                    // إضافة مؤشر تحميل
-                    const loadingIndicator = document.createElement('div');
-                    loadingIndicator.className = 'location-loading';
-                    loadingIndicator.innerHTML = `
-                        <div class="loading"></div>
-                        <div>جاري حساب المسار...</div>
-                    `;
-                    document.getElementById('ride-map').appendChild(loadingIndicator);
-                    
-                    // استخدام OSRM للحصول على المسار الحقيقي
-                    const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
-                    
-                    const response = await fetch(osrmUrl);
-                    const data = await response.json();
-                    
-                    // إزالة مؤشر التحميل
-                    loadingIndicator.remove();
-                    
-                    if (data.routes && data.routes.length > 0) {
-                        const route = data.routes[0];
-                        
-                        // حفظ بيانات المسار
-                        currentRoute = {
-                            distance: route.distance / 1000, // تحويل إلى كم
-                            duration: route.duration / 60, // تحويل إلى دقائق
-                            geometry: route.geometry
-                        };
-                        
-                        // رسم المسار على الخريطة
-                        drawRouteOnMap(route.geometry);
-                        
-                        // تحديث عرض المسافة
-                        updateDistanceDisplay(currentRoute.distance);
-                        
-                        showNotification(`✓ المسار المحسوب: ${currentRoute.distance.toFixed(1)} كم`, 'success');
-                        
-                        return currentRoute;
-                    } else {
-                        throw new Error('لم يتم العثور على مسار');
-                    }
-                    
-                } catch (error) {
-                    console.error('خطأ في حساب المسار:', error);
-                    
-                    // استخدام المسافة المستقيمة كبديل
-                    const straightDistance = calculateDistance(start, end);
-                    drawStraightLine(start, end);
-                    updateDistanceDisplay(straightDistance);
-                    
-                    showNotification('⚠️ استخدام المسافة التقريبية', 'warning');
-                    
-                    return {
-                        distance: straightDistance,
-                        duration: (straightDistance / 40) * 60, // تقدير الوقت (سرعة 40 كم/س)
-                        geometry: null
-                    };
-                }
+// --- دالة حساب المسار الحقيقي ---
+async function calculateRealRoute(start, end) {
+    try {
+        // إضافة مؤشر تحميل
+        const loadingIndicator = document.createElement('div');
+        loadingIndicator.className = 'location-loading';
+        loadingIndicator.innerHTML = `
+            <div class="loading"></div>
+            <div>جاري حساب المسار...</div>
+        `;
+        document.getElementById('ride-map').appendChild(loadingIndicator);
+
+        // رابط OSRM
+        const osrmUrl = `https://router.project-osrm.org/route/v1/driving/${start.lng},${start.lat};${end.lng},${end.lat}?overview=full&geometries=geojson`;
+
+        const response = await fetch(osrmUrl);
+        const data = await response.json();
+
+        loadingIndicator.remove();
+
+        if (data.routes && data.routes.length > 0) {
+            const route = data.routes[0];
+
+            // حفظ بيانات المسار
+            currentRoute = {
+                distance: route.distance / 1000,
+                duration: route.duration / 60,
+                geometry: route.geometry
+            };
+
+            // رسم المسار الحقيقي
+            if (route.geometry && route.geometry.coordinates.length > 1) {
+                drawRouteOnMap(route.geometry);
+            } else {
+                // fallback في حال فشل الحصول على المسار
+                drawStraightLine(start, end);
             }
-            
-            // --- دالة جديدة: رسم المسار على الخريطة ---
-            function drawRouteOnMap(geometry) {
-                // إزالة المسار القديم إذا كان موجوداً
-                if (routePolyline) {
-                    rideMap.removeLayer(routePolyline);
-                }
-                
-                if (window.routeLine) {
-                    rideMap.removeLayer(window.routeLine);
-                }
-                
-                // تحويل إحداثيات GeoJSON إلى تنسيق Leaflet
-                const coordinates = geometry.coordinates.map(coord => [coord[1], coord[0]]);
-                
-                // رسم المسار بخط متقطع أجمل
-                routePolyline = L.polyline(coordinates, {
-                    color: '#4f46e5',
-                    weight: 4,
-                    opacity: 0.8,
-                    dashArray: '10, 10',
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                    className: 'route-line'
-                }).addTo(rideMap);
-                
-                // إضافة معلومات المسار
-                if (currentRoute) {
-                    addRouteInfo();
-                }
-            }
-            
-            // --- دالة جديدة: رسم خط مستقيم (بديل) ---
-            function drawStraightLine(start, end) {
-                if (routePolyline) {
-                    rideMap.removeLayer(routePolyline);
-                }
-                
-                routePolyline = L.polyline([
-                    [start.lat, start.lng],
-                    [end.lat, end.lng]
-                ], {
-                    color: '#4f46e5',
-                    weight: 3,
-                    opacity: 0.7,
-                    dashArray: '10, 10',
-                    lineCap: 'round'
-                }).addTo(rideMap);
-            }
+
+            updateDistanceDisplay(currentRoute.distance);
+            showNotification(`✓ المسار المحسوب: ${currentRoute.distance.toFixed(1)} كم`, 'success');
+
+            return currentRoute;
+        } else {
+            throw new Error('لم يتم العثور على مسار');
+        }
+
+    } catch (error) {
+        console.error('خطأ في حساب المسار:', error);
+
+        // fallback للمسافة المستقيمة
+        const straightDistance = calculateDistance(start, end);
+        drawStraightLine(start, end);
+        updateDistanceDisplay(straightDistance);
+        showNotification('⚠️ استخدام المسافة التقريبية', 'warning');
+
+        return {
+            distance: straightDistance,
+            duration: (straightDistance / 40) * 60,
+            geometry: null
+        };
+    }
+}
+
+// --- رسم المسار على الخريطة ---
+function drawRouteOnMap(geometry) {
+    if (!geometry || !geometry.coordinates || geometry.coordinates.length < 2) return;
+
+    if (routePolyline) rideMap.removeLayer(routePolyline);
+
+    const coords = geometry.coordinates.map(c => [c[1], c[0]]);
+    routePolyline = L.polyline(coords, {
+        color: '#4f46e5',
+        weight: 4,
+        opacity: 0.8,
+        dashArray: '10,10',
+        lineCap: 'round'
+    }).addTo(rideMap);
+
+    rideMap.fitBounds(routePolyline.getBounds());
+
+    if (currentRoute) addRouteInfo();
+}
+
+// --- رسم خط مستقيم كبديل ---
+function drawStraightLine(start, end) {
+    if (routePolyline) rideMap.removeLayer(routePolyline);
+
+    routePolyline = L.polyline([
+        [start.lat, start.lng],
+        [end.lat, end.lng]
+    ], {
+        color: '#4f46e5',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '10,10',
+        lineCap: 'round'
+    }).addTo(rideMap);
+
+    rideMap.fitBounds(routePolyline.getBounds());
+}
             
             // --- دالة جديدة: تحديث عرض المسافة ---
             function updateDistanceDisplay(distance) {
