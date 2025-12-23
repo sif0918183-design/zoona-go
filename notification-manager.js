@@ -50,12 +50,10 @@ class TarhalNotificationManager {
   async getServiceWorkerRegistration() {
     try {
       const registration = await navigator.serviceWorker.getRegistration('/service-worker.js');
-      if (registration) {
-        return registration;
-      }
+      if (registration) return registration;
 
       const reg = await navigator.serviceWorker.register('/service-worker.js');
-      await navigator.serviceWorker.ready;
+      await navigator.serviceWorker.ready; // ✅ التأكد من جاهزية SW
       reg.update();
       console.log('✅ Service Worker جاهز');
       return reg;
@@ -81,22 +79,23 @@ class TarhalNotificationManager {
         authDomain: "double-carport-476915-j7.firebasestorage.app",
         projectId: "double-carport-476915-j7",
         messagingSenderId: "122641462099",
-        appId: "1:122641462099:web:345b777a88757d3ef7e7a6"
+        appId: "1:122641462099:web:345b777a88757d3ef7a7"
       };
 
-      if (!firebase.apps.length) {
-        firebase.initializeApp(firebaseConfig);
-      }
+      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
+      // ✅ التأكد من جاهزية Service Worker قبل استخدام messaging
+      await navigator.serviceWorker.ready;
 
       const messaging = firebase.messaging();
 
       this.permission = await Notification.requestPermission();
-
       if (this.permission !== 'granted') {
         console.log('❌ لم يتم منح إذن الإشعارات');
         return;
       }
 
+      // الحصول على FCM Token باستخدام Service Worker الجاهز
       this.fcmToken = await messaging.getToken({
         serviceWorkerRegistration: this.swRegistration
       });
