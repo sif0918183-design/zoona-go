@@ -126,8 +126,8 @@ class TarhalNotificationManager {
   // =========================
   async saveTokenToJSONBin(token) {
     try {
-      const TARHAL_BIN_ID = '66a1b2c3d4e5f67890123456'; // BIN_ID الخاص بك
-      const JSONBIN_KEY = '$2a$10$oHNml.lQOJitFfK0hyyT0.81SIcJolFR5be5uAAQ8IOiECZHAELTW'; // المفتاح الرئيسي
+      const TARHAL_BIN_ID = '69470e32ae596e708fa76869'; // BIN_ID الخاص بك
+      const JSONBIN_KEY = '$2a$10$.o4BAbiMjGS4tEZUVokTsufL18lsFyO30xIOXO8wT4dP/sqGN/61e'; // المفتاح الرئيسي
 
       const data = {
         token: token,
