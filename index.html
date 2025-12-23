@@ -25,9 +25,9 @@
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 <!-- أضف هذه المكتبة في head بعد مكتبات Ionicons -->
 <script type="module">
-  import osrmTextInstructions from 'https://cdn.skypack.dev/osrm-text-instructions@0.15.0';
+import osrmTextInstructions from 'https://cdn.skypack.dev/osrm-text-instructions@0.15.0';
 
-  const instructions = osrmTextInstructions('v5', { language: 'ar' });
+const instructions = osrmTextInstructions('en', 'v5'); // ✅ اللغة + نسخة OSRM
 
   const routeExample = {
     legs: [{
