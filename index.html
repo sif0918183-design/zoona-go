@@ -23,23 +23,7 @@
     <!-- Ionicons Icons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
-<!-- أضف هذه المكتبة في head بعد مكتبات Ionicons -->
-<script type="module">
-import osrmTextInstructions from 'https://cdn.skypack.dev/osrm-text-instructions@0.15.0';
 
-const instructions = osrmTextInstructions('en', 'v5'); // ✅ اللغة + نسخة OSRM
-
-  const routeExample = {
-    legs: [{
-      steps: [
-        { maneuver: { type: 'turn', modifier: 'right' }, distance: 120, duration: 30 },
-        { maneuver: { type: 'turn', modifier: 'left' }, distance: 200, duration: 60 },
-      ]
-    }]
-  };
-
-  console.log(instructions.compile(routeExample.legs[0].steps));
-</script>
     <!-- Firebase for Notifications -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js"></script>
