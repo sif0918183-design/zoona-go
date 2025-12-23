@@ -68,51 +68,70 @@
             padding: 0;
         }
         
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: var(--dark);
-            overflow-x: hidden;
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-        }
-        
-        .app-container {
-            max-width: 500px;
-            margin: 0 auto;
-            min-height: 100vh;
-            background: var(--light);
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
-            position: relative;
-        }
-        
-        /* Header */
+        /* تصفير القيم الافتراضية — مهم جدًا */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+}
+
+/* Body */
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: var(--dark);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Container */
+.app-container {
+    max-width: 500px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: var(--light);
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+/* Header */
 .app-header {
     background: linear-gradient(135deg, var(--primary), var(--primary-dark));
     color: white;
-    padding: 2px 2px; /* قللنا من 20px إلى 10px */
+    padding: 2px;
     text-align: center;
     box-shadow: var(--shadow);
     position: sticky;
     top: 0;
-    z-index: 9999 !important;
+    z-index: 9999;
     border-bottom: 4px solid var(--primary-dark);
 }
 
+/* 🔴 هذا كان سبب الفراغ الأعلى والأسفل */
 .app-header h1 {
+    margin: 0;              /* مهم جدًا */
+    padding: 0;
     font-size: 24px;
     font-weight: 800;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 12px;
+    line-height: 1.2;       /* يمنع فراغ عمودي خفي */
 }
 
+/* Logo */
 .app-header .logo {
-    max-height: 50px; /* قللنا الارتفاع لتناسب الهيدر */
+    max-height: 50px;
     width: auto;
-    padding: 0; /* إزالة البادينج الكبير */
+    padding: 0;
+    display: block;
 }
         
         /* Screens */
