@@ -976,20 +976,31 @@ body {
 <!-- Splash Screen -->
 <div id="splash-screen">
   <div class="splash-content">
-    <img src="icons/icon-512x512.png" alt="Tarhal Zoona Logo" class="splash-logo">
+
     <div class="pulse-ring"></div>
+
+    <img src="icons/icon-512x512.png" alt="Tarhal Zoona Logo" class="splash-logo">
 
     <div class="loader"></div>
     <p class="splash-text">جاري تشغيل ترحال زونا…</p>
+
   </div>
 </div>
 
 <style>
-/* Full Screen Splash */
+/* ===============================
+   Splash Screen - Zoona Theme
+================================ */
+
 #splash-screen {
   position: fixed;
   inset: 0;
-  background: linear-gradient(135deg, #1e3a8a, #2563eb, #1e40af);
+  background: linear-gradient(
+    135deg,
+    #4338ca,
+    #4f46e5,
+    #6366f1
+  );
   display: flex;
   align-items: center;
   justify-content: center;
@@ -997,7 +1008,6 @@ body {
   transition: opacity 0.6s ease, visibility 0.6s ease;
 }
 
-/* Content */
 .splash-content {
   text-align: center;
   position: relative;
@@ -1008,42 +1018,42 @@ body {
   width: 180px;
   max-width: 70vw;
   height: auto;
-  z-index: 2;
   position: relative;
-  animation: fadeScale 0.8s ease;
+  z-index: 2;
+  animation: logoIn 0.9s ease;
 }
 
-/* Pulse Ring */
+/* Pulse Ring (حول الشعار) */
 .pulse-ring {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 220px;
-  height: 220px;
-  background: rgba(255, 255, 255, 0.15);
+  width: 230px;
+  height: 230px;
   border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
   transform: translate(-50%, -50%);
-  animation: pulse 1.8s infinite;
+  animation: pulse 1.9s infinite;
   z-index: 1;
 }
 
 /* Loader */
 .loader {
-  margin: 24px auto 10px;
-  width: 34px;
-  height: 34px;
-  border: 4px solid rgba(255,255,255,0.3);
-  border-top: 4px solid #ffffff;
+  margin: 26px auto 10px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
+  border: 4px solid rgba(255,255,255,0.35);
+  border-top-color: #ffffff;
+  animation: spin 0.9s linear infinite;
 }
 
 /* Text */
 .splash-text {
   font-family: "Tajawal", system-ui, sans-serif;
   font-size: 14px;
-  color: #e5e7eb;
-  letter-spacing: 0.3px;
+  color: #eef2ff;
+  letter-spacing: 0.4px;
 }
 
 /* Animations */
@@ -1057,12 +1067,12 @@ body {
     opacity: 0.6;
   }
   100% {
-    transform: translate(-50%, -50%) scale(1.2);
+    transform: translate(-50%, -50%) scale(1.25);
     opacity: 0;
   }
 }
 
-@keyframes fadeScale {
+@keyframes logoIn {
   from {
     transform: scale(0.85);
     opacity: 0;
@@ -1081,14 +1091,11 @@ body {
 </style>
 
 <script>
-/*
-  إخفاء Splash بعد جاهزية التطبيق
-  يمكنك ربطه لاحقًا بتحميل الخريطة أو تسجيل الدخول
-*/
+/* إخفاء Splash بعد جاهزية التطبيق */
 window.addEventListener("load", () => {
   setTimeout(() => {
     document.getElementById("splash-screen").classList.add("hide");
-  }, 1000);
+  }, 900);
 });
 </script>
 
