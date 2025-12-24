@@ -1558,7 +1558,14 @@ window.addEventListener("load", () => {
                         <ion-icon name="car-outline" style="vertical-align: middle; margin-left: 8px;"></ion-icon>
                         اختر نوع المركبة
                     </h4>
-                    <div class="vehicle-options" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 0;">
+                    <div class="vehicle-options" style="
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  gap: 8px;
+  justify-content: center;
+  justify-items: center;
+  margin-bottom: 0;
+">
                         <div class="vehicle-option" data-type="tuktuk" onclick="selectVehicle('tuktuk')" style="
                             border: 2px solid var(--gray-light);
                             border-radius: 10px;
