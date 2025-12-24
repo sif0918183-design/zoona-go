@@ -1,22 +1,28 @@
 {
   "name": "ترحال زونا السودان",
   "short_name": "ترحال",
-  "description": "تطبيق النقل الأول في السودان - طلب رحلات بسهولة وأمان",
+  "description": "تطبيق النقل الذكي الأول في السودان - طلب الرحلات بسهولة وأمان",
   "lang": "ar",
   "dir": "rtl",
-  "start_url": "/",
+
+  "start_url": "/?source=pwa",
   "scope": "/",
+
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone"],
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
+
   "orientation": "portrait",
   "theme_color": "#4f46e5",
-  "background_color": "#ffffff",
+  "background_color": "#4f46e5",
+
   "icons": [
     {
       "src": "icons/icon-72x72.png",
       "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any maskable"
+      "type": "image/png"
     },
     {
       "src": "icons/icon-96x96.png",
@@ -55,42 +61,43 @@
       "type": "image/png"
     }
   ],
-  "screenshots": [
-    {
-      "src": "screenshots/screenshot1.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "شاشة الطلب الرئيسية"
-    },
-    {
-      "src": "screenshots/screenshot2.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "label": "شاشة السائق"
-    }
-  ],
-  "categories": ["travel", "navigation", "transportation"],
+
   "shortcuts": [
     {
       "name": "طلب رحلة جديدة",
       "short_name": "طلب",
-      "description": "اطلب رحلة جديدة",
-      "url": "/?source=shortcut&action=newride",
-      "icons": [{ "src": "icons/ride-icon.png", "sizes": "96x96" }]
+      "description": "ابدأ طلب رحلة جديدة",
+      "url": "/?action=newride",
+      "icons": [
+        {
+          "src": "icons/ride-icon.png",
+          "sizes": "96x96"
+        }
+      ]
     },
     {
       "name": "لوحة السائق",
       "short_name": "سائق",
-      "description": "فتح لوحة السائق",
-      "url": "/?source=shortcut&action=driver",
-      "icons": [{ "src": "icons/driver-icon.png", "sizes": "96x96" }]
+      "description": "الدخول إلى لوحة السائق",
+      "url": "/?action=driver",
+      "icons": [
+        {
+          "src": "icons/driver-icon.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
+
+  "categories": [
+    "travel",
+    "navigation",
+    "transportation"
+  ],
+
   "launch_handler": {
     "client_mode": ["auto"]
   },
-  "handle_links": "preferred",
-  "edge_side_panel": {
-    "preferred_width": 480
-  }
+
+  "handle_links": "preferred"
 }
