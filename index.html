@@ -2566,18 +2566,18 @@ window.addEventListener("load", () => {
                 
                 // تحديث أو إنشاء سجل الموقع
                 await tarhalDB
-                    .from('driver_locations')
-                    .upsert({
-                        driver_id: currentDriver.id,
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        is_online: isOnline,
-                        last_seen: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    }, { 
-                        onConflict: 'driver_id',
-                        ignoreDuplicates: false 
-                    });
+            .from('driver_locations')
+            .upsert({
+                driver_id: currentDriver.id,
+                lat: position.coords.latitude, // تأكد من تحويله لرقم
+                lng: position.coords.longitude,
+                is_online: isOnline,
+                last_seen: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }, { 
+                onConflict: 'driver_id',
+                ignoreDuplicates: false 
+            });
                 
                 // إذا كان متصلاً، تفعيل تحديث الموقع الدوري
                 if (isOnline) {
