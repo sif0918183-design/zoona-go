@@ -114,7 +114,7 @@
             border-bottom: 4px solid var(--primary-dark);
         }
 
-        /* 🔴 هذا كان سبب الفراغ الأعلى والأسفل */
+        /*  هذا كان سبب الفراغ الأعلى والأسفل */
         .app-header h1 {
             margin: 0;              /* مهم جدًا */
             padding: 0;
@@ -1406,17 +1406,17 @@ window.addEventListener("load", () => {
                 
                 <div class="home-actions">
                     <div class="action-card" onclick="requestRide()">
-                        <div class="action-icon">🚗</div>
+                        <div class="action-icon"></div>
                         <h4>طلب رحلة</h4>
                     </div>
                     
                     <div class="action-card" onclick="showMyRides()">
-                        <div class="action-icon">📋</div>
+                        <div class="action-icon"></div>
                         <h4>رحلاتي</h4>
                     </div>
                     
                     <div class="action-card" onclick="showWallet()">
-                        <div class="action-icon">💰</div>
+                        <div class="action-icon"></div>
                         <h4>المحفظة</h4>
                     </div>
                     
@@ -1604,7 +1604,7 @@ window.addEventListener("load", () => {
                             text-align: center;
                             background: white;
                         ">
-                            <div class="vehicle-icon" style="font-size: 20px; margin-bottom: 6px;">🛺</div>
+                            <div class="vehicle-icon" style="font-size: 20px; margin-bottom: 6px;"></div>
                             <div class="vehicle-name" style="font-weight: 700; margin-bottom: 4px; font-size: 12px;">ركــشــــــــة</div>
                             <div class="vehicle-price" style="color: var(--primary); font-weight: 800; font-size: 14px;">5,000</div>
                         </div>
@@ -1618,7 +1618,7 @@ window.addEventListener("load", () => {
                             text-align: center;
                             background: white;
                         ">
-                            <div class="vehicle-icon" style="font-size: 20px; margin-bottom: 6px;">🚗</div>
+                            <div class="vehicle-icon" style="font-size: 20px; margin-bottom: 6px;"></div>
                             <div class="vehicle-name" style="font-weight: 700; margin-bottom: 4px; font-size: 12px;">اقتصادية</div>
                             <div class="vehicle-price" style="color: var(--primary); font-weight: 800; font-size: 14px;">6,000</div>
                         </div>
@@ -1632,7 +1632,7 @@ window.addEventListener("load", () => {
                             text-align: center;
                             background: white;
                         ">
-                            <div class="vehicle-icon" style="font-size: 20px; margin-bottom: 6px;">🚙</div>
+                            <div class="vehicle-icon" style="font-size: 20px; margin-bottom: 6px;"></div>
                             <div class="vehicle-name" style="font-weight: 700; margin-bottom: 4px; font-size: 12px;">متوسطة</div>
                             <div class="vehicle-price" style="color: var(--primary); font-weight: 800; font-size: 14px;">7,000</div>
                         </div>
@@ -1817,7 +1817,7 @@ window.addEventListener("load", () => {
 
     <script>
         // ============================================
-        // 🔧 الجزء المعدل من الملف الرئيسي
+        //  الجزء المعدل من الملف الرئيسي
         // التعديلات فقط كما طلبت
         // ============================================
 
@@ -1865,15 +1865,15 @@ window.addEventListener("load", () => {
         
         // Vehicle prices
         const VEHICLE_PRICES = {
-            tuktuk: { base: 5000, perKm: 2000, name: 'ركشــــــة', icon: '🛺' },
-            economy: { base: 6000, perKm: 3000, name: 'اقتصادية', icon: '🚗' },
-            comfort: { base: 7000, perKm: 3500, name: 'متوسطة', icon: '🚙' },
+            tuktuk: { base: 5000, perKm: 2000, name: 'ركشــــــة', icon: '' },
+            economy: { base: 6000, perKm: 3000, name: 'اقتصادية', icon: '' },
+            comfort: { base: 7000, perKm: 3500, name: 'متوسطة', icon: '' },
             vip: { base: 10000, perKm: 5000, name: 'VIP', icon: '⭐' }
         };
         
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 ترحال زونا - النظام المحسن');
+            console.log(' ترحال زونا - النظام المحسن');
             
             // تهيئة الأنظمة الأساسية
             initPWA();
@@ -1952,7 +1952,7 @@ window.addEventListener("load", () => {
 
                 console.log('✅ Service Worker مسجل بنجاح');
 
-                // 🔄 إجبار التحديث عند كل فتح
+                //  إجبار التحديث عند كل فتح
                 registration.update();
 
                 // تحميل Firebase Messaging
@@ -2225,7 +2225,7 @@ window.addEventListener("load", () => {
         }
         
         // ============================================
-        // 🔥 الوظائف المعدلة - النظام الجديد
+        //  الوظائف المعدلة - النظام الجديد
         // ============================================
         
         // --- Customer Functions ---
@@ -2511,7 +2511,7 @@ window.addEventListener("load", () => {
         }
         
         // ============================================
-        // 🔥 الوظيفة المحسنة toggleDriverStatus
+        //  الوظيفة المحسنة toggleDriverStatus
         // ============================================
         async function toggleDriverStatus() {
             const wasOnline = isDriverOnline;
@@ -2566,18 +2566,18 @@ window.addEventListener("load", () => {
                 
                 // تحديث أو إنشاء سجل الموقع
                 await tarhalDB
-            .from('driver_locations')
-            .upsert({
-                driver_id: currentDriver.id,
-                lat: position.coords.latitude, // تأكد من تحويله لرقم
-                lng: position.coords.longitude,
-                is_online: isOnline,
-                last_seen: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            }, { 
-                onConflict: 'driver_id',
-                ignoreDuplicates: false 
-            });
+                    .from('driver_locations')
+                    .upsert({
+                        driver_id: currentDriver.id,
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        is_online: isOnline,
+                        last_seen: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    }, { 
+                        onConflict: 'driver_id',
+                        ignoreDuplicates: false 
+                    });
                 
                 // إذا كان متصلاً، تفعيل تحديث الموقع الدوري
                 if (isOnline) {
@@ -2691,7 +2691,7 @@ window.addEventListener("load", () => {
         }
         
         // ============================================
-        // 🔥 نظام البحث الجديد - الرحلة
+        //  نظام البحث الجديد - الرحلة
         // ============================================
         function requestRide() {
             if (!currentUser || !currentUser.is_verified) {
@@ -3219,7 +3219,7 @@ window.addEventListener("load", () => {
         }
         
         // ============================================
-        // 🔥 الوظيفة المعدلة confirmRide
+        //  الوظيفة المعدلة confirmRide
         // ============================================
         async function confirmRide() {
             if (!selectedVehicleType || !destinationPosition) {
@@ -3274,7 +3274,7 @@ window.addEventListener("load", () => {
                 startDriverSearch(ride);
                 
                 // 3. تحديث واجهة المستخدم
-                showNotification('🔍 جاري البحث عن سائقين قريبين...', 'info');
+                showNotification(' جاري البحث عن سائقين قريبين...', 'info');
                 
                 // 4. إظهار لوحة البحث
                 showSearchPanel(ride);
@@ -3288,7 +3288,7 @@ window.addEventListener("load", () => {
         }
         
         // ============================================
-        // 🔥 نظام البحث الجديد عن السائقين
+        //  نظام البحث الجديد عن السائقين
         // ============================================
         async function startDriverSearch(ride) {
             let searchRadius = 5; // بدء البحث من 5 كم
@@ -3314,13 +3314,13 @@ window.addEventListener("load", () => {
                 try {
                     // البحث عن السائقين في النطاق الحالي
                     const drivers = await findAvailableDrivers(
-                parseFloat(ride.pickup_lat),
-                parseFloat(ride.pickup_lng),
-                ride.vehicle_type,
-                searchRadius
-            );
-            
-            availableDrivers = drivers;
+                        ride.pickup_lat,
+                        ride.pickup_lng,
+                        ride.vehicle_type,
+                        searchRadius
+                    );
+                    
+                    availableDrivers = drivers;
                     
                     // تحديث واجهة البحث
                     updateSearchPanel(availableDrivers.length, searchRadius);
@@ -3362,190 +3362,102 @@ window.addEventListener("load", () => {
         }
         
         // ============================================
-        // 🔥 البحث عن السائقين المتاحين
+        //  البحث عن السائقين المتاحين
         // ============================================
         async function findAvailableDrivers(pickupLat, pickupLng, vehicleType, radiusKm = 20) {
-    try {
-        console.log(`🔍 البحث عن سائقين ${vehicleType} في نطاق ${radiusKm} كم`);
-        
-        try {
-            // استخدام الدالة RPC مع معالجة الأخطاء
-            const { data, error } = await tarhalDB.rpc('find_nearby_drivers', {
-                p_lat: parseFloat(pickupLat),
-                p_lng: parseFloat(pickupLng),
-                p_radius_km: parseFloat(radiusKm),
-                p_vehicle_type: vehicleType,
-                p_limit: 10
-            });
-            
-            if (error) {
-                console.log('⚠️ خطأ في دالة RPC:', error.message);
-                throw error;
-            }
-            
-            if (data && data.length > 0) {
-                console.log(`✅ وجد ${data.length} سائق عبر RPC`);
+            try {
+                // استخدام دالة قاعدة البيانات إذا كانت موجودة
+                const { data, error } = await tarhalDB.rpc('find_nearby_drivers', {
+                    p_lat: pickupLat,
+                    p_lng: pickupLng,
+                    p_radius_km: radiusKm,
+                    p_vehicle_type: vehicleType,
+                    p_limit: 10
+                });
                 
-                // تحويل البيانات لتتناسب مع التطبيق
-                return data.map(driver => ({
-                    driver_id: driver.driver_id,
-                    lat: parseFloat(driver.lat),
-                    lng: parseFloat(driver.lng),
-                    car_type: driver.car_type,
-                    is_online: driver.is_online,
-                    distance_km: parseFloat(driver.distance_km),
-                    drivers: {
-                        id: driver.driver_id,
-                        full_name: driver.driver_name,
-                        whatsapp_number: driver.driver_phone,
-                        car_model: driver.car_model,
-                        rating: parseFloat(driver.rating),
-                        total_rides: parseInt(driver.total_rides),
-                        is_active: true
+                if (!error && data) {
+                    return data;
+                }
+                
+                // البديل: البحث يدوياً إذا لم تكن الدالة موجودة
+                const { data: drivers, error: driverError } = await tarhalDB
+                    .from('driver_locations')
+                    .select(`
+                        driver_id,
+                        lat,
+                        lng,
+                        car_type,
+                        last_seen,
+                        drivers:driver_id (
+                            id,
+                            full_name,
+                            car_type,
+                            car_model,
+                            whatsapp_number,
+                            is_online,
+                            is_active,
+                            rating,
+                            total_rides
+                        )
+                    `)
+                    .eq('is_online', true)
+                    .eq('car_type', vehicleType)
+                    .gte('last_seen', new Date(Date.now() - 5 * 60000).toISOString())
+                    .order('last_seen', { ascending: false });
+                
+                if (driverError) throw driverError;
+                
+                // تصفية حسب المسافة
+                const nearbyDrivers = drivers.filter(driver => {
+                    const distance = calculateDistance(
+                        pickupLat, pickupLng,
+                        driver.lat, driver.lng
+                    );
+                    return distance <= radiusKm && driver.drivers?.is_active;
+                });
+                
+                // ترتيب حسب المسافة والتقييم
+                return nearbyDrivers.sort((a, b) => {
+                    const distA = calculateDistance(pickupLat, pickupLng, a.lat, a.lng);
+                    const distB = calculateDistance(pickupLat, pickupLng, b.lat, b.lng);
+                    
+                    // الأولوية للمسافة الأقرب ثم التقييم الأعلى
+                    if (Math.abs(distA - distB) < 1) {
+                        return (b.drivers?.rating || 0) - (a.drivers?.rating || 0);
                     }
-                }));
-            } else {
-                console.log('⚠️ لا توجد نتائج من دالة RPC');
+                    return distA - distB;
+                });
+                
+            } catch (error) {
+                console.error('Error finding drivers:', error);
                 return [];
             }
-            
-        } catch (rpcError) {
-            console.log('⚠️ فشل الاتصال بدالة RPC:', rpcError.message);
-            
-            // استخدام البديل اليدوي
-            return await findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm);
         }
         
-    } catch (error) {
-        console.error('❌ خطأ في البحث عن السائقين:', error);
-        return [];
-    }
-}
+        function calculateDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371; // نصف قطر الأرض بالكيلومتر
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a = 
+                Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+        
+        function toRad(value) {
+            return value * Math.PI / 180;
+        }
         
         // ============================================
-// 🔥 دالة حساب المسافة (نفسها ولكن تأكد من وجودها)
-// ============================================
-function calculateDistance(lat1, lon1, lat2, lon2) {
-    const R = 6371; // نصف قطر الأرض بالكيلومتر
-    const dLat = toRad(lat2 - lat1);
-    const dLon = toRad(lon2 - lon1);
-    const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return R * c;
-}
-
-function toRad(value) {
-    return value * Math.PI / 180;
-}
-
-// ============================================
-// 🔥 البحث اليدوي البديل (دالة جديدة تماماً)
-// ============================================
-async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) {
-    try {
-        // جلب جميع السائقين النشطين من النوع المطلوب
-        const { data: drivers, error: driversError } = await tarhalDB
-            .from('drivers')
-            .select('*')
-            .eq('is_active', true)
-            .eq('car_type', vehicleType);
-            
-        if (driversError) {
-            console.error('خطأ في جلب السائقين:', driversError);
-            return [];
-        }
-        
-        if (!drivers || drivers.length === 0) {
-            console.log('⚠️ لا يوجد سائقين من النوع المطلوب');
-            return [];
-        }
-        
-        const driverIds = drivers.map(d => d.id);
-        
-        // جلب مواقع السائقين
-        const { data: locations, error: locError } = await tarhalDB
-            .from('driver_locations')
-            .select('*')
-            .in('driver_id', driverIds)
-            .eq('is_online', true);
-            
-        if (locError) {
-            console.error('خطأ في جلب المواقع:', locError);
-            return [];
-        }
-        
-        if (!locations || locations.length === 0) {
-            console.log('⚠️ لا يوجد سائقين متصلين');
-            return [];
-        }
-        
-        // حساب المسافات وتصفية النتائج
-        const nearbyDrivers = locations.filter(loc => {
-            if (!loc.lat || !loc.lng) return false;
-            
-            const distance = calculateDistance(
-                parseFloat(pickupLat),
-                parseFloat(pickupLng),
-                parseFloat(loc.lat),
-                parseFloat(loc.lng)
-            );
-            
-            return distance <= radiusKm;
-        });
-        
-        console.log(`✅ وجد ${nearbyDrivers.length} سائق قريب`);
-        
-        // دمج البيانات
-        const result = nearbyDrivers.map(loc => {
-            const driver = drivers.find(d => d.id === loc.driver_id);
-            const distance = calculateDistance(
-                parseFloat(pickupLat),
-                parseFloat(pickupLng),
-                parseFloat(loc.lat),
-                parseFloat(loc.lng)
-            );
-            
-            return {
-                driver_id: loc.driver_id,
-                lat: parseFloat(loc.lat),
-                lng: parseFloat(loc.lng),
-                car_type: loc.car_type,
-                is_online: loc.is_online,
-                distance_km: distance,
-                drivers: driver ? {
-                    id: driver.id,
-                    full_name: driver.full_name,
-                    whatsapp_number: driver.whatsapp_number,
-                    car_model: driver.car_model || '',
-                    rating: parseFloat(driver.rating || 5.0),
-                    total_rides: parseInt(driver.total_rides || 0),
-                    is_active: driver.is_active
-                } : null
-            };
-        }).filter(item => item.drivers !== null);
-        
-        // ترتيب حسب المسافة
-        result.sort((a, b) => a.distance_km - b.distance_km);
-        
-        return result.slice(0, 10); // إرجاع أول 10 نتائج فقط
-        
-    } catch (error) {
-        console.error('❌ خطأ في البحث اليدوي:', error);
-        return [];
-    }
-}
-        
-        // ============================================
-        // 🔥 إرسال طلبات الرحلة للسائقين
+        //  إرسال طلبات الرحلة للسائقين
         // ============================================
         async function sendRideRequestsToDrivers(ride, drivers) {
             let acceptedDriver = null;
             
             // تحديث واجهة المستخدم
-            showNotification(`📤 إرسال الطلب إلى ${drivers.length} سائق...`, 'info');
+            showNotification(` إرسال الطلب إلى ${drivers.length} سائق...`, 'info');
             
             // إرسال الطلبات لكل سائق
             const requestPromises = drivers.map(async (driver) => {
@@ -3595,7 +3507,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🔥 إرسال إشعار للسائق
+        //  إرسال إشعار للسائق
         // ============================================
         async function sendDriverNotification(driver, ride, requestId) {
             try {
@@ -3614,7 +3526,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
                 // 2. إعداد بيانات الإشعار
                 const notificationPayload = {
                     notification: {
-                        title: '🚖 طلب رحلة جديد - ترحال زونا',
+                        title: ' طلب رحلة جديد - ترحال زونا',
                         body: `${ride.customer_name} يطلب رحلة ${getVehicleTypeName(ride.vehicle_type)}`,
                         icon: '/icons/icon-192x192.png',
                         badge: '/icons/icon-72x72.png',
@@ -3694,7 +3606,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🔥 انتظار رد السائق
+        //  انتظار رد السائق
         // ============================================
         function waitForDriverResponse(requestId, timeoutMs = 40000) {
             return new Promise((resolve) => {
@@ -3765,7 +3677,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🔥 معالجة إيجاد السائق
+        //  معالجة إيجاد السائق
         // ============================================
         async function handleDriverFound(ride, driver) {
             try {
@@ -3831,7 +3743,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         function showNotificationToCustomer(ride, driver) {
             if (notificationManager) {
                 notificationManager.showInAppNotification({
-                    title: '🚗 تم تعيين سائق لرحلتك',
+                    title: ' تم تعيين سائق لرحلتك',
                     body: `السائق ${driver.drivers?.full_name || driver.driver_name} في طريقه إليك`,
                     data: {
                         rideId: ride.id,
@@ -3844,7 +3756,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🔥 معالجة عدم إيجاد سائقين
+        //  معالجة عدم إيجاد سائقين
         // ============================================
         async function handleNoDriversFound(ride) {
             try {
@@ -3884,7 +3796,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🔥 لوحة البحث الجديدة
+        //  لوحة البحث الجديدة
         // ============================================
         function showSearchPanel(ride) {
             // إنشاء لوحة البحث إذا لم تكن موجودة
@@ -4124,7 +4036,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🔥 تحسينات واجهة الرحلة النشطة
+        //  تحسينات واجهة الرحلة النشطة
         // ============================================
         function showActiveRideModal(ride) {
             const modal = document.getElementById('active-trip-modal');
@@ -4334,7 +4246,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🔥 إعدادات التطبيق المحسنة
+        //  إعدادات التطبيق المحسنة
         // ============================================
         function showSettings() {
             // إنشاء نافذة الإعدادات
@@ -4535,7 +4447,7 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        // 🛠️ دوال مساعدة محسنة
+        // ️ دوال مساعدة محسنة
         // ============================================
         
         function showNotification(message, type = 'info') {
