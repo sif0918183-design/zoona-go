@@ -8,6 +8,7 @@ class TarhalSoundManager {
         this.gainNode = null;
         this.sounds = new Map();
         this.lastInteractionTime = 0;
+        this.requiresUserInteraction = false;
         
         // مكتبة الأصوات الأساسية
         this.soundLibrary = {
@@ -19,7 +20,18 @@ class TarhalSoundManager {
             'beep': 'https://assets.mixkit.co/sfx/preview/mixkit-alarm-digital-clock-beep-989.mp3'
         };
         
+        // ربط الدوال
+        this.activateAudioImmediately = this.activateAudioImmediately.bind(this);
+        
+        // البدء بالتهيئة
         this.init();
+        
+        // تفعيل تلقائي بعد إنشاء الكائن
+        setTimeout(() => {
+            if (this.enabled) {
+                this.activateAudioImmediately();
+            }
+        }, 1000);
     }
     
     async init() {
@@ -120,9 +132,76 @@ class TarhalSoundManager {
     }
     
     async preloadSounds() {
-        // في نظام HTML5 Audio، لا نحتاج لتحميل مسبق
-        // سنقوم بتحميل الأصوات عند الحاجة
-        console.log('⚡ الأصوات ستُحمّل عند الحاجة');
+        try {
+            // محاولة تحميل أهم الأصوات مسبقاً
+            const soundsToPreload = ['notification', 'beep', 'new_ride'];
+            
+            for (const soundName of soundsToPreload) {
+                if (this.audioContext) {
+                    await this.loadSound(soundName);
+                }
+            }
+            
+            console.log('⚡ تم تحميل الأصوات الأساسية مسبقاً');
+        } catch (error) {
+            console.log('⚠️ تعذر تحميل الأصوات مسبقاً:', error);
+        }
+    }
+    
+    // ✅ تفعيل الصوت الفوري
+    activateAudioImmediately() {
+        console.log('🔊 تفعيل الصوت الفوري...');
+        
+        try {
+            // طريقة 1: استخدام AudioContext (الأفضل)
+            if (window.AudioContext || window.webkitAudioContext) {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // إنشاء صوت صامت
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                // إعدادات الصوت الصامت
+                gainNode.gain.value = 0.0001; // صوت خفي جداً
+                oscillator.frequency.value = 1; // تردد منخفض جداً
+                oscillator.type = 'sine';
+                
+                // تشغيل وإيقاف فوري
+                oscillator.start();
+                oscillator.stop(audioContext.currentTime + 0.001);
+                
+                console.log('✅ تم تفعيل AudioContext');
+                return true;
+            }
+            
+            // طريقة 2: استخدام HTML5 Audio (للأجهزة التي لا تدعم AudioContext)
+            const silentAudio = new Audio();
+            silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
+            silentAudio.volume = 0.0001;
+            
+            const playPromise = silentAudio.play();
+            
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    silentAudio.pause();
+                    silentAudio.currentTime = 0;
+                    console.log('✅ تم تفعيل HTML5 Audio');
+                }).catch(error => {
+                    console.log('⚠️ HTML5 Audio يحتاج تفعيل يدوي:', error.name);
+                    this.requiresUserInteraction = true;
+                });
+            }
+            
+            return true;
+            
+        } catch (error) {
+            console.error('❌ فشل تفعيل الصوت الفوري:', error);
+            this.requiresUserInteraction = true;
+            return false;
+        }
     }
     
     // ✅ الدالة الرئيسية لتشغيل الصوت
@@ -248,21 +327,6 @@ class TarhalSoundManager {
             const silentAudio = new Audio();
             silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
             silentAudio.volume = 0.001;
-// بعد سطر 250 في sound-manager.js أضف:
-activateAudioImmediately() {
-  // تشغيل صوت صامت عند تحميل الصفحة
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const oscillator = audioContext.createOscillator();
-  const gainNode = audioContext.createGain();
-  
-  oscillator.connect(gainNode);
-  gainNode.connect(audioContext.destination);
-  
-  gainNode.gain.value = 0.001; // صوت خفي جداً
-  oscillator.frequency.value = 1; // تردد منخفض جداً
-  oscillator.start();
-  oscillator.stop(audioContext.currentTime + 0.001);
-}
             
             await silentAudio.play();
             silentAudio.pause();
@@ -414,6 +478,9 @@ activateAudioImmediately() {
             // 4. عرض رسالة نجاح
             this.showToast('✅ تم تفعيل الأصوات بنجاح');
             
+            // 5. تفعيل النظام الصوتي فورياً
+            this.activateAudioImmediately();
+            
             console.log('🎉 الأصوات مفعلة الآن');
             return true;
             
@@ -496,7 +563,7 @@ activateAudioImmediately() {
             bottom: 100px;
             right: 20px;
             left: 20px;
-            background: ${type === 'error' ? '#ef4444' : '#4f46e5'};
+            background: ${type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981'};
             color: white;
             padding: 14px;
             border-radius: 12px;
@@ -556,6 +623,9 @@ activateAudioImmediately() {
                 this.savePreferences();
                 localStorage.setItem('tarhal_sound_activated', 'true');
                 
+                // تفعيل النظام الصوتي فورياً
+                this.activateAudioImmediately();
+                
                 // إزالة المستمعين بعد التفعيل
                 interactionEvents.forEach(event => {
                     document.removeEventListener(event, activateOnce);
@@ -569,6 +639,11 @@ activateAudioImmediately() {
         interactionEvents.forEach(event => {
             document.addEventListener(event, activateOnce, { once: true });
         });
+    }
+    
+    // ✅ دالة مساعدة للتحقق من جاهزية النظام
+    isReady() {
+        return this.initialized && this.enabled;
     }
 }
 
@@ -585,8 +660,26 @@ document.addEventListener('DOMContentLoaded', () => {
         window.soundManager.activateOnFirstInteraction();
     }, 1000);
     
+    // تفعيل إضافي بعد 3 ثواني
+    setTimeout(() => {
+        if (window.soundManager && !window.soundManager.enabled) {
+            window.soundManager.activateAudioImmediately();
+        }
+    }, 3000);
+    
     console.log('🎵 نظام صوت ترحال محمّل وجاهز');
 });
+
+// ✅ نظام تفعيل الصوت عند أي تفاعل مع التطبيق
+document.addEventListener('click', function tarhalSoundActivation() {
+    if (window.soundManager && !window.soundManager.enabled) {
+        window.soundManager.enabled = true;
+        window.soundManager.savePreferences();
+        window.soundManager.activateAudioImmediately();
+        console.log('✅ تم تفعيل الصوت بنقرة المستخدم');
+        document.removeEventListener('click', tarhalSoundActivation);
+    }
+}, { once: true });
 
 // تصدير للاستخدام في وحدات أخرى
 if (typeof module !== 'undefined' && module.exports) {
