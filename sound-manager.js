@@ -248,6 +248,21 @@ class TarhalSoundManager {
             const silentAudio = new Audio();
             silentAudio.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==';
             silentAudio.volume = 0.001;
+// بعد سطر 250 في sound-manager.js أضف:
+activateAudioImmediately() {
+  // تشغيل صوت صامت عند تحميل الصفحة
+  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  
+  gainNode.gain.value = 0.001; // صوت خفي جداً
+  oscillator.frequency.value = 1; // تردد منخفض جداً
+  oscillator.start();
+  oscillator.stop(audioContext.currentTime + 0.001);
+}
             
             await silentAudio.play();
             silentAudio.pause();
