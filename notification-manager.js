@@ -163,10 +163,21 @@ class TarhalNotificationManager {
       }
 
       // الحصول على FCM Token
-      this.fcmToken = await messaging.getToken({
-        vapidKey: "BLY-4c-9Xh3_3zJUiYyftl-tmExTQbqG_JiQwUBKpjz5GYHvJlZftlF-VvCqP4mHYQQYzZq3vT7mF5XqkjX1Qrw",
-        serviceWorkerRegistration: this.swRegistration
-      });
+      // استخدم مفتاح VAPID الفعلي من Firebase
+this.fcmToken = await messaging.getToken({
+  vapidKey: "BIP_J0k5yv......", // ⬅️ ضع مفتاح VAPID الحقيقي هنا
+  serviceWorkerRegistration: this.swRegistration
+}).catch(error => {
+  console.error('❌ فشل الحصول على FCM Token:', error);
+  
+  // استخدام بديل: إنشاء معرف فريد محلي
+  if (!localStorage.getItem('tarhal_device_id')) {
+    const deviceId = 'tarhal_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('tarhal_device_id', deviceId);
+  }
+  
+  return localStorage.getItem('tarhal_device_id');
+});
 
       if (this.fcmToken) {
         console.log('✅ FCM Token:', this.fcmToken.substring(0, 50) + '...');
