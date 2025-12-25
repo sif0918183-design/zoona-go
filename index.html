@@ -2566,18 +2566,18 @@ window.addEventListener("load", () => {
                 
                 // تحديث أو إنشاء سجل الموقع
                 await tarhalDB
-                    .from('driver_locations')
-                    .upsert({
-                        driver_id: currentDriver.id,
-                        lat: position.coords.latitude,
-                        lng: position.coords.longitude,
-                        is_online: isOnline,
-                        last_seen: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    }, { 
-                        onConflict: 'driver_id',
-                        ignoreDuplicates: false 
-                    });
+            .from('driver_locations')
+            .upsert({
+                driver_id: currentDriver.id,
+                lat: position.coords.latitude, // تأكد من تحويله لرقم
+                lng: position.coords.longitude,
+                is_online: isOnline,
+                last_seen: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }, { 
+                onConflict: 'driver_id',
+                ignoreDuplicates: false 
+            });
                 
                 // إذا كان متصلاً، تفعيل تحديث الموقع الدوري
                 if (isOnline) {
@@ -3314,13 +3314,13 @@ window.addEventListener("load", () => {
                 try {
                     // البحث عن السائقين في النطاق الحالي
                     const drivers = await findAvailableDrivers(
-                        ride.pickup_lat,
-                        ride.pickup_lng,
-                        ride.vehicle_type,
-                        searchRadius
-                    );
-                    
-                    availableDrivers = drivers;
+                parseFloat(ride.pickup_lat),
+                parseFloat(ride.pickup_lng),
+                ride.vehicle_type,
+                searchRadius
+            );
+            
+            availableDrivers = drivers;
                     
                     // تحديث واجهة البحث
                     updateSearchPanel(availableDrivers.length, searchRadius);
@@ -3365,90 +3365,178 @@ window.addEventListener("load", () => {
         //  البحث عن السائقين المتاحين
         // ============================================
         async function findAvailableDrivers(pickupLat, pickupLng, vehicleType, radiusKm = 20) {
-            try {
-                // استخدام دالة قاعدة البيانات إذا كانت موجودة
-                const { data, error } = await tarhalDB.rpc('find_nearby_drivers', {
-                    p_lat: pickupLat,
-                    p_lng: pickupLng,
-                    p_radius_km: radiusKm,
-                    p_vehicle_type: vehicleType,
-                    p_limit: 10
-                });
+    try {
+        console.log(` البحث عن سائقين ${vehicleType} في نطاق ${radiusKm} كم`);
+        
+        try {
+            // استخدام الدالة RPC مع معالجة الأخطاء
+            const { data, error } = await tarhalDB.rpc('find_nearby_drivers', {
+                p_lat: parseFloat(pickupLat),
+                p_lng: parseFloat(pickupLng),
+                p_radius_km: parseFloat(radiusKm),
+                p_vehicle_type: vehicleType,
+                p_limit: 10
+            });
+            
+            if (error) {
+                console.log('⚠️ خطأ في دالة RPC:', error.message);
+                throw error;
+            }
+            
+            if (data && data.length > 0) {
+                console.log(`✅ وجد ${data.length} سائق عبر RPC`);
                 
-                if (!error && data) {
-                    return data;
-                }
-                
-                // البديل: البحث يدوياً إذا لم تكن الدالة موجودة
-                const { data: drivers, error: driverError } = await tarhalDB
-                    .from('driver_locations')
-                    .select(`
-                        driver_id,
-                        lat,
-                        lng,
-                        car_type,
-                        last_seen,
-                        drivers:driver_id (
-                            id,
-                            full_name,
-                            car_type,
-                            car_model,
-                            whatsapp_number,
-                            is_online,
-                            is_active,
-                            rating,
-                            total_rides
-                        )
-                    `)
-                    .eq('is_online', true)
-                    .eq('car_type', vehicleType)
-                    .gte('last_seen', new Date(Date.now() - 5 * 60000).toISOString())
-                    .order('last_seen', { ascending: false });
-                
-                if (driverError) throw driverError;
-                
-                // تصفية حسب المسافة
-                const nearbyDrivers = drivers.filter(driver => {
-                    const distance = calculateDistance(
-                        pickupLat, pickupLng,
-                        driver.lat, driver.lng
-                    );
-                    return distance <= radiusKm && driver.drivers?.is_active;
-                });
-                
-                // ترتيب حسب المسافة والتقييم
-                return nearbyDrivers.sort((a, b) => {
-                    const distA = calculateDistance(pickupLat, pickupLng, a.lat, a.lng);
-                    const distB = calculateDistance(pickupLat, pickupLng, b.lat, b.lng);
-                    
-                    // الأولوية للمسافة الأقرب ثم التقييم الأعلى
-                    if (Math.abs(distA - distB) < 1) {
-                        return (b.drivers?.rating || 0) - (a.drivers?.rating || 0);
+                // تحويل البيانات لتتناسب مع التطبيق
+                return data.map(driver => ({
+                    driver_id: driver.driver_id,
+                    lat: parseFloat(driver.lat),
+                    lng: parseFloat(driver.lng),
+                    car_type: driver.car_type,
+                    is_online: driver.is_online,
+                    distance_km: parseFloat(driver.distance_km),
+                    drivers: {
+                        id: driver.driver_id,
+                        full_name: driver.driver_name,
+                        whatsapp_number: driver.driver_phone,
+                        car_model: driver.car_model,
+                        rating: parseFloat(driver.rating),
+                        total_rides: parseInt(driver.total_rides),
+                        is_active: true
                     }
-                    return distA - distB;
-                });
-                
-            } catch (error) {
-                console.error('Error finding drivers:', error);
+                }));
+            } else {
+                console.log('⚠️ لا توجد نتائج من دالة RPC');
                 return [];
             }
+            
+        } catch (rpcError) {
+            console.log('⚠️ فشل الاتصال بدالة RPC:', rpcError.message);
+            
+            // استخدام البديل اليدوي
+            return await findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm);
         }
         
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371; // نصف قطر الأرض بالكيلومتر
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-            const a = 
-                Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-            return R * c;
+    } catch (error) {
+        console.error('❌ خطأ في البحث عن السائقين:', error);
+        return [];
+    }
+}
+        
+        // ============================================
+//  دالة حساب المسافة (نفسها ولكن تأكد من وجودها)
+// ============================================
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // نصف قطر الأرض بالكيلومتر
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
+
+function toRad(value) {
+    return value * Math.PI / 180;
+}
+
+// ============================================
+//  البحث اليدوي البديل (دالة جديدة تماماً)
+// ============================================
+async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) {
+    try {
+        // جلب جميع السائقين النشطين من النوع المطلوب
+        const { data: drivers, error: driversError } = await tarhalDB
+            .from('drivers')
+            .select('*')
+            .eq('is_active', true)
+            .eq('car_type', vehicleType);
+            
+        if (driversError) {
+            console.error('خطأ في جلب السائقين:', driversError);
+            return [];
         }
         
-        function toRad(value) {
-            return value * Math.PI / 180;
+        if (!drivers || drivers.length === 0) {
+            console.log('⚠️ لا يوجد سائقين من النوع المطلوب');
+            return [];
         }
+        
+        const driverIds = drivers.map(d => d.id);
+        
+        // جلب مواقع السائقين
+        const { data: locations, error: locError } = await tarhalDB
+            .from('driver_locations')
+            .select('*')
+            .in('driver_id', driverIds)
+            .eq('is_online', true);
+            
+        if (locError) {
+            console.error('خطأ في جلب المواقع:', locError);
+            return [];
+        }
+        
+        if (!locations || locations.length === 0) {
+            console.log('⚠️ لا يوجد سائقين متصلين');
+            return [];
+        }
+        
+        // حساب المسافات وتصفية النتائج
+        const nearbyDrivers = locations.filter(loc => {
+            if (!loc.lat || !loc.lng) return false;
+            
+            const distance = calculateDistance(
+                parseFloat(pickupLat),
+                parseFloat(pickupLng),
+                parseFloat(loc.lat),
+                parseFloat(loc.lng)
+            );
+            
+            return distance <= radiusKm;
+        });
+        
+        console.log(`✅ وجد ${nearbyDrivers.length} سائق قريب`);
+        
+        // دمج البيانات
+        const result = nearbyDrivers.map(loc => {
+            const driver = drivers.find(d => d.id === loc.driver_id);
+            const distance = calculateDistance(
+                parseFloat(pickupLat),
+                parseFloat(pickupLng),
+                parseFloat(loc.lat),
+                parseFloat(loc.lng)
+            );
+            
+            return {
+                driver_id: loc.driver_id,
+                lat: parseFloat(loc.lat),
+                lng: parseFloat(loc.lng),
+                car_type: loc.car_type,
+                is_online: loc.is_online,
+                distance_km: distance,
+                drivers: driver ? {
+                    id: driver.id,
+                    full_name: driver.full_name,
+                    whatsapp_number: driver.whatsapp_number,
+                    car_model: driver.car_model || '',
+                    rating: parseFloat(driver.rating || 5.0),
+                    total_rides: parseInt(driver.total_rides || 0),
+                    is_active: driver.is_active
+                } : null
+            };
+        }).filter(item => item.drivers !== null);
+        
+        // ترتيب حسب المسافة
+        result.sort((a, b) => a.distance_km - b.distance_km);
+        
+        return result.slice(0, 10); // إرجاع أول 10 نتائج فقط
+        
+    } catch (error) {
+        console.error('❌ خطأ في البحث اليدوي:', error);
+        return [];
+    }
+}
         
         // ============================================
         //  إرسال طلبات الرحلة للسائقين
