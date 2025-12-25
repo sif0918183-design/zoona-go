@@ -1941,26 +1941,63 @@ window.addEventListener("load", () => {
         }
         
         // --- نظام PWA الأساسي ---
-        async function initPWA() {
-            if (!('serviceWorker' in navigator)) return;
+        // في ملف index.html - دالة initPWA() المعدلة
+async function initPWA() {
+  if (!('serviceWorker' in navigator)) {
+    console.log('⚠️ Service Worker غير مدعوم في هذا المتصفح');
+    return;
+  }
 
-            try {
-                const registration = await navigator.serviceWorker.register(
-                    '/service-worker.js',
-                    { scope: '/' }
-                );
+  try {
+    console.log('🔄 جاري تسجيل Service Workers...');
+    
+    // ✅ 1. تسجيل Service Worker الرئيسي (للـ PWA والكاش)
+    const swRegistration = await navigator.serviceWorker.register(
+      '/service-worker.js',
+      { scope: '/' }
+    );
 
-                console.log('✅ Service Worker مسجل بنجاح');
+    console.log('✅ Service Worker الرئيسي مسجل بنجاح');
 
-                //  إجبار التحديث عند كل فتح
-                registration.update();
+    // ✅ 2. تسجيل Firebase Messaging Service Worker بشكل منفصل
+    if ('serviceWorker' in navigator) {
+      try {
+        await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+          scope: '/firebase-cloud-messaging-push-scope'
+        });
+        console.log('✅ Firebase Messaging SW مسجل بنجاح');
+      } catch (firebaseSwError) {
+        console.warn('⚠️ فشل تسجيل Firebase SW، استخدام الرئيسي:', firebaseSwError);
+        // استخدم SW الرئيسي كاحتياطي للإشعارات
+        if (window.firebase && firebase.messaging) {
+          firebase.messaging().useServiceWorker(swRegistration);
+        }
+      }
+    }
 
-                // تحميل Firebase Messaging
-                await loadFirebase();
+    // ✅ 3. تحديث Service Workers
+    swRegistration.update();
+    console.log('✅ تم تحديث Service Workers');
 
-            } catch (error) {
-                console.error('❌ خطأ في تسجيل Service Worker:', error);
-            }
+    // ✅ 4. تحميل Firebase فقط إذا كان المستخدم سائقاً أو كان مفعلاً سابقاً
+    const isDriver = localStorage.getItem('tarhal_driver');
+    const notificationsEnabled = localStorage.getItem('tarhal_notifications_asked');
+    
+    if (isDriver || notificationsEnabled) {
+      await loadFirebase();
+    }
+
+  } catch (error) {
+    console.error('❌ خطأ في تسجيل Service Workers:', error);
+    
+    // محاولة تسجيل Service Worker فقط بدون Firebase
+    try {
+      await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
+      console.log('✅ تم تسجيل Service Worker الرئيسي فقط');
+    } catch (simpleError) {
+      console.error('❌ فشل تسجيل أي Service Worker');
+    }
+  }
             
             // معالجة تثبيت PWA
             window.addEventListener('beforeinstallprompt', (e) => {
