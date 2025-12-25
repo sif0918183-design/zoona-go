@@ -1886,15 +1886,18 @@ window.addEventListener("load", () => {
             }
             
             // تحميل أنظمة الإشعارات بعد تأخير بسيط
-            setTimeout(() => {
-                loadNotificationSystem();
-                
-                // تحميل إعدادات الصوت
-                if (soundManager && settings.soundsEnabled !== false) {
-                    soundManager.enabled = true;
-                    updateSoundButton();
-                }
-            }, 1000);
+setTimeout(() => {
+  // ✅ تحميل نظام الإشعارات أولاً
+  loadNotificationSystem();
+  
+  // ✅ تحميل إعدادات الصوت بعد تأكيد الإذن
+  setTimeout(() => {
+    if (soundManager && settings.soundsEnabled !== false) {
+      soundManager.enabled = true;
+      updateSoundButton();
+    }
+  }, 1500);
+}, 1000);
             
             // إضافة تحسينات لواجهة المستخدم
             addUIEnhancements();
