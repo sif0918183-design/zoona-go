@@ -4772,14 +4772,22 @@ window.addEventListener('load', function() {
   }, 3000);
 });
 
-// تفعيل الصوت عند أي تفاعل مع التطبيق
-['click', 'touchstart', 'keydown', 'mousemove'].forEach(event => {
+// تفعيل الصوت عند أول تفاعل حقيقي مع المستخدم
+['click', 'touchstart', 'keydown'].forEach(event => {
   document.addEventListener(event, function activateSound() {
     if (window.soundManager && !window.soundManager.enabled) {
-      window.soundManager.enabled = true;
-      window.soundManager.savePreferences();
+      // ✅ التفعيل الصحيح المسموح
+      window.soundManager.enable();
+
+      // صوت تأكيد خفيف
+      window.soundManager.playSound('beep');
+
       console.log('🎵 تم تفعيل الصوت بتفاعل:', event);
-      document.removeEventListener(event, activateSound);
+
+      // إزالة كل المستمعين بعد التفعيل
+      ['click', 'touchstart', 'keydown'].forEach(e => {
+        document.removeEventListener(e, activateSound);
+      });
     }
   }, { once: true });
 });
