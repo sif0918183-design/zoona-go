@@ -1888,25 +1888,14 @@ window.addEventListener("load", () => {
             // تحميل أنظمة الإشعارات بعد تأخير بسيط
 setTimeout(() => {
   // ✅ تحميل نظام الإشعارات أولاً
-  // تحميل أنظمة الإشعارات بعد تأخير بسيط
 setTimeout(() => {
   loadNotificationSystem();
   
-  // تحميل إعدادات الصوت بعد تأكيد الإذن
-  setTimeout(() => {
-    if (soundManager && settings.soundsEnabled !== false) {
-      soundManager.enabled = true;
-      updateSoundButton();
-      
-      // ✅ تفعيل الصوت الفوري بعد 2 ثانية
-      setTimeout(() => {
-        if (window.soundManager) {
-          console.log('🎵 جاري تفعيل النظام الصوتي...');
-          window.soundManager.activateAudioImmediately();
-        }
-      }, 2000);
-    }
-  }, 1500);
+  // تحميل إعدادات الصوت
+  if (soundManager && settings.soundsEnabled !== false) {
+    soundManager.enabled = true;
+    updateSoundButton();
+  }
 }, 1000);
             
             // إضافة تحسينات لواجهة المستخدم
