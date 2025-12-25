@@ -1888,13 +1888,23 @@ window.addEventListener("load", () => {
             // تحميل أنظمة الإشعارات بعد تأخير بسيط
 setTimeout(() => {
   // ✅ تحميل نظام الإشعارات أولاً
+  // تحميل أنظمة الإشعارات بعد تأخير بسيط
+setTimeout(() => {
   loadNotificationSystem();
   
-  // ✅ تحميل إعدادات الصوت بعد تأكيد الإذن
+  // تحميل إعدادات الصوت بعد تأكيد الإذن
   setTimeout(() => {
     if (soundManager && settings.soundsEnabled !== false) {
       soundManager.enabled = true;
       updateSoundButton();
+      
+      // ✅ تفعيل الصوت الفوري بعد 2 ثانية
+      setTimeout(() => {
+        if (window.soundManager) {
+          console.log('🎵 جاري تفعيل النظام الصوتي...');
+          window.soundManager.activateAudioImmediately();
+        }
+      }, 2000);
     }
   }, 1500);
 }, 1000);
@@ -4729,7 +4739,49 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
                 // ننتظر حتى يكون هناك تفاعل من المستخدم
             }
         });
-        
+
+    // ============================================
+//  تفعيل الصوت التلقائي
+// ============================================
+
+// تفعيل الصوت بعد تحميل الصفحة بالكامل
+window.addEventListener('load', function() {
+  setTimeout(function() {
+    if (window.soundManager) {
+      console.log('🔊 محاولة تفعيل الصوت التلقائي...');
+      
+      // طريقة 1: تفعيل فوري
+      try {
+        window.soundManager.activateAudioImmediately();
+      } catch (e) {
+        console.log('⚠️ تعذر التفعيل الفوري:', e);
+      }
+      
+      // طريقة 2: تفعيل عند أول نقر
+      document.addEventListener('click', function activateOnClick() {
+        if (window.soundManager) {
+          window.soundManager.enabled = true;
+          window.soundManager.savePreferences();
+          console.log('✅ تم تفعيل الصوت بنقرة المستخدم');
+        }
+        document.removeEventListener('click', activateOnClick);
+      }, { once: true });
+    }
+  }, 3000);
+});
+
+// تفعيل الصوت عند أي تفاعل مع التطبيق
+['click', 'touchstart', 'keydown', 'mousemove'].forEach(event => {
+  document.addEventListener(event, function activateSound() {
+    if (window.soundManager && !window.soundManager.enabled) {
+      window.soundManager.enabled = true;
+      window.soundManager.savePreferences();
+      console.log('🎵 تم تفعيل الصوت بتفاعل:', event);
+      document.removeEventListener(event, activateSound);
+    }
+  }, { once: true });
+});
+    
         console.log('✅ تم تحميل النظام المحسن لتطبيق ترحال زونا');
     </script>
     
