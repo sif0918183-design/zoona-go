@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قبول الرحلة - ترحال زونا</title>
+    
+    <!-- Tajawal Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Ionicons -->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #111827;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        .logo-header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-top: 20px;
+        }
+        
+        .logo-header img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 4px solid white;
+        }
+        
+        .logo-header h1 {
+            color: white;
+            margin-top: 15px;
+            font-size: 24px;
+        }
+        
+        .ride-card {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            margin-bottom: 20px;
+            border: 3px solid #4f46e5;
+        }
+        
+        .ride-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        
+        .ride-title {
+            color: #4f46e5;
+            font-size: 24px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .ride-status {
+            background: #dcfce7;
+            color: #059669;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .customer-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            padding: 15px;
+            background: #f8fafc;
+            border-radius: 15px;
+        }
+        
+        .customer-avatar {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 28px;
+            font-weight: 700;
+        }
+        
+        .customer-details h3 {
+            color: #1f2937;
+            margin-bottom: 5px;
+            font-size: 20px;
+        }
+        
+        .customer-details p {
+            color: #6b7280;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 3px;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .info-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #e5e7eb;
+        }
+        
+        .info-label {
+            color: #6b7280;
+            font-size: 14px;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .info-value {
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 16px;
+        }
+        
+        .route-info {
+            background: linear-gradient(135deg, #e0e7ff 0%, #ede9fe 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 2px solid #c7d2fe;
+        }
+        
+        .route-item {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .route-icon {
+            width: 40px;
+            height: 40px;
+            background: #4f46e5;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .route-details {
+            flex: 1;
+        }
+        
+        .route-details h4 {
+            color: #4f46e5;
+            margin-bottom: 3px;
+            font-size: 16px;
+        }
+        
+        .route-details p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+        
+        .price-section {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f0f9ff;
+            border-radius: 15px;
+            border: 2px solid #bae6fd;
+        }
+        
+        .price-label {
+            color: #0369a1;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .price-amount {
+            font-size: 36px;
+            font-weight: 900;
+            color: #059669;
+            direction: ltr;
+        }
+        
+        .price-currency {
+            font-size: 20px;
+            color: #6b7280;
+            margin-right: 5px;
+        }
+        
+        .countdown {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .countdown h3 {
+            color: #dc2626;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .timer {
+            font-size: 48px;
+            font-weight: 900;
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 15px;
+            border-radius: 15px;
+            display: inline-block;
+            min-width: 120px;
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 18px;
+            border-radius: 15px;
+            border: none;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:active {
+            transform: translateY(2px);
+        }
+        
+        .btn-accept {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+        
+        .btn-accept:hover {
+            background: linear-gradient(135deg, #059669, #047857);
+            box-shadow: 0 10px 25px rgba(16, 185, 129, 0.3);
+        }
+        
+        .btn-decline {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+        
+        .btn-decline:hover {
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            box-shadow: 0 10px 25px rgba(239, 68, 68, 0.3);
+        }
+        
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            padding: 50px;
+            background: white;
+            border-radius: 20px;
+            text-align: center;
+        }
+        
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e5e7eb;
+            border-top-color: #4f46e5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        .error-message {
+            background: #fef2f2;
+            color: #dc2626;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #fecaca;
+            margin-bottom: 20px;
+        }
+        
+        .success-message {
+            background: #dcfce7;
+            color: #059669;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #86efac;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .whatsapp-btn {
+            background: #25D366;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 700;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .whatsapp-btn:hover {
+            background: #128C7E;
+        }
+        
+        .map-btn {
+            background: #3b82f6;
+            color: white;
+            padding: 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 700;
+            margin-top: 15px;
+            transition: all 0.3s;
+        }
+        
+        .map-btn:hover {
+            background: #1d4ed8;
+        }
+        
+        @media (max-width: 480px) {
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                grid-template-columns: 1fr;
+            }
+            
+            .ride-card {
+                padding: 20px;
+            }
+            
+            .price-amount {
+                font-size: 32px;
+            }
+            
+            .timer {
+                font-size: 40px;
+            }
+        }
+        
+        .driver-earnings {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #f0fdf4;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 15px;
+            border: 2px solid #bbf7d0;
+        }
+        
+        .earnings-label {
+            color: #059669;
+            font-weight: 600;
+        }
+        
+        .earnings-amount {
+            color: #059669;
+            font-weight: 800;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo-header">
+            <img src="/icons/icon-512x512.png" alt="ترحال زونا">
+            <h1>قبول الرحلة</h1>
+        </div>
+        
+        <div id="loading" class="loading">
+            <div class="loader"></div>
+            <h3>جاري تحميل تفاصيل الرحلة...</h3>
+        </div>
+        
+        <div id="ride-content" style="display: none;">
+            <div class="ride-card">
+                <div class="ride-header">
+                    <h2 class="ride-title">
+                        <ion-icon name="car-outline"></ion-icon>
+                        طلب رحلة جديد
+                    </h2>
+                    <div class="ride-status">
+                        <ion-icon name="time-outline"></ion-icon>
+                        <span id="status-text">بانتظار ردك</span>
+                    </div>
+                </div>
+                
+                <div class="customer-info">
+                    <div class="customer-avatar" id="customer-avatar">
+                        ؟
+                    </div>
+                    <div class="customer-details">
+                        <h3 id="customer-name">العميل</h3>
+                        <p id="customer-phone">
+                            <ion-icon name="call-outline"></ion-icon>
+                            <span>رقم الهاتف</span>
+                        </p>
+                        <p id="customer-rating">
+                            <ion-icon name="star-outline"></ion-icon>
+                            <span>التقييم: 4.5</span>
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">
+                            <ion-icon name="car-sport-outline"></ion-icon>
+                            نوع المركبة
+                        </div>
+                        <div class="info-value" id="vehicle-type">اقتصادية</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <ion-icon name="time-outline"></ion-icon>
+                            المسافة
+                        </div>
+                        <div class="info-value" id="ride-distance">0 كم</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <ion-icon name="hourglass-outline"></ion-icon>
+                            الوقت المتوقع
+                        </div>
+                        <div class="info-value" id="ride-duration">0 دقيقة</div>
+                    </div>
+                    
+                    <div class="info-item">
+                        <div class="info-label">
+                            <ion-icon name="cash-outline"></ion-icon>
+                            الرقم المرجعي
+                        </div>
+                        <div class="info-value" id="ride-id">#000</div>
+                    </div>
+                </div>
+                
+                <div class="route-info">
+                    <div class="route-item">
+                        <div class="route-icon">A</div>
+                        <div class="route-details">
+                            <h4>مكان الانطلاق</h4>
+                            <p id="pickup-location">جارٍ التحديد...</p>
+                        </div>
+                    </div>
+                    
+                    <div class="route-item">
+                        <div class="route-icon">B</div>
+                        <div class="route-details">
+                            <h4>وجهة الوصول</h4>
+                            <p id="destination-location">جارٍ التحديد...</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="price-section">
+                    <div class="price-label">قيمة الرحلة</div>
+                    <div class="price-amount">
+                        <span class="price-currency">SDG</span>
+                        <span id="ride-price">0</span>
+                    </div>
+                </div>
+                
+                <div class="driver-earnings" id="driver-earnings" style="display: none;">
+                    <span class="earnings-label">أرباحك من هذه الرحلة:</span>
+                    <span class="earnings-amount" id="earnings-amount">0 SDG</span>
+                </div>
+                
+                <div class="countdown">
+                    <h3>الوقت المتبقي للرد:</h3>
+                    <div class="timer" id="countdown-timer">40</div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-accept" onclick="acceptRide()">
+                        <ion-icon name="checkmark-outline"></ion-icon>
+                        قبول الرحلة
+                    </button>
+                    
+                    <button class="btn btn-decline" onclick="declineRide()">
+                        <ion-icon name="close-outline"></ion-icon>
+                        رفض
+                    </button>
+                </div>
+                
+                <a href="#" id="whatsapp-btn" class="whatsapp-btn" target="_blank" style="display: none;">
+                    <ion-icon name="logo-whatsapp"></ion-icon>
+                    محادثة العميل عبر واتساب
+                </a>
+                
+                <a href="#" id="map-btn" class="map-btn" target="_blank" style="display: none;">
+                    <ion-icon name="navigate-outline"></ion-icon>
+                    فتح الخريطة للمسار
+                </a>
+            </div>
+        </div>
+        
+        <div id="error-message" class="error-message" style="display: none;">
+            <ion-icon name="alert-circle-outline" style="font-size: 32px; margin-bottom: 10px;"></ion-icon>
+            <h3 id="error-title">حدث خطأ</h3>
+            <p id="error-details"></p>
+            <button onclick="window.location.href='/driver-dashboard.html'" style="
+                background: #4f46e5;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 10px;
+                margin-top: 15px;
+                font-family: 'Tajawal';
+                font-weight: 600;
+                cursor: pointer;
+            ">
+                العودة للوحة التحكم
+            </button>
+        </div>
+        
+        <div id="success-message" class="success-message" style="display: none;">
+            <ion-icon name="checkmark-circle-outline" style="font-size: 32px; margin-bottom: 10px;"></ion-icon>
+            <h3 id="success-title">تم بنجاح</h3>
+            <p id="success-details"></p>
+            <button onclick="window.location.href='/driver-dashboard.html'" style="
+                background: #10b981;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                border-radius: 10px;
+                margin-top: 15px;
+                font-family: 'Tajawal';
+                font-weight: 600;
+                cursor: pointer;
+            ">
+                متابعة الرحلات
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // ============================================
+        //  تهيئة النظام
+        // ============================================
+        let rideData = null;
+        let countdownInterval = null;
+        let timeRemaining = 40; // ثانية
+        let requestId = null;
+        
+        // Supabase Configuration
+        const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
+        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
+        
+        // ============================================
+        //  تحميل بيانات الرحلة من URL
+        // ============================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const rideId = urlParams.get('rideId');
+            requestId = urlParams.get('requestId');
+            
+            if (!rideId && !requestId) {
+                showError('خطأ في البيانات', 'لم يتم العثور على رقم الرحلة في الرابط.');
+                return;
+            }
+            
+            try {
+                await loadRideData(rideId, requestId);
+            } catch (error) {
+                console.error('Error loading ride:', error);
+                showError('خطأ في التحميل', 'تعذر تحميل بيانات الرحلة.');
+            }
+        });
+        
+        // ============================================
+        //  دالة تحميل بيانات الرحلة
+        // ============================================
+        async function loadRideData(rideId, reqId) {
+            try {
+                // التحقق من إما rideId أو requestId
+                let query;
+                
+                if (rideId) {
+                    // جلب الرحلة مباشرة
+                    query = supabase
+                        .from('rides')
+                        .select('*')
+                        .eq('id', rideId)
+                        .single();
+                } else if (reqId) {
+                    // جلب من خلال requestId
+                    query = supabase
+                        .from('ride_requests')
+                        .select('*, rides(*)')
+                        .eq('id', reqId)
+                        .single();
+                }
+                
+                const { data, error } = await query;
+                
+                if (error) throw error;
+                
+                rideData = rideId ? data : data.rides;
+                
+                if (!rideData) {
+                    throw new Error('الرحلة غير موجودة');
+                }
+                
+                // عرض بيانات الرحلة
+                displayRideData(rideData);
+                
+                // بدء العد التنازلي
+                startCountdown();
+                
+                // عرض المحتوى
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('ride-content').style.display = 'block';
+                
+                // تحديث حالة الطلب إذا كان من خلال requestId
+                if (reqId) {
+                    await updateRequestStatus(reqId, 'viewed');
+                }
+                
+            } catch (error) {
+                console.error('Error loading ride data:', error);
+                showError('خطأ في البيانات', 'تعذر تحميل بيانات الرحلة: ' + error.message);
+            }
+        }
+        
+        // ============================================
+        //  عرض بيانات الرحلة
+        // ============================================
+        function displayRideData(data) {
+            // بيانات العميل
+            document.getElementById('customer-name').textContent = data.customer_name || 'العميل';
+            document.getElementById('customer-avatar').textContent = 
+                data.customer_name?.charAt(0) || '؟';
+            document.getElementById('customer-phone').innerHTML = 
+                `<ion-icon name="call-outline"></ion-icon> ${data.customer_phone || 'غير متوفر'}`;
+            
+            // تفاصيل الرحلة
+            document.getElementById('vehicle-type').textContent = 
+                getVehicleTypeName(data.vehicle_type);
+            document.getElementById('ride-distance').textContent = 
+                data.distance_km ? `${data.distance_km.toFixed(1)} كم` : 'غير محدد';
+            document.getElementById('ride-duration').textContent = 
+                data.estimated_duration ? `${Math.round(data.estimated_duration)} دقيقة` : 'غير محدد';
+            document.getElementById('ride-id').textContent = `#${data.id}`;
+            
+            // المواقع
+            document.getElementById('pickup-location').textContent = 
+                data.pickup_address || 'موقع الانطلاق';
+            document.getElementById('destination-location').textContent = 
+                data.destination_address || 'الوجهة';
+            
+            // السعر
+            const amount = data.amount || 0;
+            document.getElementById('ride-price').textContent = 
+                amount.toLocaleString('en-US');
+            
+            // إضافة روابط التواصل
+            setupContactLinks(data);
+            
+            // حساب أرباح السائق
+            calculateDriverEarnings(data);
+        }
+        
+        function getVehicleTypeName(type) {
+            const names = {
+                'tuktuk': 'توك توك',
+                'economy': 'اقتصادية',
+                'comfort': 'متوسطة',
+                'vip': 'VIP'
+            };
+            return names[type] || type;
+        }
+        
+        // ============================================
+        //  إعداد روابط التواصل
+        // ============================================
+        function setupContactLinks(data) {
+            // رابط واتساب
+            if (data.customer_phone) {
+                const whatsappBtn = document.getElementById('whatsapp-btn');
+                const phone = data.customer_phone.startsWith('+') ? 
+                    data.customer_phone : `+${data.customer_phone}`;
+                const message = encodeURIComponent(`مرحباً، أنا السائق على تطبيق ترحال زونا رقم الرحلة: #${data.id}`);
+                whatsappBtn.href = `https://wa.me/${phone}?text=${message}`;
+                whatsappBtn.style.display = 'flex';
+            }
+            
+            // رابط الخريطة
+            const mapBtn = document.getElementById('map-btn');
+            if (data.pickup_lat && data.pickup_lng && data.destination_lat && data.destination_lng) {
+                const mapUrl = `https://www.google.com/maps/dir/${data.pickup_lat},${data.pickup_lng}/${data.destination_lat},${data.destination_lng}`;
+                mapBtn.href = mapUrl;
+                mapBtn.style.display = 'flex';
+            }
+        }
+        
+        // ============================================
+        //  حساب أرباح السائق
+        // ============================================
+        function calculateDriverEarnings(data) {
+            const amount = data.amount || 0;
+            
+            // نسبة أرباح السائق (75% كحد أدنى)
+            const commissionRate = 0.75; // 75% للسائق
+            const driverEarnings = Math.round(amount * commissionRate);
+            
+            // عرض الأرباح
+            document.getElementById('earnings-amount').textContent = 
+                driverEarnings.toLocaleString('en-US') + ' SDG';
+            document.getElementById('driver-earnings').style.display = 'flex';
+        }
+        
+        // ============================================
+        //  العد التنازلي
+        // ============================================
+        function startCountdown() {
+            updateCountdownDisplay();
+            
+            countdownInterval = setInterval(() => {
+                timeRemaining--;
+                updateCountdownDisplay();
+                
+                if (timeRemaining <= 0) {
+                    clearInterval(countdownInterval);
+                    handleTimeout();
+                }
+                
+                if (timeRemaining <= 10) {
+                    document.getElementById('countdown-timer').style.color = '#dc2626';
+                    document.getElementById('countdown-timer').style.animation = 'pulse 1s infinite';
+                }
+            }, 1000);
+        }
+        
+        function updateCountdownDisplay() {
+            document.getElementById('countdown-timer').textContent = timeRemaining;
+            document.getElementById('status-text').textContent = 
+                timeRemaining <= 10 ? 'وقت قصير!' : 'بانتظار ردك';
+        }
+        
+        // ============================================
+        //  انتهاء الوقت
+        // ============================================
+        async function handleTimeout() {
+            if (requestId) {
+                await updateRequestStatus(requestId, 'expired');
+            }
+            
+            document.getElementById('ride-content').style.display = 'none';
+            document.getElementById('success-message').style.display = 'block';
+            document.getElementById('success-title').textContent = 'انتهى الوقت';
+            document.getElementById('success-details').textContent = 
+                'انتهى الوقت المخصص للرد على طلب الرحلة.';
+        }
+        
+        // ============================================
+        //  قبول الرحلة
+        // ============================================
+        async function acceptRide() {
+            if (!rideData) return;
+            
+            // إيقاف العد التنازلي
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            try {
+                // تحديث حالة الرحلة
+                await updateRideStatus('driver_assigned');
+                
+                // إذا كان هناك requestId، تحديث حالة الطلب
+                if (requestId) {
+                    await updateRequestStatus(requestId, 'accepted');
+                }
+                
+                // عرض رسالة النجاح
+                document.getElementById('ride-content').style.display = 'none';
+                document.getElementById('success-message').style.display = 'block';
+                document.getElementById('success-title').textContent = 'تم قبول الرحلة';
+                document.getElementById('success-details').textContent = 
+                    `تم قبول رحلة #${rideData.id} بنجاح. اتجه إلى موقع العميل.`;
+                
+                // إرسال إشعار للعميل
+                await sendNotificationToCustomer('accepted');
+                
+                // تحديث موقع السائق
+                await updateDriverLocation(false); // يصبح غير متاح
+                
+            } catch (error) {
+                console.error('Error accepting ride:', error);
+                showError('خطأ في القبول', 'تعذر قبول الرحلة: ' + error.message);
+            }
+        }
+        
+        // ============================================
+        //  رفض الرحلة
+        // ============================================
+        async function declineRide() {
+            if (!rideData) return;
+            
+            // إيقاف العد التنازلي
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            try {
+                // إذا كان هناك requestId، تحديث حالة الطلب
+                if (requestId) {
+                    await updateRequestStatus(requestId, 'declined');
+                }
+                
+                // عرض رسالة الرفض
+                document.getElementById('ride-content').style.display = 'none';
+                document.getElementById('success-message').style.display = 'block';
+                document.getElementById('success-title').textContent = 'تم رفض الرحلة';
+                document.getElementById('success-details').textContent = 
+                    `تم رفض رحلة #${rideData.id}.`;
+                
+                // إرسال إشعار للعميل
+                await sendNotificationToCustomer('declined');
+                
+            } catch (error) {
+                console.error('Error declining ride:', error);
+                showError('خطأ في الرفض', 'تعذر رفض الرحلة: ' + error.message);
+            }
+        }
+        
+        // ============================================
+        //  دوال تحديث قاعدة البيانات
+        // ============================================
+        async function updateRideStatus(status) {
+            const { error } = await supabase
+                .from('rides')
+                .update({
+                    status: status,
+                    driver_assigned_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', rideData.id);
+            
+            if (error) throw error;
+        }
+        
+        async function updateRequestStatus(requestId, response) {
+            const { error } = await supabase
+                .from('ride_requests')
+                .update({
+                    driver_response: response,
+                    responded_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                })
+                .eq('id', requestId);
+            
+            if (error) throw error;
+        }
+        
+        async function updateDriverLocation(isAvailable) {
+            // جلب ID السائق من localStorage
+            const driverData = JSON.parse(localStorage.getItem('tarhal_driver'));
+            if (!driverData) return;
+            
+            const { error } = await supabase
+                .from('driver_locations')
+                .update({
+                    is_available: isAvailable,
+                    current_ride_id: isAvailable ? null : rideData.id,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('driver_id', driverData.id);
+            
+            if (error) throw error;
+        }
+        
+        // ============================================
+        //  إرسال إشعار للعميل
+        // ============================================
+        async function sendNotificationToCustomer(action) {
+            try {
+                const notificationUrl = '/api/send-customer-notification';
+                
+                const response = await fetch(notificationUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        rideId: rideData.id,
+                        customerId: rideData.customer_id,
+                        action: action,
+                        driverId: JSON.parse(localStorage.getItem('tarhal_driver'))?.id
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('Notification sent:', result);
+                
+            } catch (error) {
+                console.error('Error sending notification:', error);
+            }
+        }
+        
+        // ============================================
+        //  دوال مساعدة
+        // ============================================
+        function showError(title, details) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error-message').style.display = 'block';
+            document.getElementById('error-title').textContent = title;
+            document.getElementById('error-details').textContent = details;
+        }
+        
+        // إضافة أنماط CSS للنبض
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0% { transform: scale(1); }
+                50% { transform: scale(1.1); }
+                100% { transform: scale(1); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
