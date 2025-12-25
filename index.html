@@ -4746,47 +4746,6 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
     <!-- ملفات النظام الجديد -->
     <script src="notification-manager.js"></script>
     <script src="sound-manager.js">
-// ============================================
-//  تفعيل الصوت التلقائي
-// ============================================
-
-// تفعيل الصوت بعد تحميل الصفحة بالكامل
-window.addEventListener('load', function() {
-  setTimeout(function() {
-    if (window.soundManager) {
-      console.log('🔊 محاولة تفعيل الصوت التلقائي...');
-      
-      // طريقة 1: تفعيل فوري
-      try {
-        window.soundManager.activateAudioImmediately();
-      } catch (e) {
-        console.log('⚠️ تعذر التفعيل الفوري:', e);
-      }
-      
-      // طريقة 2: تفعيل عند أول نقر
-      document.addEventListener('click', function activateOnClick() {
-        if (window.soundManager) {
-          window.soundManager.enabled = true;
-          window.soundManager.savePreferences();
-          console.log('✅ تم تفعيل الصوت بنقرة المستخدم');
-        }
-        document.removeEventListener('click', activateOnClick);
-      }, { once: true });
-    }
-  }, 3000);
-});
-
-// تفعيل الصوت عند أي تفاعل مع التطبيق
-['click', 'touchstart', 'keydown', 'mousemove'].forEach(event => {
-  document.addEventListener(event, function activateSound() {
-    if (window.soundManager && !window.soundManager.enabled) {
-      window.soundManager.enabled = true;
-      window.soundManager.savePreferences();
-      console.log('🎵 تم تفعيل الصوت بتفاعل:', event);
-      document.removeEventListener(event, activateSound);
-    }
-  }, { once: true });
-});
 </script>
     
 </body>
