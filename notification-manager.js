@@ -1,4 +1,4 @@
-// notification-manager.js
+// notification-manager.js - نظام إشعارات متقدم لتطبيق ترحال زونا
 class TarhalNotificationManager {
   constructor() {
     this.permission = null;
@@ -8,59 +8,122 @@ class TarhalNotificationManager {
     this.isInitialized = false;
     this.fcmToken = null;
     this.swRegistration = null;
+    this.currentDriver = null;
+    this.currentUser = null;
+    this.isDriver = false;
+    
+    // تهيئة البيانات
+    this.loadCurrentUserData();
   }
 
   // =========================
-  // تهيئة نظام الإشعارات
+  // تهيئة النظام
   // =========================
   async initialize() {
     try {
+      // التحقق من دعم المتصفح
       if (!('Notification' in window)) {
-        console.log('❌ الإشعارات غير مدعومة');
+        console.log('❌ الإشعارات غير مدعومة في هذا المتصفح');
         return false;
       }
 
-      if (!('serviceWorker' in navigator)) {
-        console.log('❌ Service Worker غير مدعوم');
-        return false;
-      }
-
-      // ✅ تسجيل Service Worker مرة واحدة فقط
+      // تسجيل Service Worker المناسب
       this.swRegistration = await this.getServiceWorkerRegistration();
 
-      // تهيئة Firebase
-      await this.initializeFirebase();
+      // تهيئة Firebase للمستخدمين المناسبين
+      if (this.isDriver || this.shouldEnableNotifications()) {
+        await this.initializeFirebase();
+      }
 
       // تحميل التفضيلات
       this.loadPreferences();
 
       this.isInitialized = true;
-      console.log('✅ نظام الإشعارات جاهز');
+      console.log('✅ نظام إشعارات ترحال جاهز');
       return true;
 
     } catch (error) {
-      console.error('❌ خطأ في التهيئة:', error);
+      console.error('❌ خطأ في تهيئة نظام الإشعارات:', error);
       return false;
     }
   }
 
   // =========================
-  // الحصول على Service Worker
+  // تحميل بيانات المستخدم
+  // =========================
+  loadCurrentUserData() {
+    try {
+      // محاولة جلب بيانات السائق
+      const driverData = localStorage.getItem('tarhal_driver');
+      if (driverData) {
+        this.currentDriver = JSON.parse(driverData);
+        this.isDriver = true;
+        console.log('🚖 تم التعرف على سائق:', this.currentDriver.full_name);
+      }
+      
+      // محاولة جلب بيانات العميل
+      const userData = localStorage.getItem('tarhal_customer');
+      if (userData && !this.isDriver) {
+        this.currentUser = JSON.parse(userData);
+        console.log('👤 تم التعرف على عميل:', this.currentUser.full_name);
+      }
+    } catch (error) {
+      console.warn('⚠️ خطأ في تحميل بيانات المستخدم:', error);
+    }
+  }
+
+  // =========================
+  // تحديد إذا كان يجب تفعيل الإشعارات
+  // =========================
+  shouldEnableNotifications() {
+    // تفعيل الإشعارات للسائقين فقط
+    if (this.isDriver) return true;
+    
+    // للعملاء، يمكن تفعيل حسب التفضيلات
+    const prefs = JSON.parse(localStorage.getItem('tarhal_notification_prefs') || '{}');
+    return prefs.notificationEnabled === true;
+  }
+
+  // =========================
+  // الحصول على Service Worker المناسب
   // =========================
   async getServiceWorkerRegistration() {
     try {
-      const registration = await navigator.serviceWorker.getRegistration('/service-worker.js');
-      if (registration) return registration;
-
-      const reg = await navigator.serviceWorker.register('/service-worker.js');
-      await navigator.serviceWorker.ready; // ✅ التأكد من جاهزية SW
-      reg.update();
+      // محاولة استخدام Firebase SW أولاً
+      let registration = await navigator.serviceWorker.getRegistration('/firebase-cloud-messaging-push-scope');
+      
+      if (!registration) {
+        // البحث عن أي SW نشط
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        if (registrations.length > 0) {
+          registration = registrations[0];
+        }
+      }
+      
+      if (!registration) {
+        // تسجيل جديد باستخدام Firebase SW
+        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+          scope: '/firebase-cloud-messaging-push-scope'
+        });
+      }
+      
+      await navigator.serviceWorker.ready;
       console.log('✅ Service Worker جاهز');
-      return reg;
+      return registration;
 
     } catch (error) {
       console.error('❌ فشل تسجيل Service Worker:', error);
-      throw error;
+      
+      // محاولة تسجيل بديل
+      try {
+        const fallbackRegistration = await navigator.serviceWorker.register('/service-worker.js');
+        await navigator.serviceWorker.ready;
+        console.log('✅ تم تسجيل Service Worker بديل');
+        return fallbackRegistration;
+      } catch (fallbackError) {
+        console.error('❌ فشل جميع محاولات تسجيل Service Worker');
+        throw fallbackError;
+      }
     }
   }
 
@@ -69,75 +132,157 @@ class TarhalNotificationManager {
   // =========================
   async initializeFirebase() {
     try {
+      // التحقق من وجود Firebase
       if (!window.firebase || !firebase.messaging) {
-        console.warn('⚠️ Firebase غير متوفر');
-        return;
+        console.warn('⚠️ Firebase غير متوفر، جارٍ تحميله...');
+        await this.loadFirebaseScripts();
       }
 
       const firebaseConfig = {
         apiKey: "AIzaSyBxQLDLqr4W3lApfYLPjSV5It7925a9Rr0",
-        authDomain: "double-carport-476915-j7.firebasestorage.app",
+        authDomain: "double-carport-476915-j7.firebaseapp.com",
         projectId: "double-carport-476915-j7",
+        storageBucket: "double-carport-476915-j7.firebasestorage.app",
         messagingSenderId: "122641462099",
-        appId: "1:122641462099:web:345b777a88757d3ef7a7"
+        appId: "1:122641462099:web:345b777a88757d3ef7e7a6"
       };
 
-      if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
-      // ✅ التأكد من جاهزية Service Worker قبل استخدام messaging
-      await navigator.serviceWorker.ready;
+      // تهيئة Firebase إذا لم يكن مهيئاً
+      if (firebase.apps.length === 0) {
+        firebase.initializeApp(firebaseConfig);
+      }
 
       const messaging = firebase.messaging();
 
+      // طلب الإذن
       this.permission = await Notification.requestPermission();
       if (this.permission !== 'granted') {
         console.log('❌ لم يتم منح إذن الإشعارات');
+        this.notificationEnabled = false;
         return;
       }
 
-      // الحصول على FCM Token باستخدام Service Worker الجاهز
+      // الحصول على FCM Token
       this.fcmToken = await messaging.getToken({
+        vapidKey: "BLY-4c-9Xh3_3zJUiYyftl-tmExTQbqG_JiQwUBKpjz5GYHvJlZftlF-VvCqP4mHYQQYzZq3vT7mF5XqkjX1Qrw",
         serviceWorkerRegistration: this.swRegistration
       });
 
       if (this.fcmToken) {
-        console.log('✅ FCM Token:', this.fcmToken);
-        await this.saveTokenToJSONBin(this.fcmToken);
+        console.log('✅ FCM Token:', this.fcmToken.substring(0, 50) + '...');
+        
+        // حفظ التوكن في Supabase إذا كان سائقاً
+        if (this.isDriver && this.currentDriver) {
+          await this.saveDriverTokenToDatabase(this.fcmToken);
+        }
+        
+        // حفظ في localStorage كنسخة احتياطية
+        localStorage.setItem('tarhal_fcm_token', this.fcmToken);
       }
 
+      // معالجة الرسائل في الواجهة
       messaging.onMessage(payload => {
         console.log('📨 إشعار في الواجهة:', payload);
-        this.showInAppNotification({
-          title: payload.notification?.title,
-          body: payload.notification?.body,
-          data: payload.data || {}
-        });
+        this.handleIncomingNotification(payload);
       });
 
       this.notificationEnabled = true;
+      console.log('✅ Firebase مهيأ للإشعارات');
 
     } catch (error) {
-      console.error('❌ خطأ Firebase:', error);
+      console.error('❌ خطأ في تهيئة Firebase:', error);
+      
+      // إذا فشل Firebase، نستخدم إشعارات المتصفح الأساسية
+      if (this.permission === 'granted') {
+        this.notificationEnabled = true;
+        console.log('✅ تم تفعيل إشعارات المتصفح الأساسية');
+      }
     }
   }
 
   // =========================
-  // حفظ Token في JSONBin
+  // تحميل سكريبتات Firebase
+  // =========================
+  async loadFirebaseScripts() {
+    return new Promise((resolve, reject) => {
+      // تحقق إذا كان Firebase محملاً بالفعل
+      if (window.firebase) {
+        resolve();
+        return;
+      }
+
+      const firebaseAppScript = document.createElement('script');
+      firebaseAppScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js';
+      firebaseAppScript.onload = () => {
+        const firebaseMessagingScript = document.createElement('script');
+        firebaseMessagingScript.src = 'https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js';
+        firebaseMessagingScript.onload = resolve;
+        firebaseMessagingScript.onerror = reject;
+        document.head.appendChild(firebaseMessagingScript);
+      };
+      firebaseAppScript.onerror = reject;
+      document.head.appendChild(firebaseAppScript);
+    });
+  }
+
+  // =========================
+  // حفظ توكن السائق في قاعدة البيانات
+  // =========================
+  async saveDriverTokenToDatabase(token) {
+    try {
+      // استخدام Supabase
+      const SB_URL = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
+      const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
+      
+      const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+      
+      const { error } = await supabase
+        .from('driver_notifications')
+        .upsert({
+          driver_id: this.currentDriver.id,
+          fcm_token: token,
+          notification_enabled: true,
+          last_active: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'driver_id' });
+
+      if (error) throw error;
+      
+      console.log('✅ تم حفظ توكن السائق في قاعدة البيانات');
+      return true;
+
+    } catch (error) {
+      console.error('❌ فشل حفظ توكن السائق:', error);
+      
+      // محاولة الحفظ في JSONBin كنسخة احتياطية
+      try {
+        await this.saveTokenToJSONBin(token);
+      } catch (jsonbinError) {
+        console.error('❌ فشل الحفظ في JSONBin أيضاً');
+      }
+      
+      return false;
+    }
+  }
+
+  // =========================
+  // حفظ التوكن في JSONBin (نسخة احتياطية)
   // =========================
   async saveTokenToJSONBin(token) {
     try {
-      const TARHAL_BIN_ID = '69470e32ae596e708fa76869'; // BIN_ID الخاص بك
-      const JSONBIN_KEY = '$2a$10$.o4BAbiMjGS4tEZUVokTsufL18lsFyO30xIOXO8wT4dP/sqGN/61e'; // المفتاح الرئيسي
+      const TARHAL_BIN_ID = '69470e32ae596e708fa76869';
+      const JSONBIN_KEY = '$2a$10$.o4BAbiMjGS4tEZUVokTsufL18lsFyO30xIOXO8wT4dP/sqGN/61e';
 
       const data = {
         token: token,
-        userId: window.currentDriver?.id || window.currentUser?.id || null,
-        userType: window.currentDriver ? 'driver' : 'customer',
-        timestamp: Date.now()
+        userId: this.currentDriver?.id || this.currentUser?.id || null,
+        userType: this.isDriver ? 'driver' : 'customer',
+        timestamp: new Date().toISOString(),
+        app: 'tarhal'
       };
 
       const response = await fetch(`https://api.jsonbin.io/v3/b/${TARHAL_BIN_ID}`, {
-        method: 'PUT', // لتحديث الـ bin
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'X-Master-Key': JSONBIN_KEY
@@ -151,7 +296,34 @@ class TarhalNotificationManager {
       return await response.json();
 
     } catch (error) {
-      console.error('❌ خطأ في حفظ التوكن:', error);
+      console.error('❌ خطأ في حفظ التوكن في JSONBin:', error);
+      throw error;
+    }
+  }
+
+  // =========================
+  // معالجة الإشعارات الواردة
+  // =========================
+  handleIncomingNotification(payload) {
+    const data = payload.data || payload.notification?.data || {};
+    const title = payload.notification?.title || data.title || 'ترحال زونا';
+    const body = payload.notification?.body || data.body || 'إشعار جديد';
+    
+    // عرض إشعار في التطبيق
+    this.showInAppNotification({
+      title: title,
+      body: body,
+      data: data
+    });
+
+    // تشغيل الصوت إذا كان مفعلاً
+    if (this.soundEnabled && window.soundManager) {
+      window.soundManager.play('notification');
+    }
+
+    // اهتزاز إذا كان مفعلاً
+    if (this.vibrationEnabled && 'vibrate' in navigator) {
+      navigator.vibrate([200, 100, 200]);
     }
   }
 
@@ -159,77 +331,138 @@ class TarhalNotificationManager {
   // نافذة تفعيل الإشعارات
   // =========================
   showActivationPrompt() {
+    // التحقق إذا سبق طلب التفعيل
     if (localStorage.getItem('tarhal_notifications_asked')) return;
+
+    // للسائقين فقط
+    if (!this.isDriver) return;
 
     const prompt = document.createElement('div');
     prompt.id = 'notification-activation-prompt';
     prompt.style.cssText = `
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,.8);
+      background: rgba(0,0,0,0.85);
       z-index: 99999;
       display: flex;
       align-items: center;
       justify-content: center;
+      padding: 20px;
+      animation: fadeIn 0.4s ease;
     `;
 
     prompt.innerHTML = `
-      <div style="background:#fff;border-radius:20px;padding:30px;max-width:400px;text-align:center">
-        <div style="font-size:48px">🔔</div>
-        <h3 style="color:#4f46e5">تفعيل الإشعارات</h3>
-        <p style="color:#6b7280">
-          لاستقبال الطلبات حتى مع إغلاق التطبيق
+      <div style="background: white; border-radius: 20px; padding: 30px; max-width: 400px; width: 100%; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.3);">
+        <div style="font-size: 64px; margin-bottom: 20px; color: #4f46e5;">🔔</div>
+        <h3 style="color: #4f46e5; margin-bottom: 15px; font-weight: 800; font-size: 22px;">تفعيل إشعارات الرحلات</h3>
+        <p style="color: #6b7280; margin-bottom: 25px; line-height: 1.6; font-size: 16px;">
+          لاستقبال طلبات الركوب حتى مع إغلاق التطبيق وتلقي التنبيهات الفورية، يرجى تفعيل الإشعارات.
+          <br><br>
+          <strong style="color: #059669;">مطلوب لجميع السائقين!</strong>
         </p>
-        <button id="enable-all-btn" style="width:100%;padding:15px;background:#4f46e5;color:#fff;border:none;border-radius:12px;margin-bottom:10px">
-          تفعيل الكل
-        </button>
-        <button id="enable-notifications-btn" style="width:100%;padding:14px;border:1px solid #4f46e5;color:#4f46e5;border-radius:12px">
-          الإشعارات فقط
-        </button>
-        <button id="skip-btn" style="margin-top:10px;background:none;border:none;color:#6b7280">
-          تخطي
-        </button>
+        <div style="display: flex; gap: 10px; flex-direction: column;">
+          <button id="enable-all-btn" style="
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            border: none;
+            padding: 18px;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+          ">
+            <ion-icon name="notifications"></ion-icon>
+            تفعيل كل الإشعارات
+          </button>
+          <button id="skip-btn" style="
+            background: transparent;
+            color: #6b7280;
+            border: 2px solid #e5e7eb;
+            padding: 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            font-weight: 600;
+          ">
+            تخطي الآن
+          </button>
+        </div>
       </div>
     `;
 
     document.body.appendChild(prompt);
 
+    // إضافة أنماط CSS
+    const style = document.createElement('style');
+    style.textContent = `
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+    `;
+    document.head.appendChild(style);
+
+    // معالجة الأحداث
     document.getElementById('enable-all-btn').onclick = async () => {
       await this.enableAllFeatures();
       prompt.remove();
       localStorage.setItem('tarhal_notifications_asked', 'true');
+      this.showToast('✅ تم تفعيل جميع الإشعارات بنجاح');
     };
 
-    document.getElementById('enable-notifications-btn').onclick = async () => {
-      await this.enableNotificationsOnly();
+    document.getElementById('skip-btn').onclick = () => {
       prompt.remove();
       localStorage.setItem('tarhal_notifications_asked', 'true');
+      this.showToast('⚠️ يمكنك تفعيل الإشعارات لاحقاً من الإعدادات');
     };
 
-    document.getElementById('skip-btn').onclick = () => prompt.remove();
+    // إزالة تلقائية بعد 45 ثانية
+    setTimeout(() => {
+      if (prompt.parentNode) {
+        prompt.remove();
+        localStorage.setItem('tarhal_notifications_asked', 'true');
+      }
+    }, 45000);
   }
 
   // =========================
-  // تفعيل كل الميزات
+  // تفعيل جميع الميزات
   // =========================
   async enableAllFeatures() {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+    try {
+      // 1. طلب إذن الإشعارات
+      this.permission = await Notification.requestPermission();
+      
+      if (this.permission !== 'granted') {
+        this.showToast('❌ لم يتم منح إذن الإشعارات', 'error');
+        return false;
+      }
 
-    this.notificationEnabled = true;
-    this.soundEnabled = true;
-    this.vibrationEnabled = true;
-    this.savePreferences();
-    this.showToast('✅ تم التفعيل بنجاح');
-  }
+      // 2. تهيئة Firebase
+      await this.initializeFirebase();
 
-  async enableNotificationsOnly() {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+      // 3. تفعيل الصوت
+      this.soundEnabled = true;
+      
+      // 4. تفعيل الاهتزاز
+      this.vibrationEnabled = true;
+      
+      // 5. حفظ التفضيلات
+      this.savePreferences();
 
-    this.notificationEnabled = true;
-    this.savePreferences();
-    this.showToast('✅ تم تفعيل الإشعارات');
+      this.notificationEnabled = true;
+      
+      this.showToast('🎉 تم تفعيل النظام بالكامل بنجاح');
+      return true;
+
+    } catch (error) {
+      console.error('❌ خطأ في تفعيل الميزات:', error);
+      this.showToast('⚠️ حدث خطأ أثناء التفعيل', 'error');
+      return false;
+    }
   }
 
   // =========================
@@ -238,62 +471,320 @@ class TarhalNotificationManager {
   showInAppNotification(payload) {
     if (!payload?.title) return;
 
-    const n = document.createElement('div');
-    n.style.cssText = `
-      position:fixed;top:20px;left:20px;right:20px;
-      background:#fff;padding:16px;border-radius:12px;
-      box-shadow:0 10px 30px rgba(0,0,0,.2);
-      z-index:9999
+    // إزالة أي إشعارات قديمة
+    const oldNotifications = document.querySelectorAll('.tarhal-in-app-notification');
+    oldNotifications.forEach(n => n.remove());
+
+    const notification = document.createElement('div');
+    notification.className = 'tarhal-in-app-notification';
+    notification.style.cssText = `
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      background: white;
+      padding: 18px;
+      border-radius: 16px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+      z-index: 9999;
+      border-right: 5px solid #4f46e5;
+      animation: slideDown 0.4s ease;
+      max-width: 400px;
+      margin: 0 auto;
+      cursor: pointer;
     `;
 
-    n.innerHTML = `
-      <strong style="color:#4f46e5">${payload.title}</strong>
-      <div style="color:#6b7280">${payload.body || ''}</div>
+    notification.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="
+          width: 50px;
+          height: 50px;
+          background: linear-gradient(135deg, #4f46e5, #7c3aed);
+          border-radius: 12px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: white;
+          font-size: 24px;
+        ">
+          🚖
+        </div>
+        <div style="flex: 1;">
+          <strong style="color: #1f2937; font-size: 16px; display: block; margin-bottom: 5px;">${payload.title}</strong>
+          <div style="color: #6b7280; font-size: 14px;">${payload.body || ''}</div>
+        </div>
+        <button onclick="this.parentElement.parentElement.remove()" style="
+          background: none;
+          border: none;
+          color: #9ca3af;
+          font-size: 20px;
+          cursor: pointer;
+          padding: 5px;
+        ">
+          ×
+        </button>
+      </div>
     `;
 
-    n.onclick = () => {
-      if (payload.data?.url) location.href = payload.data.url;
-      n.remove();
+    // النقر على الإشعار
+    notification.onclick = () => {
+      if (payload.data?.url) {
+        window.location.href = payload.data.url;
+      }
+      notification.remove();
     };
 
-    document.body.appendChild(n);
-    setTimeout(() => n.remove(), 5000);
+    document.body.appendChild(notification);
+
+    // إضافة أنماط CSS
+    if (!document.querySelector('#inapp-notification-styles')) {
+      const style = document.createElement('style');
+      style.id = 'inapp-notification-styles';
+      style.textContent = `
+        @keyframes slideDown {
+          from {
+            transform: translateY(-100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // إزالة تلقائية بعد 8 ثواني
+    setTimeout(() => {
+      if (notification.parentNode) {
+        notification.style.opacity = '0';
+        notification.style.transform = 'translateY(-20px)';
+        setTimeout(() => notification.remove(), 300);
+      }
+    }, 8000);
   }
 
   // =========================
-  // التفضيلات
+  // إرسال إشعار اختبار
+  // =========================
+  async sendTestNotification() {
+    if (!this.isInitialized) {
+      this.showToast('⚠️ النظام غير مهيأ', 'warning');
+      return false;
+    }
+
+    try {
+      // إشعار داخل التطبيق
+      this.showInAppNotification({
+        title: '🧪 اختبار الإشعارات',
+        body: 'نظام الإشعارات يعمل بشكل ممتاز!',
+        data: {
+          type: 'test',
+          time: new Date().toISOString()
+        }
+      });
+
+      // إذا كان الصوت مفعلاً
+      if (this.soundEnabled && window.soundManager) {
+        window.soundManager.play('notification');
+      }
+
+      this.showToast('✅ تم إرسال إشعار اختبار بنجاح');
+      return true;
+
+    } catch (error) {
+      console.error('❌ خطأ في إرسال إشعار الاختبار:', error);
+      this.showToast('❌ فشل إرسال الإشعار', 'error');
+      return false;
+    }
+  }
+
+  // =========================
+  // إشعارات خاصة بالسائقين
+  // =========================
+  async sendDriverNotification(driverId, payload) {
+    if (!this.isDriver || !this.fcmToken) return false;
+
+    try {
+      const response = await fetch('/api/send-driver-notification', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          driverId: driverId,
+          token: this.fcmToken,
+          payload: payload
+        })
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('❌ خطأ في إرسال إشعار للسائق:', error);
+      return false;
+    }
+  }
+
+  // =========================
+  // إدارة التفضيلات
   // =========================
   loadPreferences() {
-    const p = JSON.parse(localStorage.getItem('tarhal_notification_prefs')) || {};
-    this.notificationEnabled = p.notificationEnabled !== false;
-    this.soundEnabled = p.soundEnabled !== false;
-    this.vibrationEnabled = p.vibrationEnabled !== false;
+    try {
+      const prefs = JSON.parse(localStorage.getItem('tarhal_notification_prefs') || '{}');
+      
+      this.notificationEnabled = prefs.notificationEnabled !== false;
+      this.soundEnabled = prefs.soundEnabled !== false;
+      this.vibrationEnabled = prefs.vibrationEnabled !== false;
+      
+      console.log('⚙️ تم تحميل تفضيلات الإشعارات:', prefs);
+    } catch (error) {
+      console.warn('⚠️ خطأ في تحميل التفضيلات:', error);
+    }
   }
 
   savePreferences() {
-    localStorage.setItem('tarhal_notification_prefs', JSON.stringify({
+    const prefs = {
       notificationEnabled: this.notificationEnabled,
       soundEnabled: this.soundEnabled,
       vibrationEnabled: this.vibrationEnabled,
-      updatedAt: Date.now()
-    }));
+      lastUpdated: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem('tarhal_notification_prefs', JSON.stringify(prefs));
+      console.log('💾 تم حفظ تفضيلات الإشعارات');
+    } catch (error) {
+      console.error('❌ خطأ في حفظ التفضيلات:', error);
+    }
   }
 
   // =========================
-  // Toast
+  // إشعارات Toast
   // =========================
-  showToast(message) {
-    const t = document.createElement('div');
-    t.style.cssText = `
-      position:fixed;bottom:20px;left:20px;right:20px;
-      background:#10b981;color:#fff;padding:14px;
-      border-radius:12px;text-align:center;z-index:10000
+  showToast(message, type = 'success') {
+    // إزالة أي Toast قديمة
+    const oldToast = document.querySelector('.tarhal-toast');
+    if (oldToast) oldToast.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'tarhal-toast';
+    toast.style.cssText = `
+      position: fixed;
+      bottom: 30px;
+      left: 20px;
+      right: 20px;
+      background: ${type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981'};
+      color: white;
+      padding: 16px;
+      border-radius: 14px;
+      text-align: center;
+      font-weight: 700;
+      z-index: 10000;
+      animation: toastSlide 0.4s ease;
+      max-width: 400px;
+      margin: 0 auto;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
     `;
-    t.textContent = message;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
+
+    let icon = '✅';
+    if (type === 'error') icon = '❌';
+    else if (type === 'warning') icon = '⚠️';
+
+    toast.innerHTML = `${icon} ${message}`;
+    document.body.appendChild(toast);
+
+    // إضافة أنماط الحركة
+    if (!document.querySelector('#toast-styles')) {
+      const style = document.createElement('style');
+      style.id = 'toast-styles';
+      style.textContent = `
+        @keyframes toastSlide {
+          from {
+            transform: translateY(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+      `;
+      document.head.appendChild(style);
+    }
+
+    // إزالة تلقائية
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(20px)';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  // =========================
+  // تفعيل خاص للسائقين
+  // =========================
+  async setupDriverNotifications() {
+    if (!this.isDriver) {
+      this.showToast('⚠️ هذه الميزة للسائقين فقط', 'warning');
+      return false;
+    }
+
+    try {
+      const result = await this.enableAllFeatures();
+      
+      if (result) {
+        this.showToast('🚖 تم تفعيل إشعارات السائق بنجاح');
+        
+        // إخفاء زر التفعيل
+        const btn = document.getElementById('driver-notification-activation');
+        if (btn) btn.style.display = 'none';
+      }
+      
+      return result;
+    } catch (error) {
+      console.error('❌ خطأ في تفعيل إشعارات السائق:', error);
+      this.showToast('❌ فشل تفعيل إشعارات السائق', 'error');
+      return false;
+    }
   }
 }
 
 // نسخة عالمية
 window.TarhalNotificationManager = TarhalNotificationManager;
+
+// تهيئة تلقائية عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', async () => {
+  // انتظار تحميل الصفحة بالكامل
+  setTimeout(async () => {
+    try {
+      // إنشاء مدير الإشعارات
+      window.notificationManager = new TarhalNotificationManager();
+      
+      // تهيئة النظام
+      await window.notificationManager.initialize();
+      
+      // عرض نافذة التفعيل إذا كان سائقاً ولم يتم السؤال من قبل
+      if (window.notificationManager.isDriver && 
+          !localStorage.getItem('tarhal_notifications_asked')) {
+        setTimeout(() => {
+          window.notificationManager.showActivationPrompt();
+        }, 3000);
+      }
+      
+      console.log('🎉 نظام إشعارات ترحال محمّل وجاهز');
+      
+    } catch (error) {
+      console.error('❌ فشل تحميل نظام الإشعارات:', error);
+    }
+  }, 1000);
+});
+
+// تصدير للاستخدام في وحدات أخرى
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { TarhalNotificationManager };
+}
