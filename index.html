@@ -3590,60 +3590,154 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
 }
         
         // ============================================
-        //  إرسال طلبات الرحلة للسائقين
-        // ============================================
-        async function sendRideRequestsToDrivers(ride, drivers) {
-            let acceptedDriver = null;
-            
-            // تحديث واجهة المستخدم
-            showNotification(` إرسال الطلب إلى ${drivers.length} سائق...`, 'info');
-            
-            // إرسال الطلبات لكل سائق
-            const requestPromises = drivers.map(async (driver) => {
-                try {
-                    // 1. تسجيل طلب الرحلة
-                    const { data: rideRequest, error } = await tarhalDB
-                        .from('ride_requests')
-                        .insert({
-                            ride_id: ride.id,
-                            driver_id: driver.driver_id || driver.id,
-                            status: 'pending',
-                            expires_at: new Date(Date.now() + 40000).toISOString(),
-                            created_at: new Date().toISOString()
-                        })
-                        .select()
-                        .single();
+//  إرسال طلبات الرحلة للسائقين - النسخة المصححة
+// ============================================
+async function sendRideRequestsToDrivers(ride, drivers) {
+    console.log(`📨 إرسال طلبات إلى ${drivers.length} سائق`);
+    
+    let acceptedDriver = null;
+    
+    // تحقق أولاً من السائقين الذين لديهم طلبات حالية
+    const checkedDrivers = await Promise.all(
+        drivers.map(async (driver) => {
+            try {
+                const driverId = driver.driver_id || driver.id;
+                
+                // التحقق إذا كان هناك طلب نشط بالفعل
+                const { data: existingRequest, error } = await tarhalDB
+                    .from('ride_requests')
+                    .select('id, status')
+                    .eq('ride_id', ride.id)
+                    .eq('driver_id', driverId)
+                    .maybeSingle();
+                
+                if (existingRequest) {
+                    console.log(`⚠️ طلب موجود للسائق ${driverId}: ${existingRequest.status}`);
                     
-                    if (error) {
-                        console.error('Error creating ride request:', error);
+                    // إذا كان الطلب مقبولاً بالفعل
+                    if (existingRequest.status === 'accepted') {
+                        console.log(`✅ السائق ${driverId} قبل الرحلة مسبقاً`);
+                        return { driver, hasExistingRequest: true, status: 'accepted' };
+                    }
+                    
+                    // إذا كان الطلب pending أو expired
+                    return { driver, hasExistingRequest: true, status: existingRequest.status };
+                }
+                
+                return { driver, hasExistingRequest: false };
+                
+            } catch (error) {
+                console.error(`❌ خطأ في التحقق من السائق ${driver.driver_id}:`, error);
+                return { driver, hasExistingRequest: false, error: error.message };
+            }
+        })
+    );
+    
+    // تصفية السائقين الذين ليس لديهم طلبات حالية
+    const newDrivers = checkedDrivers
+        .filter(item => !item.hasExistingRequest || item.status === 'expired')
+        .map(item => item.driver);
+    
+    console.log(`🎯 ${newDrivers.length} سائق جديد من ${drivers.length} إجمالي`);
+    
+    if (newDrivers.length === 0) {
+        console.log('ℹ️ جميع السائقين لديهم طلبات حالية');
+        return null;
+    }
+    
+    // إرسال طلبات للسائقين الجدد فقط
+    const requestPromises = newDrivers.map(async (driver) => {
+        try {
+            const driverId = driver.driver_id || driver.id;
+            
+            console.log(`📝 إنشاء طلب جديد للسائق ${driverId}`);
+            
+            // إنشاء طلب جديد مع try-catch
+            let rideRequest;
+            try {
+                const { data, error } = await tarhalDB
+                    .from('ride_requests')
+                    .insert({
+                        ride_id: ride.id,
+                        driver_id: driverId,
+                        status: 'pending',
+                        expires_at: new Date(Date.now() + 40000).toISOString(),
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+                
+                if (error) {
+                    // إذا كان duplicate key، تخطى هذا السائق
+                    if (error.code === '23505') {
+                        console.log(`ℹ️ تجاهل duplicate للسائق ${driverId}`);
                         return null;
                     }
-                    
-                    // 2. إرسال إشعار للسائق (إذا كان لديه إشعارات)
-                    await sendDriverNotification(driver, ride, rideRequest.id);
-                    
-                    // 3. انتظار الرد (40 ثانية)
-                    const response = await waitForDriverResponse(rideRequest.id, 40000);
-                    
-                    if (response === 'accepted') {
-                        // السائق قبل الرحلة
-                        acceptedDriver = driver;
-                        return driver;
-                    }
-                    
-                    return null;
-                    
-                } catch (error) {
-                    console.error('Error processing driver request:', error);
-                    return null;
+                    throw error;
                 }
-            });
+                
+                rideRequest = data;
+                console.log(`✅ طلب جديد أنشئ للسائق ${driverId}: ${rideRequest.id}`);
+                
+            } catch (insertError) {
+                console.error(`❌ فشل إنشاء طلب للسائق ${driverId}:`, insertError.message);
+                return null;
+            }
             
-            // انتظار جميع الردود
-            await Promise.allSettled(requestPromises);
+            // إرسال الإشعار
+            const notificationResult = await sendDriverNotification(driver, ride, rideRequest.id);
             
-            return acceptedDriver;
+            if (!notificationResult.success) {
+                console.log(`⚠️ فشل إرسال إشعار للسائق ${driverId}:`, notificationResult.error);
+            } else {
+                console.log(`📲 إشعار أرسل للسائق ${driverId}`);
+            }
+            
+            // انتظار الرد (مع timeout)
+            const response = await Promise.race([
+                waitForDriverResponse(rideRequest.id, 40000),
+                new Promise(resolve => setTimeout(() => resolve('timeout'), 45000))
+            ]);
+            
+            console.log(`🔄 رد السائق ${driverId}:`, response);
+            
+            if (response === 'accepted') {
+                console.log(`🎉 السائق ${driverId} قبل الرحلة!`);
+                acceptedDriver = driver;
+                return driver;
+            }
+            
+            return null;
+            
+        } catch (error) {
+            console.error(`❌ خطأ في معالجة السائق ${driver.driver_id}:`, error);
+            return null;
         }
+    });
+    
+    // انتظار الردود مع timeout إجمالي
+    const results = await Promise.race([
+        Promise.allSettled(requestPromises),
+        new Promise(resolve => {
+            setTimeout(() => {
+                console.log('⏰ انتهى وقت انتظار جميع السائقين');
+                resolve([]);
+            }, 60000); // 60 ثانية كحد أقصى
+        })
+    ]);
+    
+    // البحث عن أي سائق قبل
+    if (Array.isArray(results)) {
+        for (const result of results) {
+            if (result?.status === 'fulfilled' && result.value) {
+                return result.value;
+            }
+        }
+    }
+    
+    return acceptedDriver;
+}
         
         // ============================================
 //  إرسال إشعار للسائق - النسخة المحسنة
