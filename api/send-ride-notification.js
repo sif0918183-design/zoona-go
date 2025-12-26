@@ -1,4 +1,4 @@
-// /api/send-ride-notification.js - النسخة المبسطة الآمنة
+// /api/send-ride-notification.js - النسخة المحدثة مع دعم الأزرار التفاعلية
 export default async function handler(req, res) {
     console.log('🚀 API Called:', req.method, req.url);
     
@@ -21,7 +21,8 @@ export default async function handler(req, res) {
             message: 'ترحال زونا - API للإشعارات',
             status: 'active',
             timestamp: new Date().toISOString(),
-            version: '2.0.0'
+            version: '2.0.0',
+            features: ['interactive_notifications', 'accept_decline_buttons']
         });
     }
     
@@ -43,7 +44,8 @@ export default async function handler(req, res) {
                 amount, 
                 vehicleType,
                 fcmToken,
-                driverId
+                driverId,
+                requestId // ⭐⭐⭐ أضف هذا الحقل ⭐⭐⭐
             } = body;
             
             // التحقق من البيانات المطلوبة
@@ -54,55 +56,112 @@ export default async function handler(req, res) {
                 });
             }
             
+            if (!rideId && !requestId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'rideId أو requestId مطلوب'
+                });
+            }
+            
             // سجل البيانات للتحليل
             console.log('🔍 Data analysis:', {
                 rideId,
+                requestId,
                 customerName,
                 driverId,
                 tokenLength: fcmToken?.length || 0,
                 tokenPreview: fcmToken?.substring(0, 30) + '...'
             });
             
-            // ⭐⭐⭐⭐ هنا جرب الإرسال المباشر بدون Firebase Admin ⭐⭐⭐⭐
-            
-            // الخيار 1: استخدام Firebase SDK من العميل (نرسل رداً للتطبيق ليرسل هو)
-            if (fcmToken && fcmToken.length > 100) {
-                console.log('✅ Token looks valid, returning success response');
-                
-                // إرجاع نجاح مع تعليمات للتطبيق
-                return res.status(200).json({
-                    success: true,
-                    message: 'طلب الإشعار مستلم، سيتم الإرسال من التطبيق',
-                    notificationData: {
-                        title: '🚖 طلب رحلة جديد - ترحال زونا',
-                        body: `${customerName || 'عميل'} يطلب رحلة ${getVehicleTypeName(vehicleType)}`,
-                        data: {
-                            rideId: rideId || '',
-                            customerName: customerName || '',
-                            customerPhone: customerPhone || '',
-                            pickupLocation: pickupLocation || 'موقع الانطلاق',
-                            destination: destination || 'الوجهة',
-                            amount: amount || 0,
-                            vehicleType: vehicleType || 'economy',
-                            driverId: driverId || '',
-                            timestamp: new Date().toISOString(),
-                            type: 'ride_request',
-                            action: 'accept_ride'
-                        },
-                        token: fcmToken
+            // ⭐⭐⭐⭐ بناء payload الإشعار مع الأزرار التفاعلية ⭐⭐⭐⭐
+            const notificationPayload = {
+                success: true,
+                message: 'تم بناء بيانات الإشعار بنجاح',
+                notificationData: {
+                    title: `🚖 طلب رحلة جديد - ترحال زونا`,
+                    body: `${customerName || 'عميل'} يطلب رحلة ${getVehicleTypeName(vehicleType)} من ${pickupLocation || 'موقع الانطلاق'} إلى ${destination || 'الوجهة'}`,
+                    
+                    // ⭐⭐⭐⭐ البيانات الأساسية ⭐⭐⭐⭐
+                    data: {
+                        rideId: rideId || '',
+                        requestId: requestId || rideId, // استخدم requestId إذا كان موجوداً
+                        customerName: customerName || '',
+                        customerPhone: customerPhone || '',
+                        pickupLocation: pickupLocation || 'موقع الانطلاق',
+                        destination: destination || 'الوجهة',
+                        amount: amount || 0,
+                        vehicleType: vehicleType || 'economy',
+                        driverId: driverId || '',
+                        timestamp: new Date().toISOString(),
+                        type: 'ride_request',
+                        action: 'accept_ride',
+                        
+                        // ⭐⭐⭐⭐ الميزات الجديدة ⭐⭐⭐⭐
+                        // 1. الأزرار التفاعلية كـ JSON string
+                        actions: JSON.stringify([
+                            { 
+                                action: 'accept', 
+                                title: '✅ قبول الرحلة',
+                                icon: '/icons/accept.png'
+                            },
+                            { 
+                                action: 'decline', 
+                                title: '❌ رفض',
+                                icon: '/icons/decline.png'
+                            }
+                        ]),
+                        
+                        // 2. رابط النقر الأساسي
+                        click_action: `https://zoona-go-eosin.vercel.app/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId || rideId}`,
+                        
+                        // 3. روابط مباشرة للقبول والرفض
+                        accept_url: `https://zoona-go-eosin.vercel.app/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId || rideId}&action=accept`,
+                        decline_url: `https://zoona-go-eosin.vercel.app/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId || rideId}&action=decline`,
+                        
+                        // 4. معلومات إضافية للعرض
+                        urgency: 'high',
+                        timeout: 40, // ثانية
+                        requires_response: true
                     },
-                    instructions: 'استخدم window.firebase.messaging().send()',
-                    sentAt: new Date().toISOString()
-                });
-            } else {
-                console.log('⚠️ Token may be invalid');
-                return res.status(200).json({
-                    success: false,
-                    error: 'Token غير صالح',
-                    tokenLength: fcmToken?.length,
-                    fallback: true
-                });
-            }
+                    
+                    // ⭐⭐⭐⭐ خيارات الإشعار ⭐⭐⭐⭐
+                    notification: {
+                        icon: '/icons/icon-192x192.png',
+                        badge: '/icons/icon-72x72.png',
+                        vibrate: [200, 100, 200, 100, 200],
+                        requireInteraction: true,
+                        silent: false,
+                        tag: `ride-request-${rideId || requestId}`,
+                        timestamp: Date.now()
+                    },
+                    
+                    token: fcmToken
+                },
+                
+                // ⭐⭐⭐⭐ تعليمات للتطبيق ⭐⭐⭐⭐
+                instructions: {
+                    web: 'استخدم window.firebase.messaging().send() مع البيانات أعلاه',
+                    android: 'قم بتمرير data إلى نظام الإشعارات',
+                    ios: 'استخدم UNNotificationAction للأزرار',
+                    priority: 'high'
+                },
+                
+                // ⭐⭐⭐⭐ معلومات الإرسال ⭐⭐⭐⭐
+                metadata: {
+                    sentAt: new Date().toISOString(),
+                    expiresAt: new Date(Date.now() + 45000).toISOString(), // 45 ثانية
+                    notificationId: `tarhal-${rideId || requestId}-${Date.now()}`,
+                    version: '2.1.0'
+                }
+            };
+            
+            console.log('✅ Notification payload built successfully');
+            console.log('🎯 Actions included:', notificationPayload.notificationData.data.actions);
+            console.log('🔗 Accept URL:', notificationPayload.notificationData.data.accept_url);
+            console.log('🔗 Decline URL:', notificationPayload.notificationData.data.decline_url);
+            
+            // إرجاع الرد النهائي
+            return res.status(200).json(notificationPayload);
             
         } catch (error) {
             console.error('❌ Error in API:', error);
