@@ -4053,72 +4053,93 @@ async function sendViaCustomAPI(payload, apiEndpoint) {
         //  انتظار رد السائق
         // ============================================
         function waitForDriverResponse(requestId, timeoutMs = 40000) {
-            return new Promise((resolve) => {
-                let responded = false;
-                const startTime = Date.now();
+    return new Promise((resolve) => {
+        let responded = false;
+        const startTime = Date.now();
+        
+        console.log(`⏳ انتظار رد السائق للطلب ${requestId} (${timeoutMs}ms)`);
+        
+        // الاستماع للتحديثات في الوقت الفعلي
+        const subscription = tarhalDB
+            .channel(`ride_request_${requestId}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'ride_requests',
+                filter: `id=eq.${requestId}`
+            }, (payload) => {
+                if (payload.new.driver_response && !responded) {
+                    responded = true;
+                    subscription.unsubscribe();
+                    console.log(`📨 رد مباشر للسائق: ${payload.new.driver_response}`);
+                    resolve(payload.new.driver_response);
+                }
+            })
+            .subscribe();
+        
+        // التحقق الدوري من قاعدة البيانات
+        const checkInterval = setInterval(async () => {
+            if (responded) {
+                clearInterval(checkInterval);
+                return;
+            }
+            
+            // التحقق من انتهاء الوقت
+            const elapsed = Date.now() - startTime;
+            if (elapsed > timeoutMs) {
+                clearInterval(checkInterval);
+                subscription.unsubscribe();
                 
-                // الاستماع للتحديثات في الوقت الفعلي
-                const subscription = tarhalDB
-                    .channel(`ride_request_${requestId}`)
-                    .on('postgres_changes', {
-                        event: 'UPDATE',
-                        schema: 'public',
-                        table: 'ride_requests',
-                        filter: `id=eq.${requestId}`
-                    }, (payload) => {
-                        if (payload.new.driver_response && !responded) {
-                            responded = true;
-                            subscription.unsubscribe();
-                            resolve(payload.new.driver_response);
-                        }
-                    })
-                    .subscribe();
+                console.log(`⏰ انتهى وقت رد السائق للطلب ${requestId}`);
                 
-                // التحقق الدوري من قاعدة البيانات
-                const checkInterval = setInterval(async () => {
-                    if (responded) {
-                        clearInterval(checkInterval);
-                        return;
-                    }
-                    
-                    // التحقق من انتهاء الوقت
-                    if (Date.now() - startTime > timeoutMs) {
-                        clearInterval(checkInterval);
-                        subscription.unsubscribe();
-                        
-                        // تحديث حالة الطلب إلى منتهي
-                        await tarhalDB
-                            .from('ride_requests')
-                            .update({ 
-                                status: 'expired',
-                                updated_at: new Date().toISOString()
-                            })
-                            .eq('id', requestId);
-                        
-                        resolve('expired');
-                        return;
-                    }
-                    
-                    // التحقق المباشر من قاعدة البيانات
-                    try {
-                        const { data: request } = await tarhalDB
-                            .from('ride_requests')
-                            .select('driver_response, status')
-                            .eq('id', requestId)
-                            .single();
-                        
-                        if (request?.driver_response) {
-                            clearInterval(checkInterval);
-                            subscription.unsubscribe();
-                            responded = true;
-                            resolve(request.driver_response);
-                        }
-                    } catch (error) {
-                        // تجاهل الأخطاء
-                    }
-                }, 1000); // التحقق كل ثانية
-            });
-        }
+                // تحديث حالة الطلب إلى منتهي
+                try {
+                    await tarhalDB
+                        .from('ride_requests')
+                        .update({ 
+                            status: 'expired',
+                            driver_response: 'expired',
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', requestId);
+                } catch (error) {
+                    console.error('❌ خطأ في تحديث حالة انتهاء:', error);
+                }
+                
+                resolve('expired');
+                return;
+            }
+            
+            // التحقق المباشر من قاعدة البيانات
+            try {
+                const { data: request } = await tarhalDB
+                    .from('ride_requests')
+                    .select('driver_response, status')
+                    .eq('id', requestId)
+                    .single();
+                
+                if (request?.driver_response && !responded) {
+                    clearInterval(checkInterval);
+                    subscription.unsubscribe();
+                    responded = true;
+                    console.log(`✅ رد السائق من DB: ${request.driver_response}`);
+                    resolve(request.driver_response);
+                }
+            } catch (error) {
+                // تجاهل الأخطاء المؤقتة
+            }
+        }, 2000); // التحقق كل ثانيتين
+        
+        // تنظيف عند انتهاء الوعد
+        const cleanup = () => {
+            clearInterval(checkInterval);
+            if (subscription) subscription.unsubscribe();
+        };
+        
+        // تنظيف بعد timeout + هامش
+        setTimeout(cleanup, timeoutMs + 5000);
+    });
+}
         
         // ============================================
         //  معالجة إيجاد السائق
