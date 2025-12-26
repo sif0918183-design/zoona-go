@@ -3351,16 +3351,13 @@ async function initPWA() {
             
             // تحديث حالة الرحلة
             await tarhalDB
-            .from('rides')
-            .update({ 
-                status: 'searching',
-                updated_at: new Date().toISOString()
-            })
-            .eq('id', ride.id);
-    }
-} catch (patchError) {
-    console.error('❌ فشل تحديث الرحلة:', patchError);
-}
+    .from('rides')
+    .update({ 
+        status: 'searching',
+        search_radius: searchRadius,
+        last_search_at: new Date().toISOString()
+    })
+    .eq('id', ride.id);
             
             // بدء عملية البحث
             rideSearchInterval = setInterval(async () => {
