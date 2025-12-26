@@ -166,7 +166,7 @@ class TarhalNotificationManager {
       // استبدل هذا:
 // استخدم مفتاح VAPID الفعلي من Firebase
 this.fcmToken = await messaging.getToken({
-  vapidKey: "BIP_J0k5yv......", // ⬅️ ضع مفتاح VAPID الحقيقي هنا
+  vapidKey: "BE2_9m83w2cu_fxhqV4eUowZQT7E8nm-FZZMWqN5DByd-Naykp52nWwA9uuW_L9x_3rPPsMNZzctsZD8j5YyaZw", // ⬅️ ضع مفتاح VAPID الحقيقي هنا
   serviceWorkerRegistration: this.swRegistration
 }).catch(error => {
   console.error('❌ فشل الحصول على FCM Token:', error);
