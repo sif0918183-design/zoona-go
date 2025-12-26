@@ -3884,10 +3884,6 @@ async function sendViaFirebaseDirectly(payload) {
 // ============================================
 async function sendViaCustomAPI(payload, apiEndpoint) {
     try {
-        if (!apiEndpoint) {
-            throw new Error('عنوان API غير محدد');
-        }
-        
         console.log(`📤 إرسال طلب إلى API: ${apiEndpoint}`);
         
         const response = await fetch(apiEndpoint, {
@@ -3904,35 +3900,45 @@ async function sendViaCustomAPI(payload, apiEndpoint) {
                 destination: payload.rideData.destination,
                 amount: payload.rideData.amount,
                 vehicleType: payload.rideData.vehicleType,
-                driverCarType: payload.rideData.vehicleType, // نفس نوع السيارة
                 fcmToken: payload.fcmToken,
                 driverId: payload.driverId
             }),
-            signal: AbortSignal.timeout(10000) // إلغاء بعد 10 ثواني
+            signal: AbortSignal.timeout(8000)
         });
         
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`خطأ API: ${response.status} - ${errorText}`);
+        const result = await response.json();
+        console.log('📨 API Response:', result);
+        
+        // إذا نجح الـ API، حاول الإرسال عبر Firebase مباشرة
+        if (result.success && result.notificationData) {
+            console.log('🔄 API نجح، جاري الإرسال عبر Firebase مباشرة...');
+            
+            // الإرسال المباشر عبر Firebase
+            const firebaseResult = await sendViaFirebaseDirectly(payload);
+            
+            return {
+                success: firebaseResult.success,
+                method: 'api_with_firebase_fallback',
+                apiResponse: result,
+                firebaseResult: firebaseResult,
+                timestamp: new Date().toISOString()
+            };
         }
         
-        const result = await response.json();
-        
-        return {
-            success: result.success || false,
-            method: 'custom_api',
-            apiResponse: result,
-            timestamp: new Date().toISOString()
-        };
+        return result;
         
     } catch (error) {
-        console.error('❌ فشل الإرسال عبر API:', error);
+        console.error('❌ فشل الاتصال بالـ API:', error.message);
+        
+        // محاولة الإرسال المباشر كبديل
+        console.log('🔄 جرب الإرسال المباشر عبر Firebase...');
+        const firebaseResult = await sendViaFirebaseDirectly(payload);
         
         return {
-            success: false,
-            method: 'custom_api',
+            success: firebaseResult.success,
+            method: 'firebase_fallback_after_api_fail',
             error: error.message,
-            endpoint: apiEndpoint
+            firebaseResult: firebaseResult
         };
     }
 }
