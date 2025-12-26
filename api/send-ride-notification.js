@@ -186,7 +186,7 @@ export default async function handler(req, res) {
 // دالة مساعدة
 function getVehicleTypeName(type) {
     const names = {
-        'tuktuk': 'توك توك',
+        'tuktuk': 'ركشة',
         'economy': 'اقتصادية',
         'comfort': 'متوسطة',
         'vip': 'VIP'
