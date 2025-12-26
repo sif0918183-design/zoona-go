@@ -1845,6 +1845,7 @@ window.addEventListener("load", () => {
         let routePolyline = null;
         let currentRoute = null;
         let routeCalculated = false;
+        let notificationServiceUrl = '/api/send-ride-notification';
         
         // --- متغيرات جديدة لنظام البحث المحسن ---
         let locationMode = 'auto';
@@ -3643,103 +3644,296 @@ async function findDriversManually(pickupLat, pickupLng, vehicleType, radiusKm) 
         }
         
         // ============================================
-        //  إرسال إشعار للسائق
-        // ============================================
-        async function sendDriverNotification(driver, ride, requestId) {
-            try {
-                // 1. التحقق من وجود توكن إشعارات للسائق
-                const { data: notificationData } = await tarhalDB
-                    .from('driver_notifications')
-                    .select('fcm_token, notification_enabled')
-                    .eq('driver_id', driver.driver_id || driver.id)
-                    .single();
-                
-                if (!notificationData?.fcm_token || !notificationData.notification_enabled) {
-                    console.log(`Driver ${driver.driver_id} has no notifications enabled`);
-                    return false;
-                }
-                
-                // 2. إعداد بيانات الإشعار
-                const notificationPayload = {
-                    notification: {
-                        title: ' طلب رحلة جديد - ترحال زونا',
-                        body: `${ride.customer_name} يطلب رحلة ${getVehicleTypeName(ride.vehicle_type)}`,
-                        icon: '/icons/icon-192x192.png',
-                        badge: '/icons/icon-72x72.png',
-                        vibrate: [200, 100, 200],
-                        requireInteraction: true,
-                        tag: `tarhal-ride-${ride.id}`,
-                        timestamp: Date.now(),
-                        data: {
-                            rideId: ride.id,
-                            requestId: requestId,
-                            customerName: ride.customer_name,
-                            customerPhone: ride.customer_phone,
-                            pickupLocation: 'موقع الانطلاق',
-                            destination: 'الوجهة',
-                            amount: ride.amount,
-                            vehicleType: ride.vehicle_type,
-                            action: 'ride_request',
-                            url: `/driver/accept-ride.html?requestId=${requestId}`
-                        },
-                        actions: [
-                            {
-                                action: 'accept',
-                                title: '✅ قبول الرحلة',
-                                icon: '/icons/accept.png'
-                            },
-                            {
-                                action: 'decline',
-                                title: '❌ رفض',
-                                icon: '/icons/decline.png'
-                            }
-                        ]
-                    },
-                    to: notificationData.fcm_token
-                };
-                
-                // 3. إرسال الإشعار عبر Firebase
-                if (window.firebase && firebase.messaging) {
-                    const messaging = firebase.messaging();
-                    
-                    // محاولة الإرسال
-                    try {
-                        await messaging.send(notificationPayload);
-                        console.log(`Notification sent to driver ${driver.driver_id}`);
-                        
-                        // تسجيل نجاح الإرسال
-                        await tarhalDB
-                            .from('activity_logs')
-                            .insert({
-                                user_id: driver.driver_id,
-                                user_type: 'driver',
-                                action: 'notification_sent',
-                                details: { rideId: ride.id, requestId: requestId }
-                            });
-                        
-                        return true;
-                    } catch (firebaseError) {
-                        console.error('Firebase notification error:', firebaseError);
-                        
-                        // تحديث حالة التوكن إذا كان غير صالح
-                        if (firebaseError.code === 'messaging/invalid-registration-token' ||
-                            firebaseError.code === 'messaging/registration-token-not-registered') {
-                            await tarhalDB
-                                .from('driver_notifications')
-                                .update({ fcm_token: null, updated_at: new Date().toISOString() })
-                                .eq('driver_id', driver.driver_id);
-                        }
-                        return false;
-                    }
-                }
-                
-                return false;
-                
-            } catch (error) {
-                console.error('Error sending notification:', error);
-                return false;
-            }
+//  إرسال إشعار للسائق - النسخة المحسنة
+// ============================================
+async function sendDriverNotification(driver, ride, requestId) {
+    try {
+        console.log(`🚀 محاولة إرسال إشعار للسائق ${driver.driver_id || driver.id}`);
+        
+        // 1. جلب بيانات إشعارات السائق من Supabase
+        const { data: notificationData, error: notificationError } = await tarhalDB
+            .from('driver_notifications')
+            .select('fcm_token, notification_enabled')
+            .eq('driver_id', driver.driver_id || driver.id)
+            .single();
+        
+        // إذا لم يكن هناك بيانات إشعارات أو التوكن مفقود
+        if (notificationError || !notificationData) {
+            console.log(`⚠️ السائق ${driver.driver_id} ليس لديه بيانات إشعارات في قاعدة البيانات`);
+            return {
+                success: false,
+                message: 'السائق ليس لديه إشعارات مفعلة',
+                driverId: driver.driver_id
+            };
         }
+        
+        const { fcm_token, notification_enabled } = notificationData;
+        
+        // التحقق من وجود التوكن وتمكين الإشعارات
+        if (!fcm_token || !notification_enabled) {
+            console.log(`⚠️ السائق ${driver.driver_id}: لا يوجد توكن أو الإشعارات غير مفعلة`);
+            return {
+                success: false,
+                message: 'توكن الإشعارات مفقود أو غير مفعل',
+                driverId: driver.driver_id
+            };
+        }
+        
+        // التحقق من صحة التوكن (يجب أن يكون نصاً طويلاً)
+        if (typeof fcm_token !== 'string' || fcm_token.length < 100) {
+            console.error(`❌ توكن غير صالح للسائق ${driver.driver_id}: ${fcm_token?.substring(0, 50)}...`);
+            
+            // تحديث حالة التوكن ليكون غير صالح
+            await tarhalDB
+                .from('driver_notifications')
+                .update({ 
+                    fcm_token: null,
+                    notification_enabled: false,
+                    updated_at: new Date().toISOString()
+                })
+                .eq('driver_id', driver.driver_id);
+            
+            return {
+                success: false,
+                message: 'توكن الإشعارات غير صالح',
+                driverId: driver.driver_id
+            };
+        }
+        
+        console.log(`✅ توكن صالح للسائق ${driver.driver_id}: ${fcm_token.substring(0, 30)}...`);
+        
+        // 2. إعداد بيانات الرحلة للإرسال
+        const notificationPayload = {
+            driverId: driver.driver_id,
+            fcmToken: fcm_token,
+            rideData: {
+                rideId: ride.id,
+                requestId: requestId,
+                customerName: ride.customer_name,
+                customerPhone: ride.customer_phone || '',
+                pickupLocation: 'موقع الانطلاق', // ⬅️ يمكنك استبدال هذا بموقع حقيقي
+                destination: 'الوجهة', // ⬅️ يمكنك استبدال هذا بوجهة حقيقية
+                amount: ride.amount || 0,
+                vehicleType: ride.vehicle_type || 'economy',
+                distance: ride.distance_km || 0,
+                pickupLat: ride.pickup_lat,
+                pickupLng: ride.pickup_lng,
+                destinationLat: ride.destination_lat,
+                destinationLng: ride.destination_lng,
+                timestamp: new Date().toISOString()
+            },
+            notificationConfig: {
+                title: '🚖 طلب رحلة جديد - ترحال زونا',
+                body: `${ride.customer_name} يطلب رحلة ${getVehicleTypeName(ride.vehicle_type)}`,
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/icon-72x72.png',
+                requireInteraction: true,
+                vibrate: [200, 100, 200]
+            }
+        };
+        
+        // 3. خيارات الإرسال
+        const sendOptions = {
+            // إما استخدام Firebase مباشرة
+            useFirebaseDirectly: false, // ⬅️ ضع true إذا تريد استخدام Firebase مباشرة
+            // أو استخدام API مخصصة
+            apiEndpoint: notificationServiceUrl,
+            timeout: 10000 // 10 ثواني
+        };
+        
+        let result;
+        
+        if (sendOptions.useFirebaseDirectly && window.firebase && firebase.messaging) {
+            // 4A. الإرسال المباشر عبر Firebase (إذا كان يعمل)
+            result = await sendViaFirebaseDirectly(notificationPayload);
+        } else {
+            // 4B. الإرسال عبر API مخصصة (مفضّل)
+            result = await sendViaCustomAPI(notificationPayload, sendOptions.apiEndpoint);
+        }
+        
+        // 5. تسجيل نتيجة الإرسال
+        if (result.success) {
+            console.log(`✅ تم إرسال الإشعار بنجاح للسائق ${driver.driver_id}`);
+            
+            // تسجيل في سجل النشاط
+            try {
+                await tarhalDB
+                    .from('activity_logs')
+                    .insert({
+                        user_id: driver.driver_id,
+                        user_type: 'driver',
+                        action: 'notification_sent',
+                        details: { 
+                            rideId: ride.id, 
+                            requestId: requestId,
+                            method: result.method,
+                            timestamp: new Date().toISOString()
+                        }
+                    });
+            } catch (logError) {
+                console.error('❌ خطأ في تسجيل النشاط:', logError);
+            }
+            
+            return {
+                success: true,
+                message: 'تم إرسال الإشعار',
+                driverId: driver.driver_id,
+                details: result
+            };
+        } else {
+            console.error(`❌ فشل إرسال الإشعار للسائق ${driver.driver_id}:`, result.error);
+            
+            // إذا كان الفشل بسبب توكن غير صالح
+            if (result.error?.includes('invalid-registration-token') || 
+                result.error?.includes('registration-token-not-registered')) {
+                
+                console.log(`🔄 تحديث توكن السائق ${driver.driver_id} ليكون غير صالح`);
+                
+                await tarhalDB
+                    .from('driver_notifications')
+                    .update({ 
+                        fcm_token: null,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('driver_id', driver.driver_id);
+            }
+            
+            return {
+                success: false,
+                message: 'فشل إرسال الإشعار',
+                driverId: driver.driver_id,
+                error: result.error
+            };
+        }
+        
+    } catch (error) {
+        console.error(`❌ خطأ غير متوقع في إرسال إشعار للسائق:`, error);
+        
+        return {
+            success: false,
+            message: 'حدث خطأ غير متوقع',
+            error: error.message,
+            driverId: driver.driver_id
+        };
+    }
+}
+
+// ============================================
+//  دالة الإرسال عبر Firebase مباشرة
+// ============================================
+async function sendViaFirebaseDirectly(payload) {
+    try {
+        if (!window.firebase || !firebase.messaging) {
+            throw new Error('Firebase غير متاح');
+        }
+        
+        const messaging = firebase.messaging();
+        
+        const message = {
+            notification: {
+                title: payload.notificationConfig.title,
+                body: payload.notificationConfig.body,
+                icon: payload.notificationConfig.icon,
+                badge: payload.notificationConfig.badge,
+                vibrate: payload.notificationConfig.vibrate,
+                requireInteraction: payload.notificationConfig.requireInteraction
+            },
+            data: {
+                ...payload.rideData,
+                type: 'ride_request',
+                action: 'accept_ride',
+                click_action: 'ACCEPT_RIDE',
+                urgency: 'high'
+            },
+            token: payload.fcmToken,
+            webpush: {
+                fcmOptions: {
+                    link: `/driver/accept-ride.html?rideId=${payload.rideData.rideId}&requestId=${payload.rideData.requestId}`
+                },
+                headers: {
+                    Urgency: 'high'
+                }
+            }
+        };
+        
+        const response = await messaging.send(message);
+        
+        return {
+            success: true,
+            method: 'firebase_direct',
+            messageId: response,
+            timestamp: new Date().toISOString()
+        };
+        
+    } catch (error) {
+        console.error('❌ فشل الإرسال عبر Firebase:', error);
+        
+        return {
+            success: false,
+            method: 'firebase_direct',
+            error: error.message,
+            errorCode: error.code
+        };
+    }
+}
+
+// ============================================
+//  دالة الإرسال عبر API مخصصة
+// ============================================
+async function sendViaCustomAPI(payload, apiEndpoint) {
+    try {
+        if (!apiEndpoint) {
+            throw new Error('عنوان API غير محدد');
+        }
+        
+        console.log(`📤 إرسال طلب إلى API: ${apiEndpoint}`);
+        
+        const response = await fetch(apiEndpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                rideId: payload.rideData.rideId,
+                customerName: payload.rideData.customerName,
+                customerPhone: payload.rideData.customerPhone,
+                pickupLocation: payload.rideData.pickupLocation,
+                destination: payload.rideData.destination,
+                amount: payload.rideData.amount,
+                vehicleType: payload.rideData.vehicleType,
+                driverCarType: payload.rideData.vehicleType, // نفس نوع السيارة
+                fcmToken: payload.fcmToken,
+                driverId: payload.driverId
+            }),
+            signal: AbortSignal.timeout(10000) // إلغاء بعد 10 ثواني
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`خطأ API: ${response.status} - ${errorText}`);
+        }
+        
+        const result = await response.json();
+        
+        return {
+            success: result.success || false,
+            method: 'custom_api',
+            apiResponse: result,
+            timestamp: new Date().toISOString()
+        };
+        
+    } catch (error) {
+        console.error('❌ فشل الإرسال عبر API:', error);
+        
+        return {
+            success: false,
+            method: 'custom_api',
+            error: error.message,
+            endpoint: apiEndpoint
+        };
+    }
+}
         
         // ============================================
         //  انتظار رد السائق
