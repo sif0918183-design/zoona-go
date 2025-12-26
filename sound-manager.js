@@ -1,21 +1,19 @@
 // sound-manager.js
-// نظام صوت خفيف ومتوافق 100% مع Firebase وملفات ترحال
+// Tarhal – Lightweight Sound Manager (Final)
 
 class TarhalSoundManager {
   constructor() {
     this.ctx = null;
-    this.enabled = false;
+    this.enabled = localStorage.getItem('tarhal_sound_enabled') === '1';
     this.volume = 0.2;
 
-    // استرجاع حالة الصوت من التخزين
-    if (localStorage.getItem('tarhal_sound_enabled') === '1') {
-      this.enabled = true;
+    const savedVolume = localStorage.getItem('tarhal_sound_volume');
+    if (savedVolume !== null) {
+      this.volume = parseFloat(savedVolume);
     }
   }
 
-  /* ===============================
-     التهيئة الأساسية
-     =============================== */
+  /* ===== Init & Enable ===== */
 
   init() {
     if (!this.ctx) {
@@ -25,28 +23,21 @@ class TarhalSoundManager {
 
   enable() {
     this.init();
-
     if (this.ctx.state === 'suspended') {
       this.ctx.resume();
     }
-
     this.enabled = true;
     localStorage.setItem('tarhal_sound_enabled', '1');
   }
 
-  /* ===============================
-     🔁 طبقة التوافق (مهمة جدًا)
-     =============================== */
+  /* ===== Compatibility Layer ===== */
 
-  // مستخدمة في index.html سابقًا
   activateAudioImmediately() {
     this.enable();
   }
 
-  // زر تشغيل / إيقاف الصوت
   toggle() {
     this.enabled = !this.enabled;
-
     localStorage.setItem(
       'tarhal_sound_enabled',
       this.enabled ? '1' : '0'
@@ -56,20 +47,16 @@ class TarhalSoundManager {
       this.enable();
       this.playSound('beep');
     }
-
     return this.enabled;
   }
 
-  // الاسم القديم المستخدم في التطبيق
-  playSound(name, options = {}) {
-    this.play(name);
+  playSound(type = 'beep', volumeOverride = null) {
+    this.play(type, volumeOverride);
   }
 
-  /* ===============================
-     تشغيل الصوت (Oscillator)
-     =============================== */
+  /* ===== Sound Engine ===== */
 
-  play(type = 'beep') {
+  play(type = 'beep', volumeOverride = null) {
     if (!this.enabled) return;
 
     this.init();
@@ -77,21 +64,20 @@ class TarhalSoundManager {
     const osc = this.ctx.createOscillator();
     const gain = this.ctx.createGain();
 
-    // نغمات مخصصة لترحال
     const sounds = {
-      new_ride: [900, 0.25],        // طلب رحلة جديد
-      ride_accepted: [1200, 0.3],   // قبول الرحلة
-      ride_declined: [250, 0.35],   // رفض الرحلة
-      notification: [700, 0.15],    // إشعار عام
-      time_warning: [450, 0.4],     // تنبيه وقت
-      beep: [600, 0.1]              // تأكيد بسيط
+      new_ride: [900, 0.25],
+      ride_accepted: [1200, 0.3],
+      ride_declined: [250, 0.35],
+      notification: [700, 0.15],
+      time_warning: [450, 0.4],
+      beep: [600, 0.1]
     };
 
     const [freq, duration] = sounds[type] || sounds.beep;
 
     osc.type = 'sine';
     osc.frequency.value = freq;
-    gain.gain.value = this.volume;
+    gain.gain.value = volumeOverride ?? this.volume;
 
     osc.connect(gain);
     gain.connect(this.ctx.destination);
@@ -100,13 +86,11 @@ class TarhalSoundManager {
     osc.stop(this.ctx.currentTime + duration);
   }
 
-  /* ===============================
-     أدوات مساعدة
-     =============================== */
+  /* ===== Helpers ===== */
 
   setVolume(level) {
-    // level من 0 إلى 100
-    this.volume = Math.max(0, Math.min(1, level / 100));
+    this.volume = Math.max(0, Math.min(1, level));
+    localStorage.setItem('tarhal_sound_volume', this.volume);
   }
 
   isEnabled() {
@@ -114,23 +98,20 @@ class TarhalSoundManager {
   }
 }
 
-/* ===============================
-   إنشاء نسخة عالمية
-   =============================== */
+/* ===== Global Instance ===== */
 
 window.soundManager = new TarhalSoundManager();
 
-/* ===============================
-   تفعيل تلقائي بعد أول تفاعل
-   (متوافق مع Chrome / Android)
-   =============================== */
+/* ===== Enable After First Interaction (Once) ===== */
+
+const activateOnce = () => {
+  if (window.soundManager && !window.soundManager.enabled) {
+    window.soundManager.enable();
+    window.soundManager.playSound('beep');
+    console.log('🎵 Tarhal sound enabled');
+  }
+};
 
 ['click', 'touchstart', 'keydown'].forEach(event => {
-  document.addEventListener(event, function activateSound() {
-    if (window.soundManager && !window.soundManager.enabled) {
-      window.soundManager.enable();
-      window.soundManager.playSound('beep');
-      console.log('🎵 تم تفعيل الصوت بتفاعل:', event);
-    }
-  }, { once: true });
+  document.addEventListener(event, activateOnce, { once: true });
 });
