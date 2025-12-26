@@ -179,6 +179,26 @@ this.fcmToken = await messaging.getToken({
   
   return localStorage.getItem('tarhal_device_id');
 });
+   // ⭐⭐⭐⭐⭐ هنا أضف اختبار التوكن ⭐⭐⭐⭐⭐
+        console.log('🔑 FCM Token:', this.fcmToken);
+        
+        // تحقق من طول التوكن
+        if (this.fcmToken && this.fcmToken.length > 100) {
+            console.log('✅ التوكن صالح الطول:', this.fcmToken.length);
+        } else {
+            console.log('❌ التوكن قصير جداً أو غير صالح');
+            
+            // معلومات تفصيلية عن التوكن
+            if (this.fcmToken) {
+                console.log('📊 معلومات التوكن:');
+                console.log('- النوع:', typeof this.fcmToken);
+                console.log('- الطول:', this.fcmToken.length);
+                console.log('- أول 50 حرف:', this.fcmToken.substring(0, 50));
+                console.log('- يحتوي على ":"', this.fcmToken.includes(':'));
+                console.log('- يبدأ بـ "f"', this.fcmToken.startsWith('f'));
+            }
+        }
+        // ⭐⭐⭐⭐⭐ نهاية الاختبار ⭐⭐⭐⭐⭐
 
       if (this.fcmToken) {
         console.log('✅ FCM Token:', this.fcmToken.substring(0, 50) + '...');
