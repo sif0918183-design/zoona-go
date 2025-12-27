@@ -1,6 +1,4 @@
-// /api/send-push.js
-import { GoogleAuth } from 'google-auth-library';
-
+// /api/send-push.js - نسخة تعمل مباشرة مع FCM v1 بدون مكتبات خارجية
 export default async function handler(req, res) {
   console.log('📤 API send-push called');
 
@@ -28,36 +26,64 @@ export default async function handler(req, res) {
     });
 
     // ===== 1️⃣ قراءة Service Account من Vercel =====
-    const serviceAccount = JSON.parse(
-      process.env.FIREBASE_SERVICE_ACCOUNT
-    );
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+    if (!serviceAccount) throw new Error('FIREBASE_SERVICE_ACCOUNT غير موجود في متغيرات البيئة');
 
-    // ===== 2️⃣ إنشاء OAuth Access Token =====
-    const auth = new GoogleAuth({
-      credentials: serviceAccount,
-      scopes: ['https://www.googleapis.com/auth/firebase.messaging'],
+    // ===== 2️⃣ إنشاء JWT يدوي للحصول على Access Token =====
+    const jwtHeader = {
+      alg: "RS256",
+      typ: "JWT"
+    };
+    const iat = Math.floor(Date.now() / 1000);
+    const exp = iat + 3600;
+    const jwtClaim = {
+      iss: serviceAccount.client_email,
+      scope: "https://www.googleapis.com/auth/firebase.messaging",
+      aud: serviceAccount.token_uri,
+      exp,
+      iat
+    };
+
+    // تحويل إلى Base64Url
+    function base64UrlEncode(obj) {
+      return Buffer.from(JSON.stringify(obj)).toString('base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    }
+
+    const header64 = base64UrlEncode(jwtHeader);
+    const claim64 = base64UrlEncode(jwtClaim);
+    const unsignedToken = `${header64}.${claim64}`;
+
+    const crypto = require('crypto');
+    const sign = crypto.createSign('RSA-SHA256');
+    sign.update(unsignedToken);
+    const signature = sign.sign(serviceAccount.private_key, 'base64').replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+    const jwt = `${unsignedToken}.${signature}`;
+
+    // ===== 3️⃣ طلب Access Token =====
+    const tokenResp = await fetch(serviceAccount.token_uri, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`
     });
+    const tokenData = await tokenResp.json();
+    if (!tokenData.access_token) throw new Error('فشل الحصول على Access Token');
 
-    const accessToken = await auth.getAccessToken();
-
-    // ===== 3️⃣ إرسال الإشعار عبر FCM v1 =====
+    // ===== 4️⃣ إرسال الإشعار عبر FCM v1 =====
     const fcmResponse = await fetch(
       `https://fcm.googleapis.com/v1/projects/${serviceAccount.project_id}/messages:send`,
       {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${tokenData.access_token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           message: {
             token: token,
-
             notification: {
               title: '🚖 طلب رحلة جديد - ترحال زونا',
               body: `${customerName || 'عميل'} يطلب ${getVehicleArabic(vehicleType)}`,
             },
-
             webpush: {
               notification: {
                 icon: '/icons/icon-192x192.png',
@@ -67,7 +93,6 @@ export default async function handler(req, res) {
                 link: `https://zoona-go-eosin.vercel.app/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId}`,
               },
             },
-
             data: {
               rideId: String(rideId || ''),
               requestId: String(requestId || ''),
