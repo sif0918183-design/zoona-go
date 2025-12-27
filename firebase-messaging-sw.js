@@ -1,4 +1,4 @@
-// firebase-messaging-sw.js - النسخة التفاعلية
+// firebase-messaging-sw.js - النسخة المحسنة
 importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/9.22.0/firebase-messaging-compat.js');
 
@@ -14,40 +14,31 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// إعدادات الإشعار
-const NOTIFICATION_OPTIONS = {
-  icon: '/icons/icon-192x192.png',
-  badge: '/icons/icon-72x72.png',
-  vibrate: [200, 100, 200, 100, 200],
-  requireInteraction: true,
-  silent: false
-};
-
-// 1. معالجة الإشعارات في الخلفية
-messaging.onBackgroundMessage((payload) => {
-  console.log('📨 [SW] استقبال إشعار في الخلفية:', payload);
+// معالج الإشعارات الرئيسي
+messaging.onBackgroundMessage(async (payload) => {
+  console.log('📨 [SW] استقبال إشعار FCM:', payload);
   
-  const { data, notification } = payload;
+  const data = payload.data || {};
+  const notification = payload.notification || {};
   
-  const notificationTitle = notification?.title || data?.title || '🚖 طلب رحلة - ترحال زونا';
-  const notificationBody = notification?.body || data?.body || 'لديك طلب رحلة جديد';
-  
-  const notificationId = `tarhal-${data?.rideId || Date.now()}`;
+  const notificationTitle = notification.title || data.title || '🚖 طلب رحلة - ترحال زونا';
+  const notificationBody = notification.body || data.body || 'لديك طلب رحلة جديد';
   
   const options = {
-    ...NOTIFICATION_OPTIONS,
     body: notificationBody,
-    tag: notificationId,
-    timestamp: Date.now(),
+    icon: data.icon || '/icons/icon-192x192.png',
+    badge: data.badge || '/icons/icon-72x72.png',
+    tag: `tarhal-${data.rideId || Date.now()}`,
     data: {
       ...data,
-      notificationId,
-      app: 'tarhal',
-      type: 'ride_request',
-      time: new Date().toISOString()
+      notificationId: `tarhal-${Date.now()}`,
+      timestamp: new Date().toISOString()
     },
-    // ⭐⭐⭐ أزرار تفاعلية ⭐⭐⭐
-    actions: [
+    requireInteraction: true,
+    vibrate: [200, 100, 200, 100, 200],
+    silent: false,
+    // أزرار تفاعلية
+    actions: data.actions ? JSON.parse(data.actions) : [
       {
         action: 'accept',
         title: '✅ قبول الرحلة',
@@ -60,104 +51,112 @@ messaging.onBackgroundMessage((payload) => {
       }
     ]
   };
+
+  console.log('🎯 عرض إشعار FCM:', options);
   
-  console.log('🎯 عرض إشعار تفاعلي:', options);
-  
-  return self.registration.showNotification(notificationTitle, options);
+  try {
+    await self.registration.showNotification(notificationTitle, options);
+    console.log('✅ تم عرض الإشعار بنجاح');
+  } catch (error) {
+    console.error('❌ فشل عرض الإشعار:', error);
+  }
 });
 
-// 2. معالجة نقر الإشعار
+// معالج نقر الإشعار
 self.addEventListener('notificationclick', (event) => {
-  console.log('🖱️ [SW] نقر على إشعار:', event.notification.data);
+  console.log('🖱️ نقر على إشعار:', event.notification.data);
   
   event.notification.close();
   
   const data = event.notification.data || {};
+  const action = event.action;
   const rideId = data.rideId;
   const requestId = data.requestId;
-  const action = event.action;
   
-  console.log('🔘 الإجراء المختار:', action);
+  let url = '/driver/dashboard.html';
   
-  let url = '/index.html';
-  let focus = true;
-  
-  // بناء الرابط بناءً على الإجراء
-  if (rideId) {
+  if (rideId && requestId) {
+    url = `/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId}`;
+    
     if (action === 'accept') {
-      url = `/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId}&action=accept`;
-      console.log('✅ قبول الرحلة:', rideId);
+      url += '&action=accept';
     } else if (action === 'decline') {
-      url = `/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId}&action=decline`;
-      console.log('❌ رفض الرحلة:', rideId);
-    } else {
-      url = `/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId}`;
+      url += '&action=decline';
     }
   }
   
-  // إرسال رسالة إلى التطبيق
+  console.log('🔗 الانتقال إلى:', url);
+  
   event.waitUntil(
-    self.clients.matchAll({
-      type: 'window',
-      includeUncontrolled: true
-    }).then((clientList) => {
-      // البحث عن نافذة مفتوحة
-      for (const client of clientList) {
-        if (client.url.includes('zoona') && 'focus' in client) {
-          console.log('🎯 تركيز النافذة الموجودة');
-          
-          // إرسال بيانات الإشعار
-          client.postMessage({
-            type: 'NOTIFICATION_CLICK',
-            data: data,
-            action: action,
-            timestamp: new Date().toISOString()
-          });
-          
-          return client.focus().then(() => {
-            // الانتقال إلى الرابط
-            if (client.url !== url) {
-              return client.navigate(url);
-            }
-          });
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // البحث عن نافذة مفتوحة
+        for (const client of clientList) {
+          if (client.url.includes('tarhal') && 'focus' in client) {
+            console.log('🎯 تركيز النافذة الموجودة');
+            
+            // إرسال رسالة للتطبيق الرئيسي
+            client.postMessage({
+              type: 'NOTIFICATION_CLICKED',
+              data: data,
+              action: action,
+              timestamp: new Date().toISOString()
+            });
+            
+            return client.focus().then(() => {
+              if (!client.url.includes(url)) {
+                return client.navigate(url);
+              }
+            });
+          }
         }
-      }
-      
-      // إذا لم تكن هناك نافذة مفتوحة، افتح واحدة جديدة
-      console.log('🆕 فتح نافذة جديدة:', url);
-      return self.clients.openWindow(url);
-    })
+        
+        // فتح نافذة جديدة
+        console.log('🆕 فتح نافذة جديدة:', url);
+        return self.clients.openWindow(url);
+      })
   );
   
-  // إرسال رد السائق إلى الخادم
-  if (action === 'accept' || action === 'decline') {
-    sendDriverResponseToServer(requestId, action);
+  // إرسال رد السائق إذا كان هناك إجراء
+  if (action && requestId) {
+    event.waitUntil(
+      sendDriverResponseToServer(requestId, action)
+    );
   }
 });
 
-// 3. إرسال رد السائق إلى الخادم
-function sendDriverResponseToServer(requestId, response) {
-  console.log(`📤 إرسال رد السائق: ${requestId} -> ${response}`);
-  
-  // استخدم fetch لإرسال الرد
-  fetch(`https://zoona-go-eosin.vercel.app/api/driver-response`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
+// دالة مساعدة لإرسال رد السائق
+async function sendDriverResponseToServer(requestId, response) {
+  try {
+    const responseData = {
       requestId: requestId,
       response: response,
-      timestamp: new Date().toISOString()
-    })
-  }).catch(error => {
+      respondedAt: new Date().toISOString()
+    };
+    
+    // إرسال إلى Supabase مباشرة عبر REST API
+    const supabaseUrl = 'https://zsmlyiygjagmhnglrhoa.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpzbWx5aXlnamFnbWhuZ2xyaG9hIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU5NDc3NjMsImV4cCI6MjA4MTUyMzc2M30.QviVinAng-ILq0umvI5UZCFEvNpP3nI0kW_hSaXxNps';
+    
+    const fetchResponse = await fetch(`${supabaseUrl}/rest/v1/ride_requests?id=eq.${requestId}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseKey,
+        'Authorization': `Bearer ${supabaseKey}`
+      },
+      body: JSON.stringify({
+        driver_response: response,
+        status: response === 'accept' ? 'accepted' : 'declined',
+        responded_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      })
+    });
+    
+    console.log(`📤 تم إرسال رد السائق: ${response}`, fetchResponse.status);
+  } catch (error) {
     console.error('❌ فشل إرسال رد السائق:', error);
-  });
+  }
 }
 
-// 4. معالجة إغلاق الإشعار
-self.addEventListener('notificationclose', (event) => {
-  console.log('📭 إغلاق الإشعار:', event.notification.data);
-});
-
-console.log('✅ Firebase Messaging Service Worker for Tarhal (Interactive) is ready');
+console.log('✅ Firebase Messaging Service Worker جاهز للإشعارات التفاعلية');
