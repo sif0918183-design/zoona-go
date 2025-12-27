@@ -2492,6 +2492,36 @@ async function initPWA() {
                 }
                 
                 currentDriver = driver;
+// بعد currentDriver = driver; أضف:
+async function registerDriverFCM() {
+    try {
+        const messaging = firebase.messaging();
+        const token = await messaging.getToken({
+            vapidKey: "BE2_9m83w2cu_fxhqV4eUowZQT7E8nm-FZZMWqN5DByd-Naykp52nWwA9uuW_L9x_3rPPsMNZzctsZD8j5YyaZw"
+        });
+        
+        if (token) {
+            console.log('✅ FCM Token:', token.substring(0, 30) + '...');
+            
+            // حفظ في Supabase
+            await tarhalDB
+                .from('driver_notifications')
+                .upsert({
+                    driver_id: currentDriver.id,
+                    fcm_token: token,
+                    notification_enabled: true,
+                    last_active: new Date().toISOString()
+                }, { onConflict: 'driver_id' });
+            
+            console.log('✅ تم حفظ التوكن في قاعدة البيانات');
+        }
+    } catch (error) {
+        console.log('⚠️ تعذر الحصول على FCM Token:', error);
+    }
+}
+
+// استدعها بعد تسجيل الدخول
+registerDriverFCM();
                 localStorage.setItem('tarhal_driver', JSON.stringify(driver));
                 
                 showNotification('مرحباً بعودتك أيها السائق!', 'success');
