@@ -102,12 +102,12 @@ export default async function handler(req, res) {
                             { 
                                 action: 'accept', 
                                 title: '✅ قبول الرحلة',
-                                icon: '/icons/accept.png'
+                                icon: '/icons/icon-192x192.png'
                             },
                             { 
                                 action: 'decline', 
                                 title: '❌ رفض',
-                                icon: '/icons/decline.png'
+                                icon: '/icons/icon-192x192.png'
                             }
                         ]),
                         
