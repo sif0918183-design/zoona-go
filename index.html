@@ -2607,50 +2607,65 @@ async function initPWA() {
             }
         }
         
-        async function updateDriverOnlineStatus(isOnline) {
-            if (!currentDriver) return;
-            
-            try {
-                // الحصول على الموقع الحالي
-                const position = await getCurrentPosition();
-                
-                // تحديث أو إنشاء سجل الموقع
-                await tarhalDB
+        // إصلاح دالة updateDriverOnlineStatus
+async function updateDriverOnlineStatus(isOnline) {
+    // ✅ تحقق أولاً من وجود currentDriver
+    if (!currentDriver) {
+        console.warn('⚠️ لا يوجد سائق مسجل حالياً');
+        return;
+    }
+    
+    if (!currentDriver.id) {
+        console.warn('⚠️ سائق بدون ID');
+        return;
+    }
+    
+    console.log(`🔄 تحديث حالة السائق ${currentDriver.id} إلى: ${isOnline ? 'متصل' : 'غير متصل'}`);
+    
+    try {
+        // محاولة الحصول على الموقع
+        const position = await getCurrentPosition();
+        
+        await tarhalDB
             .from('driver_locations')
             .upsert({
                 driver_id: currentDriver.id,
-                lat: position.coords.latitude, // تأكد من تحويله لرقم
+                lat: position.coords.latitude,
                 lng: position.coords.longitude,
                 is_online: isOnline,
                 last_seen: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }, { 
-                onConflict: 'driver_id',
-                ignoreDuplicates: false 
+                onConflict: 'driver_id'
             });
-                
-                // إذا كان متصلاً، تفعيل تحديث الموقع الدوري
-                if (isOnline) {
-                    startLocationUpdates();
-                }
-                
-            } catch (error) {
-                console.error('Error updating driver status:', error);
-                
-                // محاولة بدون موقع
-                await tarhalDB
-                    .from('driver_locations')
-                    .upsert({
-                        driver_id: currentDriver.id,
-                        is_online: isOnline,
-                        last_seen: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    }, { 
-                        onConflict: 'driver_id',
-                        ignoreDuplicates: false 
-                    });
-            }
+        
+        console.log(`✅ تم تحديث حالة السائق ${currentDriver.id}`);
+        
+        if (isOnline) {
+            startLocationUpdates();
         }
+        
+    } catch (error) {
+        console.error('❌ خطأ في تحديث حالة السائق:', error);
+        
+        // ⭐ تحديث بدون موقع (مهم)
+        try {
+            await tarhalDB
+                .from('driver_locations')
+                .upsert({
+                    driver_id: currentDriver.id,
+                    is_online: isOnline,
+                    last_seen: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }, { 
+                    onConflict: 'driver_id' 
+                });
+            console.log(`✅ تم تحديث الحالة بدون موقع`);
+        } catch (dbError) {
+            console.error('❌ خطأ في تحديث قاعدة البيانات:', dbError);
+        }
+    }
+}
         
         function startLocationUpdates() {
             if (locationUpdateInterval) {
