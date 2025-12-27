@@ -1,195 +1,151 @@
-// /api/send-ride-notification.js - النسخة المحدثة مع دعم الأزرار التفاعلية
-export default async function handler(req, res) {
-    console.log('🚀 API Called:', req.method, req.url);
-    
-    // تمكين CORS
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS, GET');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-    
-    // معالجة OPTIONS (preflight)
-    if (req.method === 'OPTIONS') {
-        console.log('✅ Preflight request handled');
-        return res.status(200).end();
-    }
-    
-    // معالجة GET (لاختبار أن API يعمل)
-    if (req.method === 'GET') {
-        console.log('📊 GET request - API is alive');
-        return res.status(200).json({
-            success: true,
-            message: 'ترحال زونا - API للإشعارات',
-            status: 'active',
-            timestamp: new Date().toISOString(),
-            version: '2.0.0',
-            features: ['interactive_notifications', 'accept_decline_buttons']
-        });
-    }
-    
-    // معالجة POST (الإرسال الفعلي)
-    if (req.method === 'POST') {
-        try {
-            console.log('📨 POST request received');
-            
-            // تحليل البيانات
-            const body = req.body;
-            console.log('📦 Request body:', JSON.stringify(body, null, 2));
-            
-            const { 
-                rideId, 
-                customerName, 
-                customerPhone,
-                pickupLocation, 
-                destination, 
-                amount, 
-                vehicleType,
-                fcmToken,
-                driverId,
-                requestId // ⭐⭐⭐ أضف هذا الحقل ⭐⭐⭐
-            } = body;
-            
-            // التحقق من البيانات المطلوبة
-            if (!fcmToken) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'FCM token مطلوب'
-                });
-            }
-            
-            if (!rideId && !requestId) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'rideId أو requestId مطلوب'
-                });
-            }
-            
-            // سجل البيانات للتحليل
-            console.log('🔍 Data analysis:', {
-                rideId,
-                requestId,
-                customerName,
-                driverId,
-                tokenLength: fcmToken?.length || 0,
-                tokenPreview: fcmToken?.substring(0, 30) + '...'
-            });
-            
-            // ⭐⭐⭐⭐ بناء payload الإشعار مع الأزرار التفاعلية ⭐⭐⭐⭐
-            const notificationPayload = {
-                success: true,
-                message: 'تم بناء بيانات الإشعار بنجاح',
-                notificationData: {
-                    title: `🚖 طلب رحلة جديد - ترحال زونا`,
-                    body: `${customerName || 'عميل'} يطلب رحلة ${getVehicleTypeName(vehicleType)} من ${pickupLocation || 'موقع الانطلاق'} إلى ${destination || 'الوجهة'}`,
-                    
-                    // ⭐⭐⭐⭐ البيانات الأساسية ⭐⭐⭐⭐
-                    data: {
-                        rideId: rideId || '',
-                        requestId: requestId || rideId, // استخدم requestId إذا كان موجوداً
-                        customerName: customerName || '',
-                        customerPhone: customerPhone || '',
-                        pickupLocation: pickupLocation || 'موقع الانطلاق',
-                        destination: destination || 'الوجهة',
-                        amount: amount || 0,
-                        vehicleType: vehicleType || 'economy',
-                        driverId: driverId || '',
-                        timestamp: new Date().toISOString(),
-                        type: 'ride_request',
-                        action: 'accept_ride',
-                        
-                        // ⭐⭐⭐⭐ الميزات الجديدة ⭐⭐⭐⭐
-                        // 1. الأزرار التفاعلية كـ JSON string
-                        actions: JSON.stringify([
-                            { 
-                                action: 'accept', 
-                                title: '✅ قبول الرحلة',
-                                icon: '/icons/icon-192x192.png'
-                            },
-                            { 
-                                action: 'decline', 
-                                title: '❌ رفض',
-                                icon: '/icons/icon-192x192.png'
-                            }
-                        ]),
-                        
-                        // 2. رابط النقر الأساسي
-                        click_action: `https://zoona-go-eosin.vercel.app/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId || rideId}`,
-                        
-                        // 3. روابط مباشرة للقبول والرفض
-                        accept_url: `https://zoona-go-eosin.vercel.app/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId || rideId}&action=accept`,
-                        decline_url: `https://zoona-go-eosin.vercel.app/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId || rideId}&action=decline`,
-                        
-                        // 4. معلومات إضافية للعرض
-                        urgency: 'high',
-                        timeout: 40, // ثانية
-                        requires_response: true
-                    },
-                    
-                    // ⭐⭐⭐⭐ خيارات الإشعار ⭐⭐⭐⭐
-                    notification: {
-                        icon: '/icons/icon-192x192.png',
-                        badge: '/icons/icon-72x72.png',
-                        vibrate: [200, 100, 200, 100, 200],
-                        requireInteraction: true,
-                        silent: false,
-                        tag: `ride-request-${rideId || requestId}`,
-                        timestamp: Date.now()
-                    },
-                    
-                    token: fcmToken
-                },
-                
-                // ⭐⭐⭐⭐ تعليمات للتطبيق ⭐⭐⭐⭐
-                instructions: {
-                    web: 'استخدم window.firebase.messaging().send() مع البيانات أعلاه',
-                    android: 'قم بتمرير data إلى نظام الإشعارات',
-                    ios: 'استخدم UNNotificationAction للأزرار',
-                    priority: 'high'
-                },
-                
-                // ⭐⭐⭐⭐ معلومات الإرسال ⭐⭐⭐⭐
-                metadata: {
-                    sentAt: new Date().toISOString(),
-                    expiresAt: new Date(Date.now() + 45000).toISOString(), // 45 ثانية
-                    notificationId: `tarhal-${rideId || requestId}-${Date.now()}`,
-                    version: '2.1.0'
-                }
-            };
-            
-            console.log('✅ Notification payload built successfully');
-            console.log('🎯 Actions included:', notificationPayload.notificationData.data.actions);
-            console.log('🔗 Accept URL:', notificationPayload.notificationData.data.accept_url);
-            console.log('🔗 Decline URL:', notificationPayload.notificationData.data.decline_url);
-            
-            // إرجاع الرد النهائي
-            return res.status(200).json(notificationPayload);
-            
-        } catch (error) {
-            console.error('❌ Error in API:', error);
-            
-            return res.status(200).json({
-                success: false,
-                error: error.message,
-                stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-                timestamp: new Date().toISOString()
-            });
-        }
-    }
-    
-    // أي طريقة أخرى
-    return res.status(405).json({
-        success: false,
-        error: 'Method not allowed',
-        allowedMethods: ['GET', 'POST', 'OPTIONS']
+// /api/send-notification.js - النسخة النهائية
+const admin = require('firebase-admin');
+
+// تهيئة Firebase Admin SDK (مرة واحدة فقط)
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert({
+        "type": "service_account",
+        "project_id": process.env.FIREBASE_PROJECT_ID,
+        "private_key": process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+        "client_email": process.env.FIREBASE_CLIENT_EMAIL
+      })
     });
+  } catch (error) {
+    console.error('Firebase admin init error:', error);
+  }
 }
 
-// دالة مساعدة
-function getVehicleTypeName(type) {
-    const names = {
-        'tuktuk': 'ركشة',
-        'economy': 'اقتصادية',
-        'comfort': 'متوسطة',
-        'vip': 'VIP'
+export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { 
+      token,          // FCM Token للسائق
+      driverId,       // ID السائق
+      rideId,         // ID الرحلة
+      requestId,      // ID طلب الرحلة
+      customerName,   // اسم العميل
+      vehicleType,    // نوع المركبة
+      amount,         // السعر
+      distance        // المسافة
+    } = req.body;
+
+    // التحقق من البيانات الأساسية
+    if (!token || !rideId || !requestId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Missing required fields' 
+      });
+    }
+
+    console.log(`📨 Sending notification to driver ${driverId} for ride ${rideId}`);
+
+    // بناء رسالة FCM
+    const message = {
+      token: token,
+      notification: {
+        title: '🚖 طلب رحلة جديد - ترحال زونا',
+        body: `${customerName || 'عميل'} يطلب ${getVehicleArabic(vehicleType)} - ${amount ? amount.toLocaleString() : ''} SDG`,
+      },
+      data: {
+        type: 'ride_request',
+        rideId: rideId.toString(),
+        requestId: requestId.toString(),
+        driverId: driverId || '',
+        customerName: customerName || '',
+        vehicleType: vehicleType || 'economy',
+        amount: amount ? amount.toString() : '0',
+        distance: distance || '0',
+        timestamp: new Date().toISOString(),
+        click_action: `https://${req.headers.host}/driver/accept-ride.html`,
+        sound: 'default'
+      },
+      webpush: {
+        fcmOptions: {
+          link: `https://${req.headers.host}/driver/accept-ride.html?rideId=${rideId}&requestId=${requestId}`
+        },
+        notification: {
+          icon: '/icons/icon-192x192.png',
+          badge: '/icons/icon-72x72.png',
+          vibrate: [200, 100, 200, 100, 200],
+          requireInteraction: true,
+          actions: [
+            {
+              action: 'accept',
+              title: '✅ قبول الرحلة',
+              icon: '/icons/accept.png'
+            },
+            {
+              action: 'decline',
+              title: '❌ رفض',
+              icon: '/icons/decline.png'
+            }
+          ]
+        }
+      },
+      android: {
+        priority: 'high'
+      },
+      apns: {
+        payload: {
+          aps: {
+            sound: 'default',
+            badge: 1
+          }
+        }
+      }
     };
-    return names[type] || type || 'سيارة';
+
+    // إرسال الإشعار عبر Firebase Admin
+    const response = await admin.messaging().send(message);
+    
+    console.log('✅ Notification sent successfully:', response);
+    
+    return res.status(200).json({
+      success: true,
+      messageId: response,
+      sentAt: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('❌ Error sending notification:', error);
+    
+    // تحليل نوع الخطأ
+    let errorType = 'unknown';
+    if (error.code === 'messaging/invalid-registration-token') {
+      errorType = 'invalid_token';
+    } else if (error.code === 'messaging/registration-token-not-registered') {
+      errorType = 'token_not_registered';
+    }
+    
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+      errorType: errorType,
+      code: error.code
+    });
+  }
+}
+
+function getVehicleArabic(type) {
+  const types = {
+    tuktuk: 'ركشة',
+    economy: 'سيارة اقتصادية',
+    comfort: 'سيارة متوسطة',
+    vip: 'سيارة VIP'
+  };
+  return types[type] || 'رحلة';
 }
