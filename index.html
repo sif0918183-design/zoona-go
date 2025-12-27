@@ -3773,7 +3773,7 @@ async function sendDriverNotification(driver, ride, requestId) {
         console.log(`✅ توكن صالح للسائق ${driver.driver_id}`);
 
         // 3. إرسال الإشعار عبر API الخاص
-        const response = await fetch('/api/send-ride-notification', {
+        const response = await fetch('/api/send-notification', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
