@@ -5101,6 +5101,88 @@ async function safeUpdateRide(rideId, updates) {
         return false;
     }
 }
+// أضف هذا في نهاية ملف index.html
+class RideNotificationTracker {
+    constructor() {
+        this.pendingNotifications = new Map();
+    }
+    
+    async trackNotification(rideId, requestId, driverId) {
+        const notificationId = `${rideId}-${requestId}`;
+        
+        this.pendingNotifications.set(notificationId, {
+            rideId,
+            requestId,
+            driverId,
+            sentAt: new Date().toISOString(),
+            status: 'sent',
+            attempts: 1
+        });
+        
+        // بدء المتابعة
+        this.startTracking(notificationId);
+    }
+    
+    async startTracking(notificationId) {
+        const notification = this.pendingNotifications.get(notificationId);
+        
+        if (!notification) return;
+        
+        // تحقق من الرد كل 5 ثواني
+        const checkInterval = setInterval(async () => {
+            try {
+                const { data: request } = await tarhalDB
+                    .from('ride_requests')
+                    .select('driver_response, status')
+                    .eq('id', notification.requestId)
+                    .single();
+                
+                if (request?.driver_response) {
+                    // تم الرد!
+                    clearInterval(checkInterval);
+                    notification.status = request.driver_response;
+                    notification.respondedAt = new Date().toISOString();
+                    
+                    console.log(`✅ السائق رد: ${request.driver_response}`);
+                    
+                    // إشعار العميل إذا كان مقبولاً
+                    if (request.driver_response === 'accepted') {
+                        this.notifyCustomer(notification.rideId, notification.driverId);
+                    }
+                    
+                    // إزالة من المتابعة بعد دقيقة
+                    setTimeout(() => {
+                        this.pendingNotifications.delete(notificationId);
+                    }, 60000);
+                }
+                
+                // إذا مرت 45 ثانية بدون رد
+                const elapsed = Date.now() - new Date(notification.sentAt).getTime();
+                if (elapsed > 45000 && notification.status === 'sent') {
+                    clearInterval(checkInterval);
+                    notification.status = 'expired';
+                    console.log('⏰ انتهى وقت الرد');
+                }
+                
+            } catch (error) {
+                console.error('خطأ في متابعة الإشعار:', error);
+            }
+        }, 5000);
+    }
+    
+    notifyCustomer(rideId, driverId) {
+        // إرسال إشعار للعميل أن السائق قبل الرحلة
+        if (window.soundManager) {
+            window.soundManager.play('ride_accepted');
+        }
+        
+        // يمكنك إضافة إشعار في التطبيق هنا
+        console.log(`🎉 إعلام العميل: السائق قبل الرحلة ${rideId}`);
+    }
+}
+
+// تهيئة المتابع
+window.rideTracker = new RideNotificationTracker();
 </script>
    
 </body>
