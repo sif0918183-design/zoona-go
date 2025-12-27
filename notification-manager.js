@@ -815,7 +815,63 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }, 1000);
 });
+// إضافة هذه الدالة لتحسين نظام التسجيل
+async function registerDriverForPushNotifications(driverId) {
+    try {
+        // 1. طلب إذن الإشعارات
+        const permission = await Notification.requestPermission();
+        
+        if (permission !== 'granted') {
+            console.log('❌ لم يتم منح إذن الإشعارات');
+            return null;
+        }
 
+        // 2. الحصول على Service Worker المناسب
+        const registration = await navigator.serviceWorker.ready;
+        
+        // 3. الحصول على FCM Token باستخدام VAPID Key الصحيح
+        const messaging = firebase.messaging();
+        const token = await messaging.getToken({
+            vapidKey: "BE2_9m83w2cu_fxhqV4eUowZQT7E8nm-FZZMWqN5DByd-Naykp52nWwA9uuW_L9x_3rPPsMNZzctsZD8j5YyaZw",
+            serviceWorkerRegistration: registration
+        });
+
+        if (!token) {
+            throw new Error('Failed to get FCM token');
+        }
+
+        console.log(`✅ تم الحصول على FCM Token: ${token.substring(0, 50)}...`);
+
+        // 4. حفظ التوكن في Supabase
+        const { error } = await supabase
+            .from('driver_notifications')
+            .upsert({
+                driver_id: driverId,
+                fcm_token: token,
+                notification_enabled: true,
+                vapid_key_used: "BE2_9m83w2cu_fxhqV4eUowZQT7E8nm-FZZMWqN5DByd-Naykp52nWwA9uuW_L9x_3rPPsMNZzctsZD8j5YyaZw",
+                registered_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }, { onConflict: 'driver_id' });
+
+        if (error) throw error;
+
+        console.log(`✅ تم تسجيل السائق ${driverId} للإشعارات`);
+        return token;
+
+    } catch (error) {
+        console.error('❌ خطأ في تسجيل الإشعارات:', error);
+        
+        // محاولة استخدام التوكن القديم إذا كان موجوداً
+        const { data: existingToken } = await supabase
+            .from('driver_notifications')
+            .select('fcm_token')
+            .eq('driver_id', driverId)
+            .single();
+            
+        return existingToken?.fcm_token || null;
+    }
+}
 // تصدير للاستخدام في وحدات أخرى
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = { TarhalNotificationManager };
